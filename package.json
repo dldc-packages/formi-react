@@ -25,7 +25,7 @@
   },
   "main": "./dist/react-formi.cjs.js",
   "module": "./dist/react-formi.es.js",
-  "types": "./dist/mod.d.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
