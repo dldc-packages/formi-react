@@ -4,7 +4,7 @@ import { FieldAny, OnSubmit } from './internal/types';
 
 export type UseFormControllerOptions<T extends FieldAny> = {
   initialFields: T;
-  onSubmit: OnSubmit<T>;
+  onSubmit?: OnSubmit<T>;
 };
 
 export function useFormController<T extends FieldAny>({
@@ -14,7 +14,9 @@ export function useFormController<T extends FieldAny>({
   const [controller] = useState(() => new FormController({ initialFields, onSubmit }));
 
   useLayoutEffect(() => {
-    controller.setOnSubmit(onSubmit);
+    if (onSubmit) {
+      controller.setOnSubmit(onSubmit);
+    }
   }, [controller, onSubmit]);
 
   return controller;

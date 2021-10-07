@@ -28,13 +28,12 @@ import {
   sortEntries,
 } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
-import {
-  useSyncExternalStoreExtra,
-  SyncExternalStoreSubscribe,
-} from 'use-sync-external-store/extra';
+import { useSyncExternalStoreExtra } from 'use-sync-external-store/extra';
 import { FieldState, FieldValueState } from '../useField';
 import { FormState } from '../useForm';
 import React from 'react';
+
+type StoreSubscribe = (onStoreChange: () => void) => () => void;
 
 export type FormStateSelector<Result> = (state: FormControllerState) => Result;
 
@@ -219,7 +218,7 @@ function formControllerReducer(
 
 export type FormControllerOptions<T extends FieldAny> = {
   initialFields: T;
-  onSubmit: OnSubmit<T>;
+  onSubmit?: OnSubmit<T>;
 };
 
 export class FormController<T extends FieldAny> {
@@ -232,7 +231,8 @@ export class FormController<T extends FieldAny> {
 
   constructor({ initialFields, onSubmit }: FormControllerOptions<T>) {
     this.state = createInitialState(initialFields, this.pathsCache);
-    this.onSubmit = onSubmit;
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    this.onSubmit = onSubmit ?? (() => {});
     this.initialFields = initialFields;
   }
 
@@ -313,14 +313,11 @@ export type UseState = <Result>(
   comparer?: Comparer<Result>
 ) => Result;
 
-function createUseState(
-  getState: () => FormControllerState,
-  subscribe: SyncExternalStoreSubscribe
-): UseState {
+function createUseState(getState: () => FormControllerState, subscribe: StoreSubscribe): UseState {
   return function useState<Result>(
     selector: FormStateSelector<Result>,
     comparer: Comparer<Result> = Object.is
   ): Result {
-    return useSyncExternalStoreExtra(subscribe, getState, selector, comparer);
+    return useSyncExternalStoreExtra(subscribe, getState, null, selector, comparer);
   };
 }
