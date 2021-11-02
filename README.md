@@ -2,6 +2,8 @@
 
 > A type-safe react form hook using zod for validation
 
+This package use the experimental [`use-sync-external-store`](https://www.npmjs.com/package/use-sync-external-store) package.
+
 ## Installation
 
 ```bash

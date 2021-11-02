@@ -70,8 +70,8 @@
     "zod": "^3.11.6"
   },
   "peerDependencies": {
-    "react": ">=16.8",
-    "react-dom": ">=16.8",
+    "react": ">=17",
+    "react-dom": ">=17",
     "zod": ">=3"
   },
   "publishConfig": {
