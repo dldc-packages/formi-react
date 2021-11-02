@@ -28,7 +28,7 @@ import {
   sortEntries,
 } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
-import { useSyncExternalStoreExtra } from 'use-sync-external-store/extra';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { FieldState, FieldValueState } from '../useField';
 import { FormState } from '../useForm';
 import React from 'react';
@@ -318,6 +318,6 @@ function createUseState(getState: () => FormControllerState, subscribe: StoreSub
     selector: FormStateSelector<Result>,
     comparer: Comparer<Result> = Object.is
   ): Result {
-    return useSyncExternalStoreExtra(subscribe, getState, null, selector, comparer);
+    return useSyncExternalStoreWithSelector(subscribe, getState, null, selector, comparer);
   };
 }
