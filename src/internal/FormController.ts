@@ -28,7 +28,7 @@ import {
   sortEntries,
 } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector.js';
 import { FieldState, FieldValueState } from '../useField';
 import { FormState } from '../useForm';
 import React from 'react';
