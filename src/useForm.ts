@@ -14,6 +14,9 @@ export type UserFormResult<T extends FieldAny> = [
 
 export type UseFormOptions<T extends FieldAny> = UseFormControllerOptions<T>;
 
+/**
+ * Create a FormController then subscribe to form state
+ */
 export function useForm<T extends FieldAny>(options: UseFormOptions<T>): UserFormResult<T> {
   const controller = useFormController(options);
 

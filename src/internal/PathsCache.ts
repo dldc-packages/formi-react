@@ -6,6 +6,9 @@ type Node = {
   children: Map<Key, Node>;
 };
 
+/**
+ * Cache Paths to avoid recomputing them
+ */
 export class PathsCache {
   private root: Node = {
     value: [],

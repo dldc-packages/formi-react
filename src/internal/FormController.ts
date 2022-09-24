@@ -2,6 +2,7 @@ import fastDeepEqual from 'fast-deep-equal';
 import { Subscription } from 'suub';
 import { PathsCache } from './PathsCache';
 import { ReadonlyPathMap } from './ReadonlyPathMap';
+import { ReadonlyMap } from './ReadonlyMap';
 import {
   assertFieldArrayState,
   assertFieldValueState,
@@ -19,12 +20,14 @@ import {
   Entry,
   RawFields,
   FieldValue,
+  FieldKey,
 } from './types';
 import {
   buildRawFromEntries,
   expectNever,
   extractZodError,
   fieldsToEntries,
+  mountField,
   sortEntries,
 } from './utils';
 import { unstable_batchedUpdates } from 'react-dom';
@@ -39,23 +42,27 @@ export type FormStateSelector<Result> = (state: FormControllerState) => Result;
 
 export type Comparer<T> = (a: T, b: T) => boolean;
 
+export type FormStructure =
+  | { kind: 'array'; self: FieldKey; children: Array<FormStructure> }
+  | { kind: 'object'; self: FieldKey; children: Record<string, FormStructure> }
+  | FieldKey;
+
+export type FieldsMap = ReadonlyMap<FieldKey, FieldState<FieldAny>>;
+
 export type FormControllerState = {
-  fields: ReadonlyPathMap<FieldState<FieldAny>>;
+  structure: FormStructure;
+  fields: FieldsMap;
   form: FormState;
 };
 
 export type FormControllerDispatch = (action: FormReducerAction) => void;
 
-function createInitialState<T extends FieldAny>(
-  initialFields: T,
-  pathsCache: PathsCache
-): FormControllerState {
+function createInitialState<T extends FieldAny>(initialFields: T): FormControllerState {
+  const { fields, structure } = mountField([], initialFields);
   return {
-    fields: ReadonlyPathMap.fromEntries(fieldsToEntries([], initialFields), pathsCache),
-    form: {
-      isSubmitting: false,
-      submitCount: 0,
-    },
+    fields,
+    structure,
+    form: { isSubmitting: false, submitCount: 0 },
   };
 }
 
@@ -63,157 +70,185 @@ function formControllerReducer(
   state: FormControllerState,
   action: FormReducerAction
 ): FormControllerState {
-  if (action.type === 'SetFieldValue') {
-    return {
-      ...state,
-      fields: state.fields.updateOrThrow(action.path, (state) => {
-        if (!isFieldValueState(state)) {
-          throw new Error('Invalid action');
-        }
-        const parsed = state.field.schema.safeParse(action.value);
-        const error = parsed.success ? null : extractZodError(parsed.error);
-        return {
-          ...state,
-          value: action.value,
-          isDirty: fastDeepEqual(state.field.initialValue, action.value),
-          error,
-        };
-      }),
-    };
-  }
-  if (action.type === 'OnFieldBlur') {
-    return {
-      ...state,
-      fields: state.fields.updateOrThrow(action.path, (state) => {
-        if (!isFieldValueState(state)) {
-          throw new Error('Invalid action');
-        }
-        if (state.isTouched) {
-          return state;
-        }
-        return {
-          ...state,
-          isTouched: true,
-        };
-      }),
-    };
-  }
-  if (action.type === 'FormSubmitWithError') {
-    return {
-      ...state,
-      fields: state.fields.updateAll((state) => {
-        if (!isFieldValueState(state)) {
-          return state;
-        }
-        return {
-          ...state,
-          isTouched: true,
-        };
-      }),
-    };
-  }
-  if (action.type === 'FormSubmit') {
-    return {
-      ...state,
-      form: {
-        ...state.form,
-        isSubmitting: true,
-        submitCount: state.form.submitCount + 1,
-      },
-    };
-  }
-  if (action.type === 'ArrayPush') {
-    const arrayState = state.fields.getOrThrow(action.path);
-    assertFieldArrayState(arrayState);
-    const nextIndex = arrayState.length;
-    const itemsToAdd = fieldsToEntries([...action.path, nextIndex], action.item);
-    return {
-      ...state,
-      fields: state.fields
-        .updateOrThrow(action.path, (state) => {
-          if (!isFieldArrayState(state)) {
-            return state;
-          }
-          return {
-            ...state,
-            length: state.length + 1,
-          };
-        })
-        .setEntries(itemsToAdd),
-    };
-  }
-  if (action.type === 'ArrayRemove') {
-    const arrayState = state.fields.getOrThrow(action.path);
-    assertFieldArrayState(arrayState);
-    if (action.index >= arrayState.length) {
-      // index does not exist, ignore
-      return state;
-    }
-    const children = sortEntries(state.fields.getChildren(action.path));
-    // remove item
-    children.splice(action.index, 1);
-    // update paths
-    const updated = children.map(([, state], index): Entry => {
-      return [[...action.path, index], state];
-    });
-    return {
-      ...state,
-      fields: state.fields
-        // delete last one
-        .delete([...action.path, arrayState.length - 1])
-        // apply updated
-        .setEntries(updated)
-        // update length
-        .updateOrThrow(action.path, (state) => {
-          if (!isFieldArrayState(state)) {
-            return state;
-          }
-          return { ...state, length: state.length - 1 };
-        }),
-    };
-  }
-  if (action.type === 'Reset') {
-    return {
-      fields: action.fields,
-      form: {
-        isSubmitting: false,
-        submitCount: 0,
-      },
-    };
-  }
-  if (action.type === 'SetSubmitting') {
-    if (state.form.isSubmitting === action.submitting) {
-      return state;
-    }
-    return {
-      ...state,
-      form: {
-        ...state.form,
-        isSubmitting: action.submitting,
-      },
-    };
-  }
-  if (action.type === 'OnFieldReset') {
-    return {
-      ...state,
-      fields: state.fields.updateOrThrow(
-        action.path,
-        (state): FieldValueState<FieldValue<any, any>> => {
-          assertFieldValueState(state);
-          const parsed = state.field.schema.safeParse(state.field.initialValue);
-          const error = parsed.success ? null : extractZodError(parsed.error);
-          return {
-            ...state,
-            error,
-            value: state.field.initialValue,
-            isTouched: false,
-            isDirty: false,
-          };
-        }
-      ),
-    };
-  }
-  return expectNever(action);
+  // if (action.type === 'SetFieldValue') {
+  //   return {
+  //     ...state,
+  //     fields: state.fields.updateOrThrow(action.path, (state) => {
+  //       if (!isFieldValueState(state)) {
+  //         throw new Error('Invalid action');
+  //       }
+  //       const parsed = state.field.schema.safeParse(action.value);
+  //       const error = parsed.success ? null : extractZodError(parsed.error);
+  //       return {
+  //         ...state,
+  //         value: action.value,
+  //         isDirty: fastDeepEqual(state.field.initialValue, action.value),
+  //         error,
+  //       };
+  //     }),
+  //   };
+  // }
+  // if (action.type === 'OnFieldBlur') {
+  //   return {
+  //     ...state,
+  //     fields: state.fields.updateOrThrow(action.path, (state) => {
+  //       if (!isFieldValueState(state)) {
+  //         throw new Error('Invalid action');
+  //       }
+  //       if (state.isTouched) {
+  //         return state;
+  //       }
+  //       return {
+  //         ...state,
+  //         isTouched: true,
+  //       };
+  //     }),
+  //   };
+  // }
+  // if (action.type === 'FormSubmitWithError') {
+  //   return {
+  //     ...state,
+  //     fields: state.fields.updateAll((state) => {
+  //       if (!isFieldValueState(state)) {
+  //         return state;
+  //       }
+  //       return {
+  //         ...state,
+  //         isTouched: true,
+  //       };
+  //     }),
+  //   };
+  // }
+  // if (action.type === 'FormSubmit') {
+  //   return {
+  //     ...state,
+  //     form: {
+  //       ...state.form,
+  //       isSubmitting: true,
+  //       submitCount: state.form.submitCount + 1,
+  //     },
+  //   };
+  // }
+  // if (action.type === 'ArrayPush') {
+  //   const arrayState = state.fields.getOrThrow(action.path);
+  //   assertFieldArrayState(arrayState);
+  //   const nextIndex = arrayState.length;
+  //   const itemsToAdd = fieldsToEntries([...action.path, nextIndex], action.item);
+  //   return {
+  //     ...state,
+  //     fields: state.fields
+  //       .updateOrThrow(action.path, (state) => {
+  //         if (!isFieldArrayState(state)) {
+  //           return state;
+  //         }
+  //         return {
+  //           ...state,
+  //           length: state.length + 1,
+  //         };
+  //       })
+  //       .setEntries(itemsToAdd),
+  //   };
+  // }
+  // if (action.type === 'ArrayRemove') {
+  //   const arrayState = state.fields.getOrThrow(action.path);
+  //   assertFieldArrayState(arrayState);
+  //   if (action.index < 0 || action.index >= arrayState.length) {
+  //     // index does not exist, ignore
+  //     return state;
+  //   }
+  //   const children = sortEntries(state.fields.getChildren(action.path));
+  //   // remove item
+  //   children.splice(action.index, 1);
+  //   // update paths
+  //   const updated = children.map(([, state], index): Entry => {
+  //     return [[...action.path, index], state];
+  //   });
+  //   return {
+  //     ...state,
+  //     fields: state.fields
+  //       // delete last one
+  //       .delete([...action.path, arrayState.length - 1])
+  //       // apply updated
+  //       .setEntries(updated)
+  //       // update length
+  //       .updateOrThrow(action.path, (state) => {
+  //         if (!isFieldArrayState(state)) {
+  //           return state;
+  //         }
+  //         return { ...state, length: state.length - 1 };
+  //       }),
+  //   };
+  // }
+  // if (action.type === 'ArrayInsert') {
+  //   const arrayState = state.fields.getOrThrow(action.path);
+  //   assertFieldArrayState(arrayState);
+  //   if (action.index < 0 || action.index > arrayState.length) {
+  //     // index does not exist, ignore
+  //     return state;
+  //   }
+  //   const children = sortEntries(state.fields.getChildren(action.path));
+  //   const newItem = fieldsToEntries([...action.path, action.index], action.value);
+  //   // insert item
+  //   children.splice(action.index, 0, newItem);
+  //   return {
+  //     ...state,
+  //     fields: state.fields
+  //       // delete last one
+  //       .delete([...action.path, arrayState.length - 1])
+  //       // apply updated
+  //       .setEntries(updated)
+  //       // update length
+  //       .updateOrThrow(action.path, (state) => {
+  //         if (!isFieldArrayState(state)) {
+  //           return state;
+  //         }
+  //         return { ...state, length: state.length - 1 };
+  //       }),
+  //   };
+  // }
+  // if (action.type === 'Reset') {
+  //   return {
+  //     fields: action.fields,
+  //     form: {
+  //       isSubmitting: false,
+  //       submitCount: 0,
+  //     },
+  //   };
+  // }
+  // if (action.type === 'SetSubmitting') {
+  //   if (state.form.isSubmitting === action.submitting) {
+  //     return state;
+  //   }
+  //   return {
+  //     ...state,
+  //     form: {
+  //       ...state.form,
+  //       isSubmitting: action.submitting,
+  //     },
+  //   };
+  // }
+  // if (action.type === 'OnFieldReset') {
+  //   return {
+  //     ...state,
+  //     fields: state.fields.updateOrThrow(
+  //       action.path,
+  //       (state): FieldValueState<FieldValue<any, any>> => {
+  //         assertFieldValueState(state);
+  //         const parsed = state.field.schema.safeParse(state.field.initialValue);
+  //         const error = parsed.success ? null : extractZodError(parsed.error);
+  //         return {
+  //           ...state,
+  //           error,
+  //           value: state.field.initialValue,
+  //           isTouched: false,
+  //           isDirty: false,
+  //         };
+  //       }
+  //     ),
+  //   };
+  // }
+  // return expectNever(action);
+  throw new Error('TODO: Fix');
 }
 
 export type FormControllerOptions<T extends FieldAny> = {
@@ -230,7 +265,7 @@ export class FormController<T extends FieldAny> {
   private state: FormControllerState;
 
   constructor({ initialFields, onSubmit }: FormControllerOptions<T>) {
-    this.state = createInitialState(initialFields, this.pathsCache);
+    this.state = createInitialState(initialFields);
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.onSubmit = onSubmit ?? (() => {});
     this.initialFields = initialFields;

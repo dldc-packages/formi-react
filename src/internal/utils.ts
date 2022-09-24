@@ -1,5 +1,13 @@
 import * as z from 'zod';
-import { FieldAny, FieldsPaths, RawFields, FieldError, Path } from './types';
+import {
+  FieldAny,
+  FieldsPaths,
+  RawFields,
+  FieldError,
+  Path,
+  FieldKey,
+  FORM_INTERNAL,
+} from './types';
 import {
   isFieldArray,
   isFieldAny,
@@ -10,6 +18,8 @@ import {
   isFieldObjectState,
 } from '../field';
 import { FieldArrayState, FieldObjectState, FieldState, FieldValueState } from '../useField';
+import { FieldsMap, FormStructure } from './FormController';
+import { ReadonlyMap } from './ReadonlyMap';
 
 export function extractZodError(error: z.ZodError): FieldError {
   const firstError = error.errors[0];
@@ -18,6 +28,74 @@ export function extractZodError(error: z.ZodError): FieldError {
   //   return { message: err.message, code: err. };
   // }
   return { message: firstError.message, code: firstError.code };
+}
+
+export type MountResult = {
+  structure: FormStructure;
+  fields: FieldsMap;
+};
+
+export function mountField<T extends FieldAny>(basePath: Path, field: T): MountResult {
+  const fieldsMap: FieldsMap = ReadonlyMap.empty();
+  if (isFieldArray(field)) {
+    const selfKey = createFieldKey();
+    const state: FieldArrayState<any> = {
+      field,
+      length: field.children.length,
+      error: null,
+    };
+    fieldsMap.set(selfKey, state);
+    const children: Array<FormStructure> = [];
+    field.children.forEach((child, index) => {
+      const { fields, structure } = mountField([...basePath, index], child);
+      children.push(structure);
+      fieldsMap.setEntries(fields.getAll());
+    });
+    return {
+      structure: { kind: 'array', self: selfKey, children },
+      fields: fieldsMap,
+    };
+  }
+  if (isFieldObject(field)) {
+    const selfKey = createFieldKey();
+    const state: FieldObjectState<any> = {
+      field,
+      error: null,
+    };
+    fieldsMap.set(selfKey, state);
+    const children: Record<string, FormStructure> = {};
+    Object.entries(field.children).forEach(([key, child]) => {
+      const { fields, structure } = mountField([...basePath, key], child);
+      children[key] = structure;
+      fieldsMap.setEntries(fields.getAll());
+    });
+    return {
+      structure: { kind: 'object', self: selfKey, children },
+      fields: fieldsMap,
+    };
+  }
+  if (isFieldValue(field)) {
+    const selfKey = createFieldKey();
+    const parsed = field.schema.safeParse(field.initialValue);
+    const error = parsed.success ? null : extractZodError(parsed.error);
+    const state: FieldValueState<any> = {
+      field,
+      value: field.initialValue,
+      isDirty: false,
+      isTouched: false,
+      error,
+    };
+    fieldsMap.set(selfKey, state);
+    return {
+      structure: selfKey,
+      fields: fieldsMap,
+    };
+  }
+  throw new Error('Unsupported field type');
+}
+
+export function createFieldKey(): FieldKey {
+  return { [FORM_INTERNAL]: true };
 }
 
 export function fieldsToEntries<T extends FieldAny>(

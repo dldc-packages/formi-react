@@ -34,6 +34,8 @@ export type FieldArray<Item extends FieldAny> = {
   children: Array<Item>;
 };
 
+export type FieldKey = { [FORM_INTERNAL]: true };
+
 type SubFieldPaths<Prefix, T> = T extends FieldAny ? [Prefix, ...FieldsPaths<T>] : never;
 
 // prettier-ignore
@@ -84,6 +86,7 @@ export type FieldArrayItem<T extends FieldArray<any>> = T extends FieldArray<inf
 export type FormReducerAction =
   | { type: 'ArrayPush'; path: Path; item: FieldAny }
   | { type: 'ArrayRemove'; path: Path; index: number }
+  | { type: 'ArrayInsert'; path: Path; index: number; value: FieldArrayItem<any> }
   | { type: 'SetSubmitting'; submitting: boolean }
   | { type: 'OnFieldBlur'; path: Path }
   | { type: 'OnFieldReset'; path: Path }

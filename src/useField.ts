@@ -3,6 +3,7 @@ import { FormStateSelector } from './internal/FormController';
 import {
   FieldAny,
   FieldArray,
+  FieldArrayItem,
   FieldError,
   FieldObject,
   FieldValue,
@@ -42,7 +43,7 @@ export type FieldArrayActions<T extends FieldArray<any>> = {
   getPath: GetPathFn<T>;
   push: (obj: T[typeof FORM_INTERNAL]) => void;
   remove(index: number): void;
-  // insert: (index: number, value: FieldArrayItem<T>) => void;
+  insert: (index: number, value: FieldArrayItem<T>) => void;
   // swap: (indexA: number, indexB: number) => void;
   // move: (from: number, to: number) => void;
   // unshift: (value: FieldArrayItem<T>) => number;
@@ -67,6 +68,9 @@ export type FieldActions<T extends FieldAny> =
   T extends FieldValue<any, any> ? FieldValueActions<T>
   : never;
 
+/**
+ * Get state and actions for a field
+ */
 export function useField<T extends FieldAny>(
   formPath: FormPath<T>
 ): [FieldState<T>, FieldActions<T>] {
@@ -86,6 +90,7 @@ export function useField<T extends FieldAny>(
         getPath: (...subPath) => controller.getPath(...([...path, ...subPath] as any)) as any,
         push: (item) => controller.dispatch({ type: 'ArrayPush', path, item }),
         remove: (index) => controller.dispatch({ type: 'ArrayRemove', path, index }),
+        insert: (index, value) => controller.dispatch({ type: 'ArrayInsert', path, index, value }),
       };
       return actions as any;
     }

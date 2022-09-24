@@ -11,6 +11,9 @@ declare const window: any;
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
+/**
+ * Initialize a FormController
+ */
 export function useFormController<T extends FieldAny>({
   initialFields,
   onSubmit,
