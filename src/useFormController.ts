@@ -1,30 +1,68 @@
-import { useLayoutEffect, useState, useEffect } from 'react';
-import { FormController } from './internal/FormController';
-import { FieldAny, OnSubmit } from './internal/types';
+import { useLayoutEffect as reactULE, useState, useEffect, useId, MutableRefObject, useRef, useMemo, useCallback } from 'react';
+import { FormController } from './FormController';
+import { FieldAny, OnSubmit } from './types';
 
-export type UseFormControllerOptions<T extends FieldAny> = {
-  initialFields: T;
-  onSubmit?: OnSubmit<T>;
+export type FormRefObject = MutableRefObject<HTMLFormElement | undefined>;
+export type FormRefCallback = (form: HTMLFormElement | undefined) => void;
+
+export type UseFormControllerOptions<Field extends FieldAny> = {
+  fields: Field;
+  formName?: string;
+  onSubmit?: OnSubmit<Field>;
+  formRefObject?: FormRefObject;
+};
+
+export type UseFormControllerResult<Field extends FieldAny> = {
+  controller: FormController<Field>;
+  refObject: FormRefObject;
+  ref: FormRefCallback;
 };
 
 declare const window: any;
 
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+const useLayoutEffect = typeof window !== 'undefined' ? reactULE : useEffect;
 
 /**
  * Initialize a FormController
  */
-export function useFormController<T extends FieldAny>({
-  initialFields,
+export function useFormController<Field extends FieldAny>({
+  fields,
+  formName,
   onSubmit,
-}: UseFormControllerOptions<T>): FormController<T> {
-  const [controller] = useState(() => new FormController({ initialFields, onSubmit }));
+  formRefObject,
+}: UseFormControllerOptions<Field>): UseFormControllerResult<Field> {
+  const formId = useId();
+  const formNameResolved = formName ?? formId;
+  const defaultFormRefObject = useRef<HTMLFormElement | undefined>();
 
-  useIsomorphicLayoutEffect(() => {
+  const formRefObjectResolved = formRefObject ?? defaultFormRefObject;
+
+  const refCallback = useCallback(
+    (form: HTMLFormElement | undefined) => {
+      if (form === formRefObjectResolved.current) {
+        return;
+      }
+      formRefObjectResolved.current = form;
+    },
+    [formRefObjectResolved]
+  );
+
+  const [controller] = useState(() => new FormController({ formName: formNameResolved, initialFields: fields, onSubmit }));
+
+  useLayoutEffect(() => {
     if (onSubmit) {
       controller.setOnSubmit(onSubmit);
     }
-  }, [controller, onSubmit]);
+    if (formRefObjectResolved.current) {
+      controller.register(formRefObjectResolved.current);
+    }
+  }, [controller, formRefObjectResolved, onSubmit]);
 
-  return controller;
+  return useMemo((): UseFormControllerResult<Field> => {
+    return {
+      controller,
+      refObject: formRefObjectResolved,
+      ref: refCallback,
+    };
+  }, [controller, formRefObjectResolved, refCallback]);
 }

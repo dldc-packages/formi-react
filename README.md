@@ -11,3 +11,9 @@ npm install react-formi
 # or
 yarn add react-formi
 ```
+
+## Internal structure
+
+State of each input (value, error, touched...) is store in a map where the key is a `FieldKey` (an empty object).
+
+We don't use the `name` of the input as key because it can change (when you unshift an array for example).

@@ -1,96 +1,68 @@
-import * as z from 'zod';
-import { FieldState, FieldArrayState, FieldObjectState, FieldValueState } from './useField';
-import {
-  FieldAny,
-  FORM_INTERNAL,
-  FIELD_TYPE,
-  FieldArray,
-  FieldObject,
-  FieldValue,
-  FieldObjectChildren,
-} from './internal/types';
+import { z } from 'zod';
+import * as t from './types';
+import { zx } from './zx';
 
 export const field = {
-  value<ValidValue, Value>(
-    schema: z.Schema<ValidValue>,
-    initialValue: Value | ValidValue
-  ): FieldValue<ValidValue, Value> {
+  value<Value, Issue>(validate: t.FieldValidateFn_Value<Value, Issue>): t.Field_Value<Value, Issue> {
+    return { kind: 'Value', validate, [t.FORM_INTERNAL]: {} as any };
+  },
+  multiple<Value, Issue>(validate: t.FieldValidateFn_Multiple<Value, Issue>): t.Field_Multiple<Value, Issue> {
+    return { kind: 'Multiple', validate, [t.FORM_INTERNAL]: {} as any };
+  },
+  validate<Child extends t.FieldAny, Value, Issue>(
+    child: Child,
+    validate: t.FieldValidateFn_Validate<Child, Value, Issue>
+  ): t.Field_Validate<Child, Value, Issue> {
+    return { kind: 'Validate', child, validate, [t.FORM_INTERNAL]: {} as any };
+  },
+  object<Children extends Record<string, t.FieldAny>, Issue>(children: Children): t.Field_Object<Children, Issue> {
+    return { kind: 'Object', children, [t.FORM_INTERNAL]: {} as any };
+  },
+  array<Children extends Array<t.FieldAny>, Issue>(children: Children): t.Field_Array<Children, Issue> {
+    return { kind: 'Array', children, [t.FORM_INTERNAL]: {} as any };
+  },
+  withIssue<Issue>() {
     return {
-      [FIELD_TYPE]: 'FieldValue',
-      [FORM_INTERNAL]: {} as any,
-      initialValue,
-      schema,
+      value<Validate extends t.FieldValidateFn_Value<any, Issue>>(validate: Validate): t.Field_Value<ReturnType<Validate>, Issue> {
+        return { kind: 'Value', validate, [t.FORM_INTERNAL]: {} as any };
+      },
+      multiple<Validate extends t.FieldValidateFn_Multiple<any, Issue>>(validate: Validate): t.Field_Multiple<ReturnType<Validate>, Issue> {
+        return { kind: 'Multiple', validate, [t.FORM_INTERNAL]: {} as any };
+      },
+      validate<Child extends t.FieldAny, Validate extends t.FieldValidateFn_Validate<Child, any, Issue>>(
+        child: Child,
+        validate: Validate
+      ): t.Field_Validate<Child, ReturnType<Validate>, Issue> {
+        return { kind: 'Validate', child, validate, [t.FORM_INTERNAL]: {} as any };
+      },
+      object<Children extends Record<string, t.FieldAny>>(children: Children): t.Field_Object<Children, Issue> {
+        return { kind: 'Object', children, [t.FORM_INTERNAL]: {} as any };
+      },
+      array<Children extends Array<t.FieldAny>>(children: Children): t.Field_Array<Children, Issue> {
+        return { kind: 'Array', children, [t.FORM_INTERNAL]: {} as any };
+      },
     };
   },
-  object<Children extends Record<string, FieldAny>>(children: Children): FieldObject<Children> {
-    return {
-      [FIELD_TYPE]: 'FieldObject',
-      children,
-    };
-  },
-  array<Children extends FieldAny>(children: Array<Children>): FieldArray<Children> {
-    return {
-      [FIELD_TYPE]: 'FieldArray',
-      [FORM_INTERNAL]: {} as any,
-      children,
-    };
+  zx: {
+    value<Value>(schema: z.Schema<Value, z.ZodTypeDef, FormDataEntryValue>): t.Field_Value<Value, z.ZodIssue> {
+      const validate = zx.validate<FormDataEntryValue, Value, z.ZodIssue>(schema);
+      return { kind: 'Value', validate, [t.FORM_INTERNAL]: {} as any };
+    },
+    multiple<Value>(schema: z.Schema<Value, z.ZodTypeDef, Array<FormDataEntryValue>>): t.Field_Multiple<Value, z.ZodIssue> {
+      const validate = zx.validate<Array<FormDataEntryValue>, Value, z.ZodIssue>(schema);
+      return { kind: 'Multiple', validate, [t.FORM_INTERNAL]: {} as any };
+    },
+    withIssue<Issue>() {
+      return {
+        value<Value>(schema: z.Schema<Value, z.ZodTypeDef, FormDataEntryValue>): t.Field_Value<Value, Issue | z.ZodIssue> {
+          const validate = zx.validate<FormDataEntryValue, Value, Issue>(schema);
+          return { kind: 'Value', validate, [t.FORM_INTERNAL]: {} as any };
+        },
+        multiple<Value>(schema: z.Schema<Value, z.ZodTypeDef, Array<FormDataEntryValue>>): t.Field_Multiple<Value, Issue | z.ZodIssue> {
+          const validate = zx.validate<Array<FormDataEntryValue>, Value, Issue | z.ZodIssue>(schema);
+          return { kind: 'Multiple', validate, [t.FORM_INTERNAL]: {} as any };
+        },
+      };
+    },
   },
 };
-
-export function isFieldAny(maybe: unknown): maybe is FieldAny {
-  return maybe && (maybe as any)[FIELD_TYPE];
-}
-
-export function isFieldArray(maybe: FieldAny): maybe is FieldArray<any> {
-  return maybe[FIELD_TYPE] === 'FieldArray';
-}
-
-export function isFieldObject(maybe: FieldAny): maybe is FieldObject<FieldObjectChildren> {
-  return maybe[FIELD_TYPE] === 'FieldObject';
-}
-
-export function isFieldValue(maybe: FieldAny): maybe is FieldValue<any, any> {
-  return maybe[FIELD_TYPE] === 'FieldValue';
-}
-
-export function isFieldArrayState(
-  maybe: FieldState<FieldAny>
-): maybe is FieldArrayState<FieldArray<any>> {
-  return isFieldArray(maybe.field);
-}
-
-export function isFieldObjectState(
-  maybe: FieldState<FieldAny>
-): maybe is FieldObjectState<FieldObject<any>> {
-  return isFieldObject(maybe.field);
-}
-
-export function isFieldValueState(
-  maybe: FieldState<FieldAny>
-): maybe is FieldValueState<FieldValue<any, any>> {
-  return isFieldValue(maybe.field);
-}
-
-export function assertFieldArrayState(
-  maybe: FieldState<FieldAny>
-): asserts maybe is FieldArrayState<FieldArray<any>> {
-  if (!isFieldArrayState(maybe)) {
-    throw new Error(`Unexpected`);
-  }
-}
-
-export function assertFieldObjectState(
-  maybe: FieldState<FieldAny>
-): asserts maybe is FieldObjectState<FieldObject<any>> {
-  if (!isFieldObjectState(maybe)) {
-    throw new Error(`Unexpected`);
-  }
-}
-
-export function assertFieldValueState(
-  maybe: FieldState<FieldAny>
-): asserts maybe is FieldValueState<FieldValue<any, any>> {
-  if (!isFieldValueState(maybe)) {
-    throw new Error(`Unexpected`);
-  }
-}

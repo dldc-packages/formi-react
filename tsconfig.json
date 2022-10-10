@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "es5",
+    "target": "ESNext",
     "module": "ES2020",
-    "lib": ["esnext"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "importHelpers": true,
     "declaration": true,
     "sourceMap": true,
@@ -19,7 +19,8 @@
     "noFallthroughCasesInSwitch": true,
     "downlevelIteration": true,
     "moduleResolution": "node",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "jsx": "react"
   },
-  "include": ["src", "tests"]
+  "include": ["src", "tests", "example"]
 }
