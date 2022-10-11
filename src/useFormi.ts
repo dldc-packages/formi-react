@@ -1,24 +1,25 @@
 import { createElement, MutableRefObject, useCallback, useMemo } from 'react';
-import { FormController } from './FormController';
-import { FieldAny, OnSubmit } from './types';
-import { useFormController, FormRefObject, FormRefCallback } from './useFormController';
+import { FormiController } from './FormiController';
+import { OnSubmit } from './types';
+import { useFormController, FormRefObject, FormRefCallback } from './useFormiController';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { FormFieldOf } from './FormField';
+import { FormiFieldOf } from './FormiField';
+import { FormiDefAny } from './FormiDef';
 
-export type UseFormOptions<Field extends FieldAny> = {
-  fields: Field;
+export type UseFormiOptions<Def extends FormiDefAny> = {
+  fields: Def;
   formName?: string;
-  onSubmit?: OnSubmit<Field>;
+  onSubmit?: OnSubmit<Def>;
   formRefObject?: MutableRefObject<HTMLFormElement | undefined>;
 };
 
 type HtmlFormProps = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>;
 
-export type UseFormResult<Field extends FieldAny> = {
-  controller: FormController<Field>;
+export type UseFormiResult<Def extends FormiDefAny> = {
+  controller: FormiController<Def>;
   refObject: FormRefObject;
   ref: FormRefCallback;
-  fields: FormFieldOf<Field>;
+  fields: FormiFieldOf<Def>;
   // render a <form> with ref
   Form: (props: Omit<HtmlFormProps, 'ref'>) => JSX.Element;
 };
@@ -26,7 +27,7 @@ export type UseFormResult<Field extends FieldAny> = {
 /**
  * Create a FormController then subscribe to form state
  */
-export function useForm<Field extends FieldAny>(options: UseFormOptions<Field>): UseFormResult<Field> {
+export function useFormi<Def extends FormiDefAny>(options: UseFormiOptions<Def>): UseFormiResult<Def> {
   const { controller, ref, refObject } = useFormController(options);
 
   const Form = useCallback(
@@ -38,10 +39,10 @@ export function useForm<Field extends FieldAny>(options: UseFormOptions<Field>):
 
   const fields = useFields(controller);
 
-  return useMemo((): UseFormResult<Field> => ({ controller, ref, refObject, Form, fields }), [Form, controller, fields, ref, refObject]);
+  return useMemo((): UseFormiResult<Def> => ({ controller, ref, refObject, Form, fields }), [Form, controller, fields, ref, refObject]);
 }
 
-export function useFields<Field extends FieldAny>(controller: FormController<Field>): FormFieldOf<Field> {
+export function useFields<Def extends FormiDefAny>(controller: FormiController<Def>): FormiFieldOf<Def> {
   const fields = useSyncExternalStoreWithSelector(
     controller.subscribe,
     () => controller.getState(),

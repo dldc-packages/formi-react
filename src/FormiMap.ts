@@ -84,7 +84,7 @@ export const WritableFormiMap = (() => {
 
   function create<K, V, O>(
     data: Map<K, V>,
-    { immutable: clone, createOutput, getCurrent }: WritableFormiMapOptions<K, V, O>
+    { immutable, createOutput, getCurrent, onMutate }: WritableFormiMapOptions<K, V, O>
   ): WritableFormiMap<K, V, O> {
     const readable = ReadableFormiMap(data);
     const self: WritableFormiMap<K, V, O> = {
@@ -103,7 +103,7 @@ export const WritableFormiMap = (() => {
     return self;
 
     function cloneMap<K, V>(map: Map<K, V>): Map<K, V> {
-      if (clone === false) {
+      if (immutable === false) {
         return map;
       }
       return new Map(map);
@@ -121,6 +121,7 @@ export const WritableFormiMap = (() => {
       if (changed === false) {
         return getCurrent();
       }
+      onMutate?.();
       return createOutput(copy);
     }
 
@@ -130,6 +131,7 @@ export const WritableFormiMap = (() => {
       }
       const copy = cloneMap(data);
       copy.set(key, val);
+      onMutate?.();
       return createOutput(copy);
     }
 
@@ -192,6 +194,7 @@ export const WritableFormiMap = (() => {
       }
       const copy = cloneMap(data);
       copy.delete(key);
+      onMutate?.();
       return createOutput(copy);
     }
   }
@@ -251,6 +254,7 @@ const IS_IMMUTABLE_FORMI_MAP_DRAFT = Symbol('IS_IMMUTABLE_FORMI_MAP_DRAFT');
 export interface ImmutableFormiMapDraft<K, V> extends WritableFormiMap<K, V, void> {
   readonly [IS_IMMUTABLE_FORMI_MAP_DRAFT]: true;
   readonly commit: () => ImmutableFormiMap<K, V>;
+  readonly changed: boolean;
 }
 
 /**
@@ -283,6 +287,9 @@ export const ImmutableFormiMapDraft = (() => {
       ...writable,
       [IS_IMMUTABLE_FORMI_MAP_DRAFT]: true,
       commit,
+      get changed() {
+        return changed;
+      },
     };
 
     return self;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FieldValidateFn } from './types';
+import { FormiDefValidateFn } from './FormiDef';
 
 /**
  * Extened zod
@@ -21,7 +21,7 @@ export type ZodIssueInfos = {
  */
 export function validate<Input, Value, Issue = z.ZodIssue>(
   schema: z.Schema<Value, z.ZodTypeDef, Input>
-): FieldValidateFn<any, Input, Value, Issue | z.ZodIssue> {
+): FormiDefValidateFn<any, Input, Value, Issue | z.ZodIssue> {
   return (value, { issues }) => {
     const res = parse(schema, value);
     if (res.success) {

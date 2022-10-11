@@ -1,19 +1,20 @@
 import { useLayoutEffect as reactULE, useState, useEffect, useId, MutableRefObject, useRef, useMemo, useCallback } from 'react';
-import { FormController } from './FormController';
-import { FieldAny, OnSubmit } from './types';
+import { FormiController } from './FormiController';
+import { FormiDefAny } from './FormiDef';
+import { OnSubmit } from './types';
 
 export type FormRefObject = MutableRefObject<HTMLFormElement | undefined>;
 export type FormRefCallback = (form: HTMLFormElement | undefined) => void;
 
-export type UseFormControllerOptions<Field extends FieldAny> = {
-  fields: Field;
+export type UseFormControllerOptions<Def extends FormiDefAny> = {
+  fields: Def;
   formName?: string;
-  onSubmit?: OnSubmit<Field>;
+  onSubmit?: OnSubmit<Def>;
   formRefObject?: FormRefObject;
 };
 
-export type UseFormControllerResult<Field extends FieldAny> = {
-  controller: FormController<Field>;
+export type UseFormControllerResult<Def extends FormiDefAny> = {
+  controller: FormiController<Def>;
   refObject: FormRefObject;
   ref: FormRefCallback;
 };
@@ -25,12 +26,12 @@ const useLayoutEffect = typeof window !== 'undefined' ? reactULE : useEffect;
 /**
  * Initialize a FormController
  */
-export function useFormController<Field extends FieldAny>({
+export function useFormController<Def extends FormiDefAny>({
   fields,
   formName,
   onSubmit,
   formRefObject,
-}: UseFormControllerOptions<Field>): UseFormControllerResult<Field> {
+}: UseFormControllerOptions<Def>): UseFormControllerResult<Def> {
   const formId = useId();
   const formNameResolved = formName ?? formId;
   const defaultFormRefObject = useRef<HTMLFormElement | undefined>();
@@ -47,7 +48,7 @@ export function useFormController<Field extends FieldAny>({
     [formRefObjectResolved]
   );
 
-  const [controller] = useState(() => new FormController({ formName: formNameResolved, initialFields: fields, onSubmit }));
+  const [controller] = useState(() => FormiController({ formName: formNameResolved, initialFields: fields, onSubmit }));
 
   useLayoutEffect(() => {
     if (onSubmit) {
@@ -58,7 +59,7 @@ export function useFormController<Field extends FieldAny>({
     }
   }, [controller, formRefObjectResolved, onSubmit]);
 
-  return useMemo((): UseFormControllerResult<Field> => {
+  return useMemo((): UseFormControllerResult<Def> => {
     return {
       controller,
       refObject: formRefObjectResolved,

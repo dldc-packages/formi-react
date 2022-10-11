@@ -1,14 +1,11 @@
 export type Key = string | number;
 export type RawPath = ReadonlyArray<Key>;
 
-const NOT_ALLOWED = /\[|\]|\./; // . or [ or ]
-const SPLITTER = /(\[\d+\]|\.)/g;
-
 const IS_PATH = Symbol('IS_PATH');
 
 export type PathLike = RawPath | Path;
 
-interface Path {
+export interface Path {
   readonly [IS_PATH]: true;
   readonly raw: RawPath;
   readonly length: number;
@@ -19,109 +16,114 @@ interface Path {
   [Symbol.iterator](): Iterator<Key>;
 }
 
-export const Path = Object.assign(createPath, {
-  create: createPath,
-  isPath,
-  validatePathItem,
-  serialize,
-  parse,
-  from: pathFrom,
-});
+export const Path = (() => {
+  const NOT_ALLOWED = /\[|\]|\./; // . or [ or ]
+  const SPLITTER = /(\[\d+\]|\.)/g;
 
-function createPath(...raw: ReadonlyArray<Key>): Path {
-  let serialized: string | null = null;
-
-  const self: Path = {
-    [IS_PATH]: true,
-    raw,
-    length: raw.length,
+  return Object.assign(create, {
+    create: create,
+    isPath,
+    validatePathItem,
     serialize,
-    toString: serialize,
-    append,
-    splitHead,
-    [Symbol.iterator](): Iterator<Key> {
-      return this.raw[Symbol.iterator]();
-    },
-  };
-  return self;
-
-  function serialize(): string {
-    if (serialized === null) {
-      serialized = Path.serialize(self);
-    }
-    return serialized;
-  }
-
-  function append(...raw: ReadonlyArray<Key>): Path {
-    return Path(...self.raw, ...raw);
-  }
-
-  function splitHead(): [Key | null, Path] {
-    if (raw.length === 0) {
-      return [null, Path()];
-    }
-    const [head, ...tail] = raw;
-    return [head, Path(...tail)];
-  }
-}
-
-function isPath(path: any): path is Path {
-  return path && path[IS_PATH] === true;
-}
-
-function validatePathItem(item: string): string {
-  if (NOT_ALLOWED.test(item)) {
-    throw new Error(`Path item cannot contain . or [ or ]`);
-  }
-  return item;
-}
-
-/**
- * ["a", "b", "c"] => "a.b.c"
- * ["a", 0, "b"] => "a[0].b"
- */
-function serialize(path: PathLike): string {
-  const raw = Path.isPath(path) ? path.raw : path;
-
-  let result = '';
-  raw.forEach((item, index) => {
-    if (typeof item === 'number') {
-      result += `[${item}]`;
-      return;
-    }
-    if (index === 0) {
-      result += item;
-      return;
-    }
-    result += `.${item}`;
+    parse,
+    from: pathFrom,
   });
-  return result;
-}
 
-function parse(str: string): Path {
-  const parts = str.split(SPLITTER).filter((part) => part !== '.' && part !== '');
-  return Path(
-    ...parts.map((part) => {
-      if (part.startsWith('[')) {
-        return parseInt(part.slice(1, -1), 10);
+  function create(...raw: ReadonlyArray<Key>): Path {
+    let serialized: string | null = null;
+
+    const self: Path = {
+      [IS_PATH]: true,
+      raw,
+      length: raw.length,
+      serialize,
+      toString: serialize,
+      append,
+      splitHead,
+      [Symbol.iterator](): Iterator<Key> {
+        return this.raw[Symbol.iterator]();
+      },
+    };
+    return self;
+
+    function serialize(): string {
+      if (serialized === null) {
+        serialized = Path.serialize(self);
       }
-      return part;
-    })
-  );
-}
+      return serialized;
+    }
 
-function pathFrom(...items: Array<Key>): Path;
-function pathFrom(path: PathLike): Path;
-function pathFrom(...args: [PathLike] | Array<Key>): Path {
-  if (args.length === 1) {
-    const arg = args[0];
-    if (Path.isPath(arg)) {
-      return arg;
+    function append(...raw: ReadonlyArray<Key>): Path {
+      return Path(...self.raw, ...raw);
     }
-    if (Array.isArray(arg)) {
-      return Path(...arg);
+
+    function splitHead(): [Key | null, Path] {
+      if (raw.length === 0) {
+        return [null, Path()];
+      }
+      const [head, ...tail] = raw;
+      return [head, Path(...tail)];
     }
-    return Path.parse(arg as any);
   }
-  return Path(...(args as any));
-}
+
+  function isPath(path: any): path is Path {
+    return path && path[IS_PATH] === true;
+  }
+
+  function validatePathItem(item: string): string {
+    if (NOT_ALLOWED.test(item)) {
+      throw new Error(`Path item cannot contain . or [ or ]`);
+    }
+    return item;
+  }
+
+  /**
+   * ["a", "b", "c"] => "a.b.c"
+   * ["a", 0, "b"] => "a[0].b"
+   */
+  function serialize(path: PathLike): string {
+    const raw = Path.isPath(path) ? path.raw : path;
+
+    let result = '';
+    raw.forEach((item, index) => {
+      if (typeof item === 'number') {
+        result += `[${item}]`;
+        return;
+      }
+      if (index === 0) {
+        result += item;
+        return;
+      }
+      result += `.${item}`;
+    });
+    return result;
+  }
+
+  function parse(str: string): Path {
+    const parts = str.split(SPLITTER).filter((part) => part !== '.' && part !== '');
+    return Path(
+      ...parts.map((part) => {
+        if (part.startsWith('[')) {
+          return parseInt(part.slice(1, -1), 10);
+        }
+        return part;
+      })
+    );
+  }
+
+  function pathFrom(...items: Array<Key>): Path;
+  function pathFrom(path: PathLike): Path;
+  function pathFrom(...args: [PathLike] | Array<Key>): Path {
+    if (args.length === 1) {
+      const arg = args[0];
+      if (Path.isPath(arg)) {
+        return arg;
+      }
+      if (Array.isArray(arg)) {
+        return Path(...arg);
+      }
+      return Path.parse(arg as any);
+    }
+    return Path(...(args as any));
+  }
+})();

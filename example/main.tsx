@@ -1,7 +1,7 @@
 // import React, { memo } from 'react';
 // import ReactDOM from 'react-dom/client';
 import { z } from 'zod';
-import { field, useField, useForm, zx } from '../src';
+import { def, useField, useForm, zx } from '../src';
 import './index.css';
 import './mvp.css';
 
@@ -10,9 +10,9 @@ const strAsInt = zx
   .transform((v) => (v === '' ? null : parseInt(v, 10)))
   .refine((val) => Number.isNaN(val) === false, 'Invalid number');
 
-const friendField = field.object({
-  name: field.zx.withIssue<number>().value(zx.string().min(3)),
-  age: field.withIssue<{ issue: z.ZodIssue; num: number }>().value((value, { issues }) => {
+const friendField = def.object({
+  name: def.zx.withIssue<number>().value(zx.string().min(3)),
+  age: def.withIssue<{ issue: z.ZodIssue; num: number }>().value((value, { issues }) => {
     const res = zx.parse(zx.chain(strAsInt, zx.number().nullable()), value);
     if (res.success === false) {
       res.issues.forEach((issue) => {
@@ -27,16 +27,16 @@ const friendField = field.object({
   }),
 });
 
-const fields = field.object({
-  company: field.zx.value(zx.string().min(3)),
-  name: field.zx.value(zx.string().min(3)),
-  file: field.zx.value(z.instanceof(File).refine((f) => f.size > 0, 'File is required')),
-  age: field.zx.value(zx.chain(strAsInt, zx.number().int().min(18).max(99))),
-  infos: field.object({
-    address: field.zx.value(zx.string().min(3)),
-    city: field.zx.value(zx.string().min(3)),
+const fields = def.object({
+  company: def.zx.value(zx.string().min(3)),
+  name: def.zx.value(zx.string().min(3)),
+  file: def.zx.value(z.instanceof(File).refine((f) => f.size > 0, 'File is required')),
+  age: def.zx.value(zx.chain(strAsInt, zx.number().int().min(18).max(99))),
+  infos: def.object({
+    address: def.zx.value(zx.string().min(3)),
+    city: def.zx.value(zx.string().min(3)),
   }),
-  friends: field.withIssue<string>().validate(field.array([friendField, friendField, friendField]), (items, { field, issues }) => {
+  friends: def.withIssue<string>().validate(def.array([friendField, friendField, friendField]), (items, { field, issues }) => {
     if (items.length === 0) {
       issues.addIssue('At least one friend is required');
       throw issues;
@@ -65,11 +65,15 @@ function App() {
   const firstFriendName = form.fields.get('friends').children.get(0).get('name');
 
   const friendsState = useField(friendsField);
-  console.log(friendsState.formValue);
+  console.log(friendsState.value);
 
   const name = useField(nameField);
   const nameState = useField(firstFriendName);
+
+  console.log({ name, nameState });
 }
+
+console.log(App);
 
 // formField.get('friends').get(12).get('name').name;
 

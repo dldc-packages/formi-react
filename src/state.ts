@@ -1,9 +1,11 @@
-import { FormControllerAny } from './FormController';
+import { FormiControllerAny } from './FormiController';
 import { Path } from './Path';
 import { ImmutableFormiMap, ImmutableFormiMapDraft } from './FormiMap';
-import * as f from './FormField';
+import * as f from './FormiField';
 import * as t from './types';
+import * as d from './FormiDef';
 import { expectNever } from './utils';
+import { FormiKey } from './FormiKey';
 
 export type Action =
   | { type: 'FormSubmit'; data: FormData }
@@ -20,10 +22,10 @@ export type Action =
 // | { type: 'FormSubmitWithError' }
 // | { type: 'Reset'; fields: ReadonlyPathMap<FieldState<FieldAny>> };
 
-export function createInitialState(controller: FormControllerAny, field: t.FieldAny): t.FormControllerState {
+export function createInitialState(controller: FormiControllerAny, field: d.FormiDefAny): t.FormiControllerState {
   return {
-    fields: f.FormField.create(controller, field, Path.from()),
-    states: ReadonlyMap.empty(),
+    fields: f.FormiField(controller, field, Path.from()),
+    states: ImmutableFormiMap.empty(),
   };
 }
 
@@ -34,24 +36,27 @@ export function createInitialState(controller: FormControllerAny, field: t.Field
  * - How to handle validation that emit error on another field ?
  */
 
-export function reducer(state: t.FormControllerState, action: Action): t.FormControllerState {
+export function reducer(state: t.FormiControllerState, action: Action): t.FormiControllerState {
   if (action.type === 'Mount') {
     // Validate all fields
     const statesDraft = state.states.draft();
-    state.fields[t.FORMI_INTERNAL].traverse<boolean>((field, next) => {
-      const childrenChanged = next(); // validate children first
-      if (childrenChanged.length > 0 && childrenChanged.every((c) => c === false)) {
-        // if has children but none changed, skip
-        return false;
-      }
-      const prevState = statesDraft.getOrThrow(field.key);
-      const nextState = validateField(field, prevState, action.data);
-      if (nextState !== prevState) {
-        statesDraft.set(field.key, nextState);
-        return true;
-      }
-      return false;
+    f.FormiField.traverse(state.fields, (field, next) => {
+      next(); // validate children first
+      validateField(field, statesDraft, action.data);
     });
+    if (statesDraft.changed === false) {
+      return state;
+    }
+    return { ...state, states: statesDraft.commit() };
+  }
+  if (action.type === 'FieldChange') {
+    throw new Error('Not implemented');
+  }
+  if (action.type === 'Validate') {
+    throw new Error('Not implemented');
+  }
+  if (action.type === 'FormSubmit') {
+    throw new Error('Not implemented');
   }
 
   // if (action.type === 'FieldChange') {
@@ -263,33 +268,55 @@ export function reducer(state: t.FormControllerState, action: Action): t.FormCon
 //   });
 // }
 
+type FieldByKind = {
+  Value: f.FormiField_ValueAny;
+  Multiple: f.FormiField_MultipleAny;
+  Validate: f.FormiField_ValidateAny;
+  Array: f.FormiField_ArrayAny;
+  Object: f.FormiField_ObjectAny;
+};
+
+type FieldStateByKind = {
+  Value: t.FieldState_ValueAny;
+  Multiple: t.FieldState_MultipleAny;
+  Validate: t.FieldState_ValidateAny;
+  Array: t.FieldState_ArrayAny;
+  Object: t.FieldState_ObjectAny;
+};
+
+const FIELD_VALIDATOR: {
+  [K in keyof FieldByKind]: (
+    states: ImmutableFormiMapDraft<FormiKey, t.FieldStateAny>,
+    formiField: FieldByKind[K],
+    fieldState: FieldStateByKind[K],
+    data: FormData
+  ) => void;
+} = {
+  Value: () => {
+    throw new Error('Not implemented');
+  },
+  Multiple: () => {
+    throw new Error('Not implemented');
+  },
+  Validate: () => {
+    throw new Error('Not implemented');
+  },
+  Array: () => {
+    throw new Error('Not implemented');
+  },
+  Object: () => {
+    throw new Error('Not implemented');
+  },
+};
+
 /**
  * Return new state or null if no change
  */
-function validateField(
-  formField: f.FormFieldOfAny,
-  states: ImmutableFormiMapDraft<t.FieldKey, t.FieldStateAny>,
-  state: t.FieldStateAny,
-  data: FormData
-): t.FieldStateAny {
-  if (formField instanceof f.FormField_Value) {
-    if (state.kind !== 'Value') {
-      throw new Error('Invalid state');
-    }
-    return validateField_Value(formField, state, data);
+function validateField(formiField: f.FormiFieldOfAny, states: ImmutableFormiMapDraft<FormiKey, t.FieldStateAny>, data: FormData): void {
+  const fieldState = states.getOrThrow(formiField.key);
+  if (fieldState.kind !== formiField.kind) {
+    throw new Error('Invalid state (kind mismatch)');
   }
-  if (formField instanceof f.FormField_Multiple) {
-    if (state.kind !== 'Multiple') {
-      throw new Error('Invalid state');
-    }
-    return validateField_Multiple(formField, state, data);
-  }
+  const validator = FIELD_VALIDATOR[formiField.kind];
+  validator(states, formiField as any, fieldState as any, data);
 }
-
-function validateField_Value(formField: f.FormField_ValueAny, state: t.FieldState_ValueAny, data: FormData): t.FieldState_ValueAny {}
-
-function validateField_Multiple(
-  formField: f.FormField_MultipleAny,
-  state: t.FieldState_MultipleAny,
-  data: FormData
-): t.FieldState_MultipleAny {}
