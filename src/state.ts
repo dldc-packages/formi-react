@@ -1,6 +1,6 @@
 import { FormControllerAny } from './FormController';
 import { Path } from './Path';
-import { ReadonlyMap, ReadonlyMapDraft } from './ReadonlyMap';
+import { ImmutableFormiMap, ImmutableFormiMapDraft } from './FormiMap';
 import * as f from './FormField';
 import * as t from './types';
 import { expectNever } from './utils';
@@ -38,7 +38,7 @@ export function reducer(state: t.FormControllerState, action: Action): t.FormCon
   if (action.type === 'Mount') {
     // Validate all fields
     const statesDraft = state.states.draft();
-    state.fields[t.FORM_INTERNAL].traverse<boolean>((field, next) => {
+    state.fields[t.FORMI_INTERNAL].traverse<boolean>((field, next) => {
       const childrenChanged = next(); // validate children first
       if (childrenChanged.length > 0 && childrenChanged.every((c) => c === false)) {
         // if has children but none changed, skip
@@ -90,7 +90,7 @@ export function reducer(state: t.FormControllerState, action: Action): t.FormCon
 
 // function applyValues(fields: t.FieldsStateMap, values: t.FormValues, options: ApplyOptions) {
 //   return fields.updateMany(
-//     values.map(([field]) => field[t.FORM_INTERNAL].key),
+//     values.map(([field]) => field[t.FORMI_INTERNAL].key),
 //     (state, key) => {
 //       if (state && state.kind !== 'FieldValue') {
 //         console.warn('Cannot set value for non-value field');
@@ -99,8 +99,8 @@ export function reducer(state: t.FormControllerState, action: Action): t.FormCon
 //       if (state === undefined && options.isMount === false) {
 //         throw new Error('Cannot set value for field that was not mounted');
 //       }
-//       const [field, value] = values.find(([field]) => field[t.FORM_INTERNAL].key === key)!;
-//       return applyValue(state, field[t.FORM_INTERNAL].fieldDef, value, options);
+//       const [field, value] = values.find(([field]) => field[t.FORMI_INTERNAL].key === key)!;
+//       return applyValue(state, field[t.FORMI_INTERNAL].fieldDef, value, options);
 //     }
 //   );
 // }
@@ -268,7 +268,7 @@ export function reducer(state: t.FormControllerState, action: Action): t.FormCon
  */
 function validateField(
   formField: f.FormFieldOfAny,
-  states: ReadonlyMapDraft<t.FieldKey, t.FieldStateAny>,
+  states: ImmutableFormiMapDraft<t.FieldKey, t.FieldStateAny>,
   state: t.FieldStateAny,
   data: FormData
 ): t.FieldStateAny {

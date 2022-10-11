@@ -2,10 +2,16 @@ import * as z from 'zod';
 import { FormFieldIssues } from './FormFieldIssues';
 import { FormController } from './FormController';
 import * as f from './FormField';
-import { ReadonlyMap } from './ReadonlyMap';
+import { ImmutableFormiMap } from './FormiMap';
 
-export const FORM_INTERNAL = Symbol('FORM_INTERNAL');
-export type FORM_INTERNAL = typeof FORM_INTERNAL;
+export const FORMI_INTERNAL = Symbol('FORMI_INTERNAL');
+export type FORMI_INTERNAL = typeof FORMI_INTERNAL;
+
+export const IS_FORMI = Symbol('IS_FORMI');
+export type IS_FORMI = typeof IS_FORMI;
+
+export const FORMI_TYPES = Symbol('FORMI_TYPES');
+export type FORMI_TYPES = typeof FORMI_TYPES;
 
 export const NOT_SET = Symbol('NOT_SET');
 export type NOT_SET = typeof NOT_SET;
@@ -43,7 +49,7 @@ export type FieldValidateFn_Validate<Child extends FieldAny, Value, Issue> = Fie
 >;
 
 export interface FieldBase<Value, Issue> {
-  readonly [FORM_INTERNAL]: { __value: Value; __issue: Issue };
+  readonly [FORMI_INTERNAL]: { __value: Value; __issue: Issue };
 }
 export type FieldBaseAny = FieldBase<any, any>;
 
@@ -86,8 +92,8 @@ export type Field_ArrayAny = Field_Array<Array<FieldAny>, any>;
 
 export type FieldAny = Field_ValueAny | Field_ValidateAny | Field_MultipleAny | Field_ArrayAny | Field_ObjectAny;
 
-export type FieldValueOf<Field extends FieldBaseAny> = Field[FORM_INTERNAL]['__value'];
-export type FieldIssueOf<Field extends FieldBaseAny> = Field[FORM_INTERNAL]['__issue'];
+export type FieldValueOf<Field extends FieldBaseAny> = Field[FORMI_INTERNAL]['__value'];
+export type FieldIssueOf<Field extends FieldBaseAny> = Field[FORMI_INTERNAL]['__issue'];
 
 export type OnSubmitActions = {
   preventDefault: () => void;
@@ -106,7 +112,7 @@ export type OnSubmit<Field extends FieldAny> = (
  * (we don't user input name since it could change when you shift / unshift an array item for example)
  */
 export type FieldKey = {
-  readonly [FORM_INTERNAL]: true;
+  readonly [FORMI_INTERNAL]: true;
   // dynamically get the the field (used for debugging only)
   readonly field: f.FormFieldAny;
 };
@@ -187,7 +193,7 @@ export type FieldState_Object<Children extends Record<string, FieldAny>, Issue> 
 
 export type FieldStateAny = FieldState_ValueAny | FieldState_ObjectAny | FieldState_ArrayAny | FieldState_MultipleAny;
 
-export type FieldsStateMap = ReadonlyMap<FieldKey, FieldStateAny>;
+export type FieldsStateMap = ImmutableFormiMap<FieldKey, FieldStateAny>;
 
 export type FormControllerState = {
   fields: f.FormFieldOfAny; // Structure of fields
