@@ -19,7 +19,7 @@ export class FormiFieldIssues<Issue> extends Error {
 
     this.addIssue = addIssue;
 
-    function addIssue(arg1: FormiFieldAny | Issue, arg2?: Issue) {
+    function addIssue(arg1: FormiField<any, Issue> | Issue, arg2?: Issue) {
       const [issueFormiField, issue] =
         arg2 === undefined ? [formiField as FormiFieldAny, arg1 as Issue] : [arg1 as FormiFieldAny, arg2 as Issue];
       let issues = issuesMap.get(issueFormiField);

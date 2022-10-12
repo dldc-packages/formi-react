@@ -106,11 +106,11 @@ export type FieldStateAny =
 export type FieldsStateMap = ImmutableFormiMap<FormiKey, FieldStateAny>;
 
 export type FormiControllerState = {
-  fields: f.FormiFieldOfAny; // Tree of fields
+  fields: f.FormiFieldAny; // Tree of fields
   states: FieldsStateMap; // FieldKey => state
 };
 
-export type FieldStateOf<FormiField extends f.FormiFieldOfAny> = FormiField extends f.FormiField_Value<infer V, infer I>
+export type FieldStateOf<FormiField extends f.FormiFieldAny> = FormiField extends f.FormiField_Value<infer V, infer I>
   ? FieldState_Value<V, I>
   : FormiField extends f.FormiField_Multiple<infer V, infer I>
   ? FieldState_Multiple<V, I>
@@ -122,4 +122,4 @@ export type FieldStateOf<FormiField extends f.FormiFieldOfAny> = FormiField exte
   ? FieldState_Object<C, I>
   : never;
 
-export type PublicFieldStateOf<FormiField extends f.FormiFieldOfAny> = FieldStateOf<FormiField>['public'];
+export type PublicFieldStateOf<FormiField extends f.FormiFieldAny> = FieldStateOf<FormiField>['public'];

@@ -14,7 +14,7 @@ export interface FormiController<T extends d.FormiDefAny> {
   readonly setOnSubmit: (onSubmit: t.OnSubmit<T>) => void;
   readonly register: (formEl: HTMLFormElement) => void;
   readonly validate: () => void;
-  readonly findFieldByKeyOrThrow: (key: FormiKey) => f.FormiFieldOfAny;
+  readonly findFieldByKeyOrThrow: (key: FormiKey) => f.FormiFieldAny;
   readonly subscribe: SubscribeMethod<t.FormiControllerState>;
   readonly getState: () => t.FormiControllerState;
 }
@@ -57,7 +57,7 @@ export const FormiController = (() => {
       throw new Error('FormiController is not initialized');
     }
 
-    function findFieldByKeyOrThrow(key: FormiKey): f.FormiFieldOfAny {
+    function findFieldByKeyOrThrow(key: FormiKey): f.FormiFieldAny {
       return f.FormiField.findFieldByKeyOrThrow(store.getState().fields, key);
     }
 

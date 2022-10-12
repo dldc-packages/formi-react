@@ -312,7 +312,7 @@ const FIELD_VALIDATOR: {
 /**
  * Return new state or null if no change
  */
-function validateField(formiField: f.FormiFieldOfAny, states: ImmutableFormiMapDraft<FormiKey, t.FieldStateAny>, data: FormData): void {
+function validateField(formiField: f.FormiFieldAny, states: ImmutableFormiMapDraft<FormiKey, t.FieldStateAny>, data: FormData): void {
   const fieldState = states.getOrThrow(formiField.key);
   if (fieldState.kind !== formiField.kind) {
     throw new Error('Invalid state (kind mismatch)');

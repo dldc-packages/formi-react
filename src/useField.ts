@@ -1,8 +1,8 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { FormiFieldOfAny } from './FormiField';
+import { FormiFieldAny } from './FormiField';
 import * as t from './types';
 
-export function useField<FormField extends FormiFieldOfAny>(field: FormField): t.PublicFieldStateOf<FormField> {
+export function useField<FormField extends FormiFieldAny>(field: FormField): t.PublicFieldStateOf<FormField> {
   const controller = field.controller;
 
   const state = useSyncExternalStoreWithSelector(
