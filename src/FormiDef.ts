@@ -83,6 +83,7 @@ export const FormiDef = (() => {
       objectAdvanced,
       number,
       zodNumber,
+      file,
     } as const;
 
     function value<Value, Issue = BaseIssue>(
@@ -140,7 +141,7 @@ export const FormiDef = (() => {
       };
     }
 
-    function string<Value, Issue = BaseIssue>(validate?: FormiDefValidateFn<string, Value, Issue>) {
+    function string<Value = string, Issue = BaseIssue>(validate?: FormiDefValidateFn<string, Value, Issue>) {
       return value<Value, Issue | FormiIssue>(stringValidator<Value, Issue>(validate));
     }
 
@@ -148,7 +149,7 @@ export const FormiDef = (() => {
       return value<string, Issue | FormiIssue>(stringValidator<string, FormiIssue>(zodValidator<string>(schema)));
     }
 
-    function number<Value, Issue = BaseIssue>(validate?: FormiDefValidateFn<number | null, Value, Issue>) {
+    function number<Value = number, Issue = BaseIssue>(validate?: FormiDefValidateFn<number | null, Value, Issue>) {
       return value<Value, Issue | FormiIssue>(numberValidator<Value, Issue>(validate));
     }
 
@@ -156,9 +157,9 @@ export const FormiDef = (() => {
       return value<Value, Issue | FormiIssue>(numberValidator<Value, FormiIssue>(zodValidator<Value>(schema)));
     }
 
-    // function file(validate: FormiDefValidateFn<>) {
-    //   return value<string>(createStringValidator(schema));
-    // }
+    function file<Value = File, Issue = BaseIssue>(validate?: FormiDefValidateFn<File, Value, Issue>) {
+      return value<Value, Issue | FormiIssue>(fileValidator<Value, Issue>(validate));
+    }
   }
 
   function stringValidator<Value, Issue>(
@@ -170,6 +171,26 @@ export const FormiDef = (() => {
       }
       if (typeof value !== 'string') {
         return { success: false, issue: { kind: 'UnexpectedFile' } };
+      }
+      if (!validate) {
+        return { success: true, value } as any;
+      }
+      return validate(value);
+    };
+  }
+
+  function fileValidator<Value, Issue>(
+    validate?: FormiDefValidateFn<File, Value, Issue>
+  ): FormiDefValidateFn<FormDataEntryValue | null, Value, Issue | FormiIssue> {
+    return (value) => {
+      if (value === null) {
+        return { success: false, issue: { kind: 'MissingField' } };
+      }
+      if (typeof value === 'string') {
+        return { success: false, issue: { kind: 'UnexpectedString' } };
+      }
+      if (value.size === 0) {
+        return { success: false, issue: { kind: 'MissingField' } };
       }
       if (!validate) {
         return { success: true, value } as any;

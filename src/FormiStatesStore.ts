@@ -84,6 +84,8 @@ export const FormiStatesStore = (() => {
         });
       }
       if (action.type === 'Change') {
+        console.log(action);
+
         return state.produce((draft) => {
           for (const field of action.fieldList) {
             const input = getInput(draft, field, action.data);
@@ -100,6 +102,7 @@ export const FormiStatesStore = (() => {
               isMounted: true,
               rawValue: input,
               isTouched,
+              hasExternalIssues: false,
               ...validateResultToPartialState(result, isTouched),
             };
             draft.set(field.key, next);
@@ -111,6 +114,9 @@ export const FormiStatesStore = (() => {
           FormiField.traverse(action.fields, (field, next) => {
             next();
             draft.updateOrThrow(field.key, (prev) => {
+              if (prev.hasExternalIssues) {
+                return prev;
+              }
               const input = getInput(draft, field, action.data);
               const result = runValidate(field.def.validate, input);
               const isTouched = true;
@@ -131,9 +137,6 @@ export const FormiStatesStore = (() => {
           FormiField.traverse(action.fields, (field, next) => {
             next();
             draft.updateOrThrow(field.key, (prev) => {
-              if (prev.isMounted === false) {
-                throw new Error(`Field is not mounted: ${field.key}`);
-              }
               const input = getInput(draft, field, action.data);
               const result = runValidate(field.def.validate, input);
               const isTouched = false;
@@ -144,6 +147,8 @@ export const FormiStatesStore = (() => {
                 isDirty: false,
                 isTouched,
                 isSubmitted: false,
+                isMounted: true,
+                hasExternalIssues: false,
                 ...validateResultToPartialState(result, isTouched),
               };
             });
@@ -156,7 +161,6 @@ export const FormiStatesStore = (() => {
             next();
             draft.updateOrThrow(field.key, (prev) => {
               const issues = getFieldIssues(field, action.issues);
-              console.log(field.path.serialize(), issues);
               if (!issues) {
                 return prev;
               }
@@ -167,6 +171,7 @@ export const FormiStatesStore = (() => {
                 isSubmitted: true,
                 isTouched: true,
                 issues: mergedIssues,
+                hasExternalIssues: true,
                 touchedIssues: mergedIssues,
               };
             });
@@ -195,13 +200,15 @@ export const FormiStatesStore = (() => {
     }
 
     function createFieldState(field: FormiFieldAny, issues: FormiIssues<any> | undefined): FieldStateAny {
+      const issuesResolved = getFieldIssues(field, issues);
       return {
         key: field.key,
         initialRawValue: undefined,
         rawValue: undefined,
         value: undefined,
-        issues: getFieldIssues(field, issues),
-        touchedIssues: null,
+        issues: issuesResolved,
+        touchedIssues: issuesResolved,
+        hasExternalIssues: issuesResolved !== null,
         isTouched: false,
         isDirty: false,
         isSubmitted: false,

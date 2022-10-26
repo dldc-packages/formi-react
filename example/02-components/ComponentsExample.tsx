@@ -23,6 +23,10 @@ export function ComponentsExample() {
   return (
     <Form>
       <h2>Components</h2>
+      <p>
+        In this example we use a custom <code>TextInput</code> component. We use <code>useFormiFieldState</code> to get the state of a field
+        and display validation errors.
+      </p>
       <TextInput label="Username" field={fields.get('username')} type="text" defaultValue="my-username" />
       <TextInput label="Email" field={fields.get('email')} type="email" />
       <TextInput label="Password" field={fields.get('password')} type="password" />

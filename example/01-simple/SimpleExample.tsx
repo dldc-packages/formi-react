@@ -5,7 +5,7 @@ import { field, useFormiForm } from '../../src';
 const simpleFields = field.object({
   username: field.zodString(z.string().min(1).max(20)),
   email: field.zodString(z.string().email()),
-  password: field.zodString(z.string().min(8)),
+  password: field.zodString(z.string().min(1)),
 });
 
 export function SimpleExample() {
@@ -22,15 +22,19 @@ export function SimpleExample() {
   return (
     <Form>
       <h2>Simple</h2>
-      <div style={{ padding: '0.5rem 0' }}>
+      <p>
+        This is a basic example of how to use Formi. In this example we don't display validation errors but you can't submit if there are
+        some errors.
+      </p>
+      <div className="input">
         <label>Username</label>
         <input type="text" name={fields.get('username').name} defaultValue="my-username" />
       </div>
-      <div style={{ padding: '0.5rem 0' }}>
+      <div className="input">
         <label>Email</label>
         <input type="text" name={fields.get('email').name} />
       </div>
-      <div style={{ padding: '0.5rem 0' }}>
+      <div className="input">
         <label>Password</label>
         <input type="password" name={fields.get('password').name} />
       </div>

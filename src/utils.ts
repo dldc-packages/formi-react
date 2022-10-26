@@ -6,6 +6,10 @@ export function expectNever(val: never, inner?: (val: any) => void): never {
 }
 
 export function shallowEqual(left: any, right: any): boolean {
+  if (left instanceof File || right instanceof File) {
+    // never compare files)
+    return false;
+  }
   if (left === right) {
     return true;
   }

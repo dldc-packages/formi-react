@@ -32,11 +32,9 @@ export function ServerExample() {
     return { success: true, value };
   });
 
-  console.log({ status });
-
   const submitting = status.status === 'pending';
 
-  const { fields, Form, refObject, controller } = useFormiForm({
+  const { fields, Form, refObject } = useFormiForm({
     fields: fieldsDef,
     formName: FORM_NAME,
     onSubmit: ({ formData }, actions) => {
@@ -45,8 +43,6 @@ export function ServerExample() {
     },
     issues: status.status === 'resolved' && status.data.success === false ? status.data.issues : undefined,
   });
-
-  console.log(controller);
 
   useEffect(() => {
     if (!refObject.current) {
@@ -60,6 +56,7 @@ export function ServerExample() {
   return (
     <Form>
       <h2>Server</h2>
+      <p>This example shows how you can do additional validation on the server and how to display server errors in your UI.</p>
       <TextInput label="Username (try 'user')" field={fields.get('username')} type="text" />
       <TextInput label="Email" field={fields.get('email')} type="email" defaultValue="demo@example.com" />
       <TextInput label="Password" field={fields.get('password')} type="password" />

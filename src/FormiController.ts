@@ -123,6 +123,7 @@ export const FormiController = (() => {
     function submit(data: FormData, actions?: OnSubmitActions) {
       statesStore.dispatch({ type: 'Submit', data, fields: fieldsStore.getState() });
       if (hasErrors()) {
+        console.log('has errors');
         actions?.preventDefault();
         return;
       }

@@ -29,6 +29,7 @@ export type FieldState<Value, Issue> = Readonly<{
   value: Value | undefined;
   issues: null | Array<Issue>;
   touchedIssues: null | Array<Issue>;
+  hasExternalIssues: boolean; // Issues from initial issues or SetIssues
   isMounted: boolean; // Did the field received a value
   isTouched: boolean;
   isDirty: boolean;
@@ -70,6 +71,7 @@ export type FieldAllIssueOf<Def extends d.FormiDefAny> = Def extends d.FormiDef_
 export type FormiIssue =
   | { kind: 'InvalidNumber'; value: string }
   | { kind: 'UnexpectedFile' }
+  | { kind: 'UnexpectedString' }
   | { kind: 'MissingField' }
   | { kind: 'ZodIssue'; issue: z.ZodIssue }
   // generated when the validate fn throws an error
