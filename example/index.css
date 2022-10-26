@@ -17,3 +17,26 @@ form {
 * {
   box-sizing: border-box;
 }
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+button {
+  padding: 0.5rem 1rem;
+}
+
+label {
+  color: #7d7d7d;
+}
+
+p.error {
+  color: #ba2424;
+  margin: 0;
+}
+
+input {
+  margin-bottom: 0;
+}

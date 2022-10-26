@@ -1,8 +1,9 @@
 import * as f from './FormiField';
 import * as d from './FormiDef';
-import { FormiController } from './FormiController';
-import { ImmutableFormiMap } from './FormiMap';
 import { FormiKey } from './FormiKey';
+import { z } from 'zod';
+import { RawPath } from './tools/Path';
+import { FormiIssuesBuilder } from './FormiIssuesBuilder';
 
 export const FORMI_INTERNAL = Symbol('FORMI_INTERNAL');
 export type FORMI_INTERNAL = typeof FORMI_INTERNAL;
@@ -17,109 +18,72 @@ export type OnSubmitActions = {
 };
 
 export type OnSubmit<Def extends d.FormiDefAny> = (
-  values: d.FormiDefValueOf<Def>,
-  actions: OnSubmitActions,
-  controller: FormiController<Def>
+  data: { value: d.FormiDefValueOf<Def>; formData: FormData },
+  actions: OnSubmitActions
 ) => void;
 
-export type IssuesMap = Array<{ sources: f.FormiFieldAny; issues: Array<any> }>;
-
-export type FieldState_ValueAny = FieldState_Value<any, any>;
-
-export type FieldState_Value<Value, Issue> = Readonly<{
-  kind: 'Value';
+export type FieldState<Value, Issue> = Readonly<{
   key: FormiKey;
-  issuesMap: IssuesMap;
-  public: Readonly<{
-    initialFormValue: FormDataEntryValue | undefined;
-    formValue: FormDataEntryValue | undefined;
-    value: Value | undefined;
-    isTouched: boolean;
-    isDirty: boolean;
-    isSubmitted: boolean;
-    issues: null | Array<Issue>;
-  }>;
+  initialRawValue: any | undefined;
+  rawValue: any | undefined;
+  value: Value | undefined;
+  issues: null | Array<Issue>;
+  touchedIssues: null | Array<Issue>;
+  isMounted: boolean; // Did the field received a value
+  isTouched: boolean;
+  isDirty: boolean;
+  isSubmitted: boolean;
 }>;
 
-export type FieldState_MultipleAny = FieldState_Multiple<any, any>;
-
-export type FieldState_Multiple<Value, Issue> = Readonly<{
-  kind: 'Multiple';
-  key: FormiKey;
-  issuesMap: IssuesMap;
-  public: Readonly<{
-    initialFormValue: Array<FormDataEntryValue> | undefined;
-    formValue: Array<FormDataEntryValue> | undefined;
-    value: Value | undefined;
-    isTouched: boolean;
-    isDirty: boolean;
-    isSubmitted: boolean;
-    issues: null | Array<Issue>;
-  }>;
-}>;
-
-export type FieldState_ValidateAny = FieldState_Validate<any, any, any>;
-
-export type FieldState_Validate<Child extends d.FormiDefAny, Value, Issue> = Readonly<{
-  kind: 'Validate';
-  key: FormiKey;
-  issuesMap: IssuesMap;
-  public: Readonly<{
-    formValue: d.FormiDefValueOf<Child> | undefined;
-    value: Value | undefined;
-    issues: null | Array<Issue>;
-  }>;
-}>;
-
-export type FieldState_ArrayAny = FieldState_Array<Array<d.FormiDefAny>, any>;
-
-export type FieldState_Array<Children extends Array<d.FormiDefAny>, Issue> = Readonly<{
-  kind: 'Array';
-  key: FormiKey;
-  issuesMap: IssuesMap;
-  public: Readonly<{
-    value: d.FormiDefValueOf_Array<Children> | undefined;
-    length: number;
-    issues: null | Array<Issue>;
-  }>;
-}>;
-
-export type FieldState_ObjectAny = FieldState_Object<Record<string, d.FormiDefAny>, any>;
-
-export type FieldState_Object<Children extends Record<string, d.FormiDefAny>, Issue> = Readonly<{
-  kind: 'Object';
-  key: FormiKey;
-  issuesMap: IssuesMap;
-  public: Readonly<{
-    value: d.FormiDefValueOf_Object<Children> | undefined;
-    issues: null | Array<Issue>;
-  }>;
-}>;
-
-export type FieldStateAny =
-  | FieldState_ValueAny
-  | FieldState_MultipleAny
-  | FieldState_ValidateAny
-  | FieldState_ObjectAny
-  | FieldState_ArrayAny;
-
-export type FieldsStateMap = ImmutableFormiMap<FormiKey, FieldStateAny>;
-
-export type FormiControllerState = {
-  fields: f.FormiFieldAny; // Tree of fields
-  states: FieldsStateMap; // FieldKey => state
-};
+export type FieldStateAny = FieldState<any, any>;
 
 export type FieldStateOf<FormiField extends f.FormiFieldAny> = FormiField extends f.FormiField_Value<infer V, infer I>
-  ? FieldState_Value<V, I>
-  : FormiField extends f.FormiField_Multiple<infer V, infer I>
-  ? FieldState_Multiple<V, I>
-  : FormiField extends f.FormiField_Validate<infer C, infer V, infer I>
-  ? FieldState_Validate<C, V, I>
-  : FormiField extends f.FormiField_Array<infer C, infer I>
-  ? FieldState_Array<C, I>
-  : FormiField extends f.FormiField_Object<infer C, infer I>
-  ? FieldState_Object<C, I>
+  ? FieldState<V, I>
+  : FormiField extends f.FormiField_Values<infer V, infer I>
+  ? FieldState<V, I>
+  : FormiField extends f.FormiField_Repeat<any, infer V, infer I>
+  ? FieldState<V, I>
+  : FormiField extends f.FormiField_Object<any, infer V, infer I>
+  ? FieldState<V, I>
   : never;
 
-export type PublicFieldStateOf<FormiField extends f.FormiFieldAny> = FieldStateOf<FormiField>['public'];
+export type FieldIssueOf<FormiField extends f.FormiFieldAny> = FormiField extends f.FormiField_Value<any, infer I>
+  ? I
+  : FormiField extends f.FormiField_Values<any, infer I>
+  ? I
+  : FormiField extends f.FormiField_Repeat<any, any, infer I>
+  ? I
+  : FormiField extends f.FormiField_Object<any, any, infer I>
+  ? I
+  : never;
+
+export type FieldAllIssueOf<Def extends d.FormiDefAny> = Def extends d.FormiDef_Value<any, infer I>
+  ? I
+  : Def extends d.FormiDef_Values<any, infer I>
+  ? I
+  : Def extends d.FormiDef_Repeat<infer Children, any, infer I>
+  ? I | FieldAllIssueOf<Children>
+  : Def extends d.FormiDef_Object<infer Children, any, infer I>
+  ? I | { [K in keyof Children]: FieldAllIssueOf<Children[K]> }[keyof Children]
+  : never;
+
+export type FormiIssue =
+  | { kind: 'InvalidNumber'; value: string }
+  | { kind: 'UnexpectedFile' }
+  | { kind: 'MissingField' }
+  | { kind: 'ZodIssue'; issue: z.ZodIssue }
+  // generated when the validate fn throws an error
+  | { kind: 'ValidationError'; error: unknown };
+
+export type FormiIssuesItem<Issue> = { path: RawPath; issues: Array<Issue> };
+export type FormiIssues<Issue> = Array<FormiIssuesItem<Issue>>;
+
+export type FormiResult<Def extends d.FormiDefAny> =
+  | {
+      success: true;
+      value: d.FormiDefValueOf<Def>;
+      fields: f.FormiFieldOf<Def>;
+      // empty issues to make it easy to add custom server validation
+      customIssues: FormiIssuesBuilder<FieldAllIssueOf<Def>>;
+    }
+  | { success: false; issues: FormiIssues<FieldAllIssueOf<Def>> };

@@ -1,23 +1,25 @@
-const IS_READABLE_FORMI_MAP = Symbol('IS_READABLE_FORMI_MAP');
+const IS_READABLE_IMMU_MAP = Symbol('IS_READABLE_IMMU_MAP');
 
-export interface ReadableFormiMap<K, V> {
-  readonly [IS_READABLE_FORMI_MAP]: true;
+export interface ReadableImmuMap<K, V> {
+  readonly [IS_READABLE_IMMU_MAP]: true;
   readonly has: (key: K) => boolean;
   readonly get: (key: K) => V | undefined;
+  readonly entries: () => IterableIterator<[key: K, value: V]>;
   readonly getAll: () => Array<[key: K, value: V]>;
   readonly getOr: <Val = V>(key: K, defaultVal: Val) => Val | V;
   readonly getOrThrow: (key: K) => V;
   readonly forEach: (callback: (value: V, key: K) => void) => void;
 }
 
-export const ReadableFormiMap = (() => {
+export const ReadableImmuMap = (() => {
   return Object.assign(create, {});
 
-  function create<K, V>(data: Map<K, V>): ReadableFormiMap<K, V> {
-    const self: ReadableFormiMap<K, V> = {
-      [IS_READABLE_FORMI_MAP]: true,
+  function create<K, V>(data: Map<K, V>): ReadableImmuMap<K, V> {
+    const self: ReadableImmuMap<K, V> = {
+      [IS_READABLE_IMMU_MAP]: true,
       has,
       get,
+      entries,
       getAll,
       getOr,
       getOrThrow,
@@ -31,6 +33,10 @@ export const ReadableFormiMap = (() => {
 
     function get(key: K): V | undefined {
       return data.get(key);
+    }
+
+    function entries(): IterableIterator<[key: K, value: V]> {
+      return data.entries();
     }
 
     function getAll(): Array<[key: K, value: V]> {
@@ -57,10 +63,10 @@ export const ReadableFormiMap = (() => {
   }
 })();
 
-const IS_WRITABLE_FORMI_MAP = Symbol('IS_WRITABLE_FORMI_MAP');
+const IS_WRITABLE_IMMU_MAP = Symbol('IS_WRITABLE_IMMU_MAP');
 
-export interface WritableFormiMap<K, V, O> extends ReadableFormiMap<K, V> {
-  readonly [IS_WRITABLE_FORMI_MAP]: true;
+export interface WritableImmuMap<K, V, O> extends ReadableImmuMap<K, V> {
+  readonly [IS_WRITABLE_IMMU_MAP]: true;
   readonly setEntries: (entries: Iterable<[key: K, value: V]>) => O;
   readonly set: (key: K, val: V) => O;
   readonly update: (key: K, updater: (prev: V | undefined) => V) => O;
@@ -72,24 +78,24 @@ export interface WritableFormiMap<K, V, O> extends ReadableFormiMap<K, V> {
   readonly delete: (key: K) => O;
 }
 
-export interface WritableFormiMapOptions<K, V, O> {
+export interface WritableImmuMapOptions<K, V, O> {
   immutable: boolean;
   getCurrent: () => O;
   createOutput: (data: Map<K, V>) => O;
   onMutate?: () => void;
 }
 
-export const WritableFormiMap = (() => {
+export const WritableImmuMap = (() => {
   return Object.assign(create, {});
 
   function create<K, V, O>(
     data: Map<K, V>,
-    { immutable, createOutput, getCurrent, onMutate }: WritableFormiMapOptions<K, V, O>
-  ): WritableFormiMap<K, V, O> {
-    const readable = ReadableFormiMap(data);
-    const self: WritableFormiMap<K, V, O> = {
+    { immutable, createOutput, getCurrent, onMutate }: WritableImmuMapOptions<K, V, O>
+  ): WritableImmuMap<K, V, O> {
+    const readable = ReadableImmuMap(data);
+    const self: WritableImmuMap<K, V, O> = {
       ...readable,
-      [IS_WRITABLE_FORMI_MAP]: true,
+      [IS_WRITABLE_IMMU_MAP]: true,
       setEntries,
       set,
       update,
@@ -200,77 +206,88 @@ export const WritableFormiMap = (() => {
   }
 })();
 
-const IS_IMMUTABLE_FORMI_MAP = Symbol('IS_IMMUTABLE_FORMI_MAP');
+const IS_IMMUTABLE_IMMU_MAP = Symbol('IS_IMMUTABLE_IMMU_MAP');
 
-export interface ImmutableFormiMap<K, V> extends WritableFormiMap<K, V, ImmutableFormiMap<K, V>> {
-  readonly [IS_IMMUTABLE_FORMI_MAP]: true;
-  readonly draft: () => ImmutableFormiMapDraft<K, V>;
+export interface ImmutableImmuMap<K, V> extends WritableImmuMap<K, V, ImmutableImmuMap<K, V>> {
+  readonly [IS_IMMUTABLE_IMMU_MAP]: true;
+  readonly draft: () => ImmutableImmuMapDraft<K, V>;
+  readonly produce: (run: (draft: ImmutableImmuMapDraft<K, V>) => void) => ImmutableImmuMap<K, V>;
 }
 
-export const ImmutableFormiMap = (() => {
+export const ImmutableImmuMap = (() => {
   return Object.assign(empty, {
     fromMap,
     fromEntries,
     empty,
   });
 
-  function create<K, V>(data: Map<K, V>): ImmutableFormiMap<K, V> {
-    const readable = ReadableFormiMap(data);
-    const writable = WritableFormiMap(data, {
+  function create<K, V>(data: Map<K, V>): ImmutableImmuMap<K, V> {
+    const readable = ReadableImmuMap(data);
+    const writable = WritableImmuMap(data, {
       immutable: true,
       getCurrent: () => self,
       createOutput: (data) => create(data),
     });
 
-    const self: ImmutableFormiMap<K, V> = {
+    const self: ImmutableImmuMap<K, V> = {
       ...readable,
       ...writable,
-      [IS_IMMUTABLE_FORMI_MAP]: true,
+      [IS_IMMUTABLE_IMMU_MAP]: true,
       draft,
+      produce,
     };
 
     return self;
 
-    function draft(): ImmutableFormiMapDraft<K, V> {
-      return ImmutableFormiMapDraft<K, V>(data);
+    function draft(): ImmutableImmuMapDraft<K, V> {
+      return ImmutableImmuMapDraft<K, V>(data);
+    }
+
+    function produce(run: (draft: ImmutableImmuMapDraft<K, V>) => void): ImmutableImmuMap<K, V> {
+      const draft = self.draft();
+      run(draft);
+      if (draft.changed) {
+        return draft.commit();
+      }
+      return self;
     }
   }
 
-  function fromMap<K, V>(map: Map<K, V>): ImmutableFormiMap<K, V> {
+  function fromMap<K, V>(map: Map<K, V>): ImmutableImmuMap<K, V> {
     return create(new Map(map));
   }
 
-  function fromEntries<K, V>(entries: IterableIterator<[K, V]>): ImmutableFormiMap<K, V> {
-    return ImmutableFormiMap.empty<K, V>().setEntries(entries);
+  function fromEntries<K, V>(entries: IterableIterator<[K, V]>): ImmutableImmuMap<K, V> {
+    return ImmutableImmuMap.empty<K, V>().setEntries(entries);
   }
 
-  function empty<K, V>(): ImmutableFormiMap<K, V> {
+  function empty<K, V>(): ImmutableImmuMap<K, V> {
     return create(new Map());
   }
 })();
 
-const IS_IMMUTABLE_FORMI_MAP_DRAFT = Symbol('IS_IMMUTABLE_FORMI_MAP_DRAFT');
+const IS_IMMUTABLE_IMMU_MAP_DRAFT = Symbol('IS_IMMUTABLE_IMMU_MAP_DRAFT');
 
-export interface ImmutableFormiMapDraft<K, V> extends WritableFormiMap<K, V, void> {
-  readonly [IS_IMMUTABLE_FORMI_MAP_DRAFT]: true;
-  readonly commit: () => ImmutableFormiMap<K, V>;
+export interface ImmutableImmuMapDraft<K, V> extends WritableImmuMap<K, V, void> {
+  readonly [IS_IMMUTABLE_IMMU_MAP_DRAFT]: true;
+  readonly commit: () => ImmutableImmuMap<K, V>;
   readonly changed: boolean;
 }
 
 /**
  * A map that you can mutate then call .commit to get a new immutable map (or the same if nothing changed)
  */
-export const ImmutableFormiMapDraft = (() => {
+export const ImmutableImmuMapDraft = (() => {
   return Object.assign(create, {});
 
-  function create<K, V>(data: Map<K, V>): ImmutableFormiMapDraft<K, V> {
+  function create<K, V>(data: Map<K, V>): ImmutableImmuMapDraft<K, V> {
     const localData = new Map(data);
 
-    let commited: ImmutableFormiMap<K, V> | false = false;
+    let commited: ImmutableImmuMap<K, V> | false = false;
     let changed = false;
 
-    const readable = ReadableFormiMap(data);
-    const writable = WritableFormiMap(localData, {
+    const readable = ReadableImmuMap(data);
+    const writable = WritableImmuMap(localData, {
       immutable: false,
       getCurrent: () => undefined,
       createOutput: () => undefined,
@@ -282,10 +299,10 @@ export const ImmutableFormiMapDraft = (() => {
       },
     });
 
-    const self: ImmutableFormiMapDraft<K, V> = {
+    const self: ImmutableImmuMapDraft<K, V> = {
       ...readable,
       ...writable,
-      [IS_IMMUTABLE_FORMI_MAP_DRAFT]: true,
+      [IS_IMMUTABLE_IMMU_MAP_DRAFT]: true,
       commit,
       get changed() {
         return changed;
@@ -294,9 +311,9 @@ export const ImmutableFormiMapDraft = (() => {
 
     return self;
 
-    function commit(): ImmutableFormiMap<K, V> {
+    function commit(): ImmutableImmuMap<K, V> {
       if (!commited) {
-        commited = ImmutableFormiMap.fromEntries((changed ? localData : data).entries());
+        commited = ImmutableImmuMap.fromEntries((changed ? localData : data).entries());
       }
       return commited;
     }

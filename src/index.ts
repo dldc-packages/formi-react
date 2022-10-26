@@ -1,12 +1,21 @@
-export { useFormi as useForm } from './useFormi';
-export { useField } from './useField';
-export { useFormController } from './useFormiController';
-export { FormiField_Array, FormiField_Multiple, FormiField_Value, FormiField_Object } from './FormiField';
-export { def } from './FormiDef';
-export { zx, validate as zodValidation, chain as zodChain } from './zx';
-export { Path } from './Path';
-export { FormiFieldIssues } from './FormiFieldIssues';
+import { FormiDef } from './FormiDef';
 
-export type { FormiField, FormiFieldAny, FormiFieldOf } from './FormiField';
-export type { UseFormiOptions as UseFormOptions, UseFormiResult as UseFormResult } from './useFormi';
-export type { Key, PathLike, RawPath } from './Path';
+const { field, withIssue } = FormiDef;
+
+export * from './FormiController';
+export * from './FormiDef';
+export * from './FormiField';
+export * from './FormiIssuesBuilder';
+export * from './FormiKey';
+
+export * from './useFormiContext';
+export * from './useFormiController';
+export * from './useFormiControllerFields';
+export * from './useFormiFields';
+export * from './useFormiFieldState';
+export * from './useFormiForm';
+
+export * from './tools/Path';
+export * from './types';
+
+export { field, withIssue };

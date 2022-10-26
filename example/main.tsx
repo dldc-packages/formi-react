@@ -1,79 +1,79 @@
-// import React, { memo } from 'react';
-// import ReactDOM from 'react-dom/client';
-import { z } from 'zod';
-import { def, useField, useForm, zx } from '../src';
-import './index.css';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import './mvp.css';
+import './index.css';
+import { SimpleExample } from './01-simple/SimpleExample';
+import { ComponentsExample } from './02-components/ComponentsExample';
+import { ServerExample } from './03-server/ServerExample';
 
-const strAsInt = zx
-  .string()
-  .transform((v) => (v === '' ? null : parseInt(v, 10)))
-  .refine((val) => Number.isNaN(val) === false, 'Invalid number');
+const STRICT_MODE = false;
 
-const friendField = def.object({
-  name: def.zx.withIssue<number>().value(zx.string().min(3)),
-  age: def.withIssue<{ issue: z.ZodIssue; num: number }>().value((value, { issues }) => {
-    const res = zx.parse(zx.chain(strAsInt, zx.number().nullable()), value);
-    if (res.success === false) {
-      res.issues.forEach((issue) => {
-        issues.addIssue({ issue, num: 1 });
-      });
-      throw issues;
-    }
-    if (res === null) {
-      return null;
-    }
-    return 42;
-  }),
-});
+const StrictMode = STRICT_MODE ? React.StrictMode : React.Fragment;
 
-const fields = def.object({
-  company: def.zx.value(zx.string().min(3)),
-  name: def.zx.value(zx.string().min(3)),
-  file: def.zx.value(z.instanceof(File).refine((f) => f.size > 0, 'File is required')),
-  age: def.zx.value(zx.chain(strAsInt, zx.number().int().min(18).max(99))),
-  infos: def.object({
-    address: def.zx.value(zx.string().min(3)),
-    city: def.zx.value(zx.string().min(3)),
-  }),
-  friends: def.withIssue<string>().validate(def.array([friendField, friendField, friendField]), (items, { field, issues }) => {
-    if (items.length === 0) {
-      issues.addIssue('At least one friend is required');
-      throw issues;
-    }
-    if (items[0].name === 'John') {
-      issues.addIssue(field.children.get(0).get('name'), 42);
-      throw issues;
-    }
-    return items.length;
-  }),
-});
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <StrictMode>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '2rem' }}>
+      <SimpleExample />
+      <ComponentsExample />
+      <ServerExample />
+    </div>
+  </StrictMode>
+);
 
-/*
+// type CustomIssue = FormiIssue | { kind: 'PasswordDontMatch' } | { kind: 'InvalidNumber' };
 
-*/
+// const field = withIssue<CustomIssue>();
 
-function App() {
-  const form = useForm({ fields: fields });
+// const friendField = field.object({
+//   custom: field.value<number>((val) => {
+//     if (typeof val !== 'string') {
+//       return { success: false, issue: { kind: 'UnexpectedFile' } };
+//     }
+//     const num = parseInt(val, 10);
+//     if (Number.isNaN(num)) {
+//       return { success: false, issue: { kind: 'InvalidNumber' } };
+//     }
+//     return { success: true, value: num };
+//   }),
+//   name: field.zodString(z.string().min(3)),
+//   age: field.zodNumber(z.number()),
+// });
 
-  form.fields.get('age');
+// const fields = field.object({
+//   company: field.zodString(z.string().min(3)),
+//   name: field.zodString(z.string().min(3)),
+//   // file: def.z.value(z.instanceof(File).refine((f) => f.size > 0, 'File is required')),
+//   age: field.zodNumber(z.number().int().min(18).max(99)), // def.z.value(z.chain(strAsInt, z.number().int().min(18).max(99))),
+//   infos: field.object({
+//     address: field.zodString(z.string().min(3)),
+//     city: field.zodString(z.string().min(3)),
+//   }),
+//   friends: field.array([friendField, friendField, friendField]),
+// });
 
-  const nameField = form.fields.get('name');
+// function App() {
+//   const form = useForm({ fields: fields });
 
-  const friendsField = form.fields.get('friends');
+//   form.fields.get('age');
 
-  const firstFriendName = form.fields.get('friends').children.get(0).get('name');
+//   const nameField = form.fields.get('name');
 
-  const friendsState = useField(friendsField);
-  console.log(friendsState.value);
+//   const friendsField = form.fields.get('friends');
 
-  const name = useField(nameField);
-  const nameState = useField(firstFriendName);
+//   const firstFriendName = form.fields.get('friends').get(0).get('name');
 
-  console.log({ name, nameState });
-}
+//   const friendsState = useField(friendsField);
+//   console.log(friendsState.value);
 
-console.log(App);
+//   const name = useField(nameField);
+//   const nameState = useField(firstFriendName);
+
+//   console.log({ name, nameState });
+
+//   return <div>TODO</div>
+// }
+
+// console.log(App);
 
 // formField.get('friends').get(12).get('name').name;
 
@@ -149,9 +149,3 @@ console.log(App);
 //     </div>
 //   );
 // });
-
-// ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-//   <React.StrictMode>
-//     <App />
-//   </React.StrictMode>
-// );

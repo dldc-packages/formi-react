@@ -1,8 +1,7 @@
-import { FormiControllerAny } from './FormiController';
-import { Path, PathLike } from './Path';
-import type * as d from './FormiDef';
+import { Path, PathLike } from './tools/Path';
 import { expectNever } from './utils';
 import { FormiKey } from './FormiKey';
+import { FormiDef_Value, FormiDef_Values, FormiDef_Repeat, FormiDef_Object, FormiDefAny } from './FormiDef';
 
 function notImplemented(): never {
   throw new Error('Not implemented');
@@ -13,27 +12,21 @@ interface FormiFieldPrivateApi {
   readonly findByKeyOrThrow: (key: FormiKey) => FormiFieldAny;
   readonly findByPath: (path: PathLike) => FormiFieldAny | null;
   readonly findByPathOrThrow: (path: PathLike) => FormiFieldAny;
+  readonly findAllByPath: (path: PathLike) => null | Array<FormiFieldAny>;
   readonly getChildren: () => Array<FormiFieldAny>;
 }
 
-export type FormiFieldOf<Def> = Def extends d.FormiDef_Value<infer V, infer I>
+export type FormiFieldOf<Def> = Def extends FormiDef_Value<infer V, infer I>
   ? FormiField_Value<V, I>
-  : Def extends d.FormiDef_Multiple<infer V, infer I>
-  ? FormiField_Multiple<V, I>
-  : Def extends d.FormiDef_Validate<infer C, infer V, infer I>
-  ? FormiField_Validate<C, V, I>
-  : Def extends d.FormiDef_Array<infer C, infer I>
-  ? FormiField_Array<C, I>
-  : Def extends d.FormiDef_Object<infer C, infer I>
-  ? FormiField_Object<C, I>
+  : Def extends FormiDef_Values<infer V, infer I>
+  ? FormiField_Values<V, I>
+  : Def extends FormiDef_Repeat<infer C, infer V, infer I>
+  ? FormiField_Repeat<C, V, I>
+  : Def extends FormiDef_Object<infer C, infer V, infer I>
+  ? FormiField_Object<C, V, I>
   : never;
 
-export type FormiFieldAny =
-  | FormiField_ValueAny
-  | FormiField_MultipleAny
-  | FormiField_ValidateAny
-  | FormiField_ArrayAny
-  | FormiField_ObjectAny;
+export type FormiFieldAny = FormiField_ValueAny | FormiField_ValuesAny | FormiField_RepeatAny | FormiField_ObjectAny;
 
 export type FormiFieldKind = FormiFieldAny['kind'];
 
@@ -45,7 +38,6 @@ export interface FormiField<Value, Issue> {
   readonly [IS_FORMI_FIELD]: true;
   readonly [FORMI_FIELD_TYPES]: { readonly __value: Value; readonly __issue: Issue };
   readonly [FORMI_FIELD_INTERNAL]: FormiFieldPrivateApi;
-  readonly controller: FormiControllerAny;
   readonly key: FormiKey;
   readonly path: Path;
   readonly id: string;
@@ -58,17 +50,32 @@ export const FormiField = (() => {
     traverse,
     isFormiField,
     findFieldByKeyOrThrow,
+    findFieldByPath,
+    findFieldByPathOrThrow,
+    findAllFieldsByPath,
   });
+
+  function findAllFieldsByPath(formiField: FormiFieldAny, path: PathLike): null | Array<FormiFieldAny> {
+    return formiField[FORMI_FIELD_INTERNAL].findAllByPath(path);
+  }
+
+  function findFieldByPath(formiField: FormiFieldAny, path: PathLike): FormiFieldAny | null {
+    return formiField[FORMI_FIELD_INTERNAL].findByPath(path);
+  }
+
+  function findFieldByPathOrThrow(formiField: FormiFieldAny, path: PathLike): FormiFieldAny {
+    return formiField[FORMI_FIELD_INTERNAL].findByPathOrThrow(path);
+  }
 
   function findFieldByKeyOrThrow(formiField: FormiFieldAny, key: FormiKey): FormiFieldAny {
     return formiField[FORMI_FIELD_INTERNAL].findByKeyOrThrow(key);
   }
 
   function create<Value, Issue>(
+    formName: string,
     key: FormiKey,
     path: Path,
-    controller: FormiControllerAny,
-    internal: Omit<FormiFieldPrivateApi, 'findByKeyOrThrow' | 'findByPathOrThrow'>
+    internal: Omit<FormiFieldPrivateApi, 'findByKeyOrThrow' | 'findByPathOrThrow' | 'findAllByPath'>
   ): FormiField<Value, Issue> {
     return {
       [IS_FORMI_FIELD]: true,
@@ -78,42 +85,37 @@ export const FormiField = (() => {
         findByKeyOrThrow: createFindByKeyOrThrow(internal.findByKey),
         findByPath: internal.findByPath,
         findByPathOrThrow: createFindByPathOrThrow(internal.findByPath),
+        findAllByPath: createFindAllByPathOrThrow(internal.findByPath),
         getChildren: internal.getChildren,
       },
-      controller,
       key,
       path,
-      id: Path.serialize([controller.formName, ...path]),
+      id: Path.serialize([formName, ...path]),
     };
   }
 
-  function createFrom<Def extends d.FormiDefAny>(controller: FormiControllerAny, def: Def, path: Path): FormiFieldAny {
-    const key = FormiKey(controller);
+  function createFrom<Def extends FormiDefAny>(formName: string, def: Def, path: Path): FormiFieldAny {
+    const key = FormiKey();
     if (def.kind === 'Value') {
-      return FormiField_Value(key, path, def, controller);
+      return FormiField_Value(formName, key, path, def);
     }
-    if (def.kind === 'Multiple') {
-      return FormiField_Multiple(key, path, def, controller);
+    if (def.kind === 'Values') {
+      return FormiField_Values(formName, key, path, def);
     }
-    if (def.kind === 'Validate') {
-      const children = createFrom(controller, def.child, path.append('_'));
-      return FormiField_Validate(key, path, def, controller, children);
-    }
-    if (def.kind === 'Array') {
-      const children: Array<FormiFieldAny> = [];
-      def.children.forEach((child, index) => {
-        children.push(createFrom(controller, child, path.append(index)));
+    if (def.kind === 'Repeat') {
+      const children = Array.from({ length: def.initialCount }, (_, index): FormiFieldAny => {
+        return createFrom(formName, def.children, path.append(index));
       });
-      return FormiField_Array(key, path, def, controller, children);
+      return FormiField_Repeat(formName, key, path, def, children);
     }
     if (def.kind === 'Object') {
-      const key = FormiKey(controller);
+      const key = FormiKey();
       const children: Record<string, FormiFieldAny> = {};
       Object.entries(def.children).forEach(([key, child]) => {
         Path.validatePathItem(key);
-        children[key] = createFrom(controller, child as d.FormiDefAny, path.append(key));
+        children[key] = createFrom(formName, child as FormiDefAny, path.append(key));
       });
-      return FormiField_Object(key, path, def, controller, children);
+      return FormiField_Object(formName, key, path, def, children);
     }
     return expectNever(def, () => {
       throw new Error('Unsupported def type');
@@ -133,9 +135,8 @@ export const FormiField = (() => {
     if (field && field[IS_FORMI_FIELD]) {
       const kinds: Record<FormiFieldKind, null> = {
         Value: null,
-        Multiple: null,
-        Validate: null,
-        Array: null,
+        Values: null,
+        Repeat: null,
         Object: null,
       };
       if (kind) {
@@ -156,7 +157,7 @@ export type FormiField_ValueAny = FormiField_Value<any, any>;
 
 export interface FormiField_Value<Value, Issue> extends FormiField<Value, Issue> {
   readonly kind: 'Value';
-  readonly def: d.FormiDef_Value<Value, Issue>;
+  readonly def: FormiDef_Value<Value, Issue>;
   readonly name: string;
   readonly actions: FormiField_Value_Actions;
 }
@@ -167,13 +168,13 @@ export const FormiField_Value = (() => {
   });
 
   function create<Value, Issue>(
+    formName: string,
     key: FormiKey,
     path: Path,
-    def: d.FormiDef_Value<Value, Issue>,
-    controller: FormiControllerAny
+    def: FormiDef_Value<Value, Issue>
   ): FormiField_Value<Value, Issue> {
     const self: FormiField_Value<Value, Issue> = {
-      ...FormiField.create(key, path, controller, { findByKey, findByPath, getChildren }),
+      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
       def,
       kind: 'Value',
       name: path.serialize(),
@@ -205,35 +206,35 @@ export const FormiField_Value = (() => {
   }
 })();
 
-export interface FormiField_Multiple_Actions {
+export interface FormiField_Values_Actions {
   readonly reset: () => void;
   readonly setValues: (values: Array<FormDataEntryValue>) => void;
 }
 
-export type FormiField_MultipleAny = FormiField_Multiple<any, any>;
+export type FormiField_ValuesAny = FormiField_Values<any, any>;
 
-export interface FormiField_Multiple<Value, Issue> extends FormiField<Value, Issue> {
-  readonly kind: 'Multiple';
-  readonly def: d.FormiDef_Multiple<Value, Issue>;
+export interface FormiField_Values<Value, Issue> extends FormiField<Value, Issue> {
+  readonly kind: 'Values';
+  readonly def: FormiDef_Values<Value, Issue>;
   readonly name: string;
-  readonly actions: FormiField_Multiple_Actions;
+  readonly actions: FormiField_Values_Actions;
 }
 
-export const FormiField_Multiple = (() => {
+export const FormiField_Values = (() => {
   return Object.assign(create, {
-    isFormiField_Multiple,
+    isFormiField_Values,
   });
 
   function create<Value, Issue>(
+    formName: string,
     key: FormiKey,
     path: Path,
-    def: d.FormiDef_Multiple<Value, Issue>,
-    controller: FormiControllerAny
-  ): FormiField_Multiple<Value, Issue> {
-    const root: FormiField_Multiple<Value, Issue> = {
-      ...FormiField.create(key, path, controller, { findByKey, findByPath, getChildren }),
+    def: FormiDef_Values<Value, Issue>
+  ): FormiField_Values<Value, Issue> {
+    const root: FormiField_Values<Value, Issue> = {
+      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
       def,
-      kind: 'Multiple',
+      kind: 'Values',
       name: path.serialize(),
       actions: { reset: notImplemented, setValues: notImplemented },
     };
@@ -258,100 +259,43 @@ export const FormiField_Multiple = (() => {
     }
   }
 
-  function isFormiField_Multiple(field: any): field is FormiField_Multiple<any, any> {
-    return FormiField.isFormiField(field, 'Multiple');
+  function isFormiField_Values(field: any): field is FormiField_Values<any, any> {
+    return FormiField.isFormiField(field, 'Values');
   }
 })();
 
-export interface FormiField_Validate_Actions {
-  readonly reset: () => void;
-  readonly setValue: (value: FormDataEntryValue) => void;
-}
-
-export type FormiField_ValidateAny = FormiField_Validate<any, any, any>;
-
-export interface FormiField_Validate<Child extends d.FormiDefAny, Value, Issue> extends FormiField<Value, Issue> {
-  readonly kind: 'Validate';
-  readonly def: d.FormiDef_Validate<Child, Value, Issue>;
-  readonly name: string;
-  readonly actions: FormiField_Validate_Actions;
-  readonly children: FormiFieldOf<Child>;
-}
-
-export const FormiField_Validate = (() => {
-  return Object.assign(create, {});
-
-  function create<Child extends d.FormiDefAny, Value, Issue>(
-    key: FormiKey,
-    path: Path,
-    def: d.FormiDef_Validate<Child, Value, Issue>,
-    controller: FormiControllerAny,
-    children: FormiFieldOf<Child>
-  ): FormiField_Validate<Child, Value, Issue> {
-    const root: FormiField_Validate<Child, Value, Issue> = {
-      ...FormiField.create(key, path, controller, { findByKey, findByPath, getChildren }),
-      kind: 'Validate',
-      def: def,
-      name: path.serialize(),
-      actions: { reset: notImplemented, setValue: notImplemented },
-      children,
-    };
-    return root;
-
-    function getChildren(): Array<FormiFieldAny> {
-      return [children];
-    }
-
-    function findByKey(key: FormiKey): FormiFieldAny | null {
-      if (key === root.key) {
-        return root;
-      }
-      return null;
-    }
-
-    function findByPath(path: PathLike): FormiFieldAny | null {
-      if (path.length !== 0) {
-        return null;
-      }
-      return root;
-    }
-  }
-})();
-
-export interface FormiField_Array_Children_Actions {
+export interface FormiField_Repeat_Children_Actions {
   readonly reset: () => void;
   readonly push: () => void;
   readonly remove: (index: number) => void;
   readonly unshift: () => void;
 }
 
-export type FormiField_Array_Children<Children extends Array<any>> = { [K in keyof Children]: FormiFieldOf<Children[K]> } & {
-  length: Children['length'];
-};
+export type FormiField_Repeat_Children<Children extends FormiDefAny> = Array<FormiFieldOf<Children>>;
 
-export interface FormiField_Array<Children extends Array<any>, Issue> extends FormiField<d.FormiDefValueOf_Array<Children>, Issue> {
-  readonly kind: 'Array';
-  readonly def: d.FormiDef_Array<Children, Issue>;
-  readonly children: FormiField_Array_Children<Children>;
-  readonly actions: FormiField_Array_Children_Actions;
+export interface FormiField_Repeat<Children extends FormiDefAny, Value, Issue> extends FormiField<Value, Issue> {
+  readonly kind: 'Repeat';
+  readonly def: FormiDef_Repeat<Children, Value, Issue>;
+  readonly children: FormiField_Repeat_Children<Children>;
+  readonly actions: FormiField_Repeat_Children_Actions;
   readonly get: <K extends keyof Children>(index: number) => FormiFieldOf<Children[K & number]>;
 }
 
-export type FormiField_ArrayAny = FormiField_Array<Array<any>, any>;
+export type FormiField_RepeatAny = FormiField_Repeat<FormiDefAny, any, any>;
 
-export const FormiField_Array = (() => {
+export const FormiField_Repeat = (() => {
   return Object.assign(create, {});
 
-  function create<Children extends Array<d.FormiDefAny>, Issue>(
+  function create<Children extends FormiDefAny, Value, Issue>(
+    formName: string,
     key: FormiKey,
     path: Path,
-    def: d.FormiDef_Array<Children, Issue>,
-    controller: FormiControllerAny,
-    children: FormiField_Array_Children<Children>
-  ): FormiField_Array<Children, Issue> {
-    const self: FormiField_Array<Children, Issue> = {
-      ...FormiField.create(key, path, controller, { findByKey, findByPath, getChildren }),
-      kind: 'Array',
+    def: FormiDef_Repeat<Children, Value, Issue>,
+    children: FormiField_Repeat_Children<Children>
+  ): FormiField_Repeat<Children, Value, Issue> {
+    const self: FormiField_Repeat<Children, Value, Issue> = {
+      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
+      kind: 'Repeat',
       def,
       children,
       actions: { reset: notImplemented, push: notImplemented, remove: notImplemented, unshift: notImplemented },
@@ -393,7 +337,7 @@ export const FormiField_Array = (() => {
   }
 })();
 
-export type FormiField_Object_Children<Children extends Record<string, any>> = {
+export type FormiField_Object_Children<Children extends Record<string, FormiDefAny>> = {
   [K in keyof Children]: FormiFieldOf<Children[K]>;
 };
 
@@ -401,36 +345,35 @@ export interface FormiField_Object_Actions {
   readonly reset: () => void;
 }
 
-export interface FormiField_Object<Children extends Record<string, any>, Issue>
-  extends FormiField<d.FormiDefValueOf_Object<Children>, Issue> {
+export interface FormiField_Object<Children extends Record<string, FormiDefAny>, Value, Issue> extends FormiField<Value, Issue> {
   readonly kind: 'Object';
-  readonly def: d.FormiDef_Object<Children, Issue>;
+  readonly def: FormiDef_Object<Children, Value, Issue>;
   readonly children: FormiField_Object_Children<Children>;
   readonly action: FormiField_Object_Actions;
   readonly get: <K extends keyof Children>(key: K) => FormiFieldOf<Children[K]>;
 }
 
-export type FormiField_ObjectAny = FormiField_Object<Record<string, any>, any>;
+export type FormiField_ObjectAny = FormiField_Object<Record<string, FormiDefAny>, any, any>;
 
 export const FormiField_Object = (() => {
   return Object.assign(create, {});
 
-  function create<Children extends Record<string, d.FormiDefAny>, Issue>(
+  function create<Children extends Record<string, FormiDefAny>, Value, Issue>(
+    formName: string,
     key: FormiKey,
     path: Path,
-    def: d.FormiDef_Object<Children, Issue>,
-    controller: FormiControllerAny,
+    def: FormiDef_Object<Children, Value, Issue>,
     children: FormiField_Object_Children<Children>
-  ): FormiField_Object<Children, Issue> {
+  ): FormiField_Object<Children, Value, Issue> {
     const childrenArr = Array.from(Object.values(children));
 
-    const self: FormiField_Object<Children, Issue> = {
-      ...FormiField.create(key, path, controller, { findByKey, findByPath, getChildren }),
+    const self: FormiField_Object<Children, Value, Issue> = {
+      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
       kind: 'Object',
       def: def,
       children,
       action: { reset: notImplemented },
-      get: notImplemented,
+      get,
     };
     return self;
 
@@ -438,9 +381,17 @@ export const FormiField_Object = (() => {
       return childrenArr;
     }
 
+    function get<K extends keyof Children>(key: K): FormiFieldOf<Children[K]> {
+      const child = children[key];
+      if (!child) {
+        throw new Error(`No such child: ${String(key)}`);
+      }
+      return child;
+    }
+
     function findByKey(key: FormiKey): FormiFieldAny | null {
       if (key === self.key) {
-        return self;
+        return self as FormiField_ObjectAny;
       }
       for (const child of Object.values(self.children)) {
         const result = child[FORMI_FIELD_INTERNAL].findByKey(key);
@@ -454,7 +405,7 @@ export const FormiField_Object = (() => {
     function findByPath(path: PathLike): FormiFieldAny | null {
       const [key, rest] = Path.from(path).splitHead();
       if (key === null) {
-        return self;
+        return self as FormiField_ObjectAny;
       }
       if (typeof key !== 'string') {
         return null;
@@ -485,5 +436,26 @@ function createFindByPathOrThrow(findByPath: (path: PathLike) => FormiFieldAny |
       throw new Error(`No field found with path ${path}`);
     }
     return field;
+  };
+}
+
+function createFindAllByPathOrThrow(findByPath: (path: PathLike) => FormiFieldAny | null) {
+  return function findByPathOrThrow(path: PathLike): null | Array<FormiFieldAny> {
+    const pathResolved = Path.from(path);
+    const root = findByPath([]);
+    if (!root) {
+      return null;
+    }
+    let current = root;
+    const fields: Array<FormiFieldAny> = [current];
+    for (const pathItem of pathResolved) {
+      const next = current[FORMI_FIELD_INTERNAL].findByPath([pathItem]);
+      if (!next) {
+        return null;
+      }
+      current = next;
+      fields.unshift(current);
+    }
+    return fields;
   };
 }

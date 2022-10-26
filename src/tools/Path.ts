@@ -27,6 +27,7 @@ export const Path = (() => {
     serialize,
     parse,
     from: pathFrom,
+    equal,
   });
 
   function create(...raw: ReadonlyArray<Key>): Path {
@@ -64,6 +65,12 @@ export const Path = (() => {
       const [head, ...tail] = raw;
       return [head, Path(...tail)];
     }
+  }
+
+  function equal(a: PathLike, b: PathLike): boolean {
+    const aRaw = isPath(a) ? a.raw : a;
+    const bRaw = isPath(b) ? b.raw : b;
+    return aRaw.length === bRaw.length && aRaw.every((key, i) => key === bRaw[i]);
   }
 
   function isPath(path: any): path is Path {

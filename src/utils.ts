@@ -5,22 +5,33 @@ export function expectNever(val: never, inner?: (val: any) => void): never {
   throw new Error('Unexpected Never');
 }
 
-export type Ref<T> = { current: T };
-
-export function createRef<T>(): Ref<T> {
-  let value: null | { current: T } = null;
-  return {
-    get current() {
-      if (value === null) {
-        throw new Error('Ref not set');
+export function shallowEqual(left: any, right: any): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (left === undefined || right === undefined || left === null || right === null || typeof left !== typeof right) {
+    return false;
+  }
+  if (Array.isArray(left) && Array.isArray(right)) {
+    if (left.length !== right.length) {
+      return false;
+    }
+    for (let i = 0; i < left.length; i++) {
+      if (left[i] !== right[i]) {
+        return false;
       }
-      return value.current;
-    },
-    set current(val) {
-      if (value !== null) {
-        throw new Error('Ref already set');
-      }
-      value = { current: val };
-    },
-  };
+    }
+    return true;
+  }
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+  for (const key of leftKeys) {
+    if (left[key] !== right[key]) {
+      return false;
+    }
+  }
+  return true;
 }
