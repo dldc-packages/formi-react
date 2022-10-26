@@ -84,6 +84,7 @@ export const FormiDef = (() => {
       number,
       zodNumber,
       file,
+      nonEmptyfile,
     } as const;
 
     function value<Value, Issue = BaseIssue>(
@@ -160,6 +161,18 @@ export const FormiDef = (() => {
     function file<Value = File, Issue = BaseIssue>(validate?: FormiDefValidateFn<File, Value, Issue>) {
       return value<Value, Issue | FormiIssue>(fileValidator<Value, Issue>(validate));
     }
+
+    function nonEmptyfile<Value = File, Issue = BaseIssue>(validate?: FormiDefValidateFn<File, Value, Issue>) {
+      return file<Value, Issue>((file) => {
+        if (file.size === 0) {
+          return formiIssueResult({ kind: 'MissingField' });
+        }
+        if (validate) {
+          return validate(file);
+        }
+        return { success: true, value: file } as any;
+      });
+    }
   }
 
   function stringValidator<Value, Issue>(
@@ -167,10 +180,10 @@ export const FormiDef = (() => {
   ): FormiDefValidateFn<FormDataEntryValue | null, Value, Issue | FormiIssue> {
     return (value) => {
       if (value === null) {
-        return { success: false, issue: { kind: 'MissingField' } };
+        return formiIssueResult({ kind: 'MissingField' });
       }
       if (typeof value !== 'string') {
-        return { success: false, issue: { kind: 'UnexpectedFile' } };
+        return formiIssueResult({ kind: 'UnexpectedFile' });
       }
       if (!validate) {
         return { success: true, value } as any;
@@ -184,13 +197,13 @@ export const FormiDef = (() => {
   ): FormiDefValidateFn<FormDataEntryValue | null, Value, Issue | FormiIssue> {
     return (value) => {
       if (value === null) {
-        return { success: false, issue: { kind: 'MissingField' } };
+        return formiIssueResult({ kind: 'MissingField' });
       }
       if (typeof value === 'string') {
-        return { success: false, issue: { kind: 'UnexpectedString' } };
+        return formiIssueResult({ kind: 'UnexpectedString' });
       }
       if (value.size === 0) {
-        return { success: false, issue: { kind: 'MissingField' } };
+        return formiIssueResult({ kind: 'MissingField' });
       }
       if (!validate) {
         return { success: true, value } as any;
@@ -204,14 +217,14 @@ export const FormiDef = (() => {
   ): FormiDefValidateFn<FormDataEntryValue | null, Value, Issue | FormiIssue> {
     return (value) => {
       if (value === null) {
-        return { success: false, issue: { kind: 'MissingField' } };
+        return formiIssueResult({ kind: 'MissingField' });
       }
       if (typeof value !== 'string') {
-        return { success: false, issue: { kind: 'UnexpectedFile' } };
+        return formiIssueResult({ kind: 'UnexpectedFile' });
       }
       const numberValue = value === '' ? null : Number(value);
       if (Number.isNaN(numberValue)) {
-        return { success: false, issue: { kind: 'InvalidNumber', value } };
+        return formiIssueResult({ kind: 'InvalidNumber', value });
       }
       if (!validate) {
         return { success: true, value: numberValue } as any;
@@ -224,7 +237,7 @@ export const FormiDef = (() => {
     return (value) => {
       const result = schema.safeParse(value);
       if (result.success) {
-        return { success: true, value };
+        return { success: true, value: result.data };
       }
       const issues = result.error.issues.map((issue): FormiIssue => ({ kind: 'ZodIssue', issue }));
       if (issues.length === 1) {
@@ -234,3 +247,7 @@ export const FormiDef = (() => {
     };
   }
 })();
+
+function formiIssueResult(issue: FormiIssue): FormiDefValidateResult<any, FormiIssue> {
+  return { success: false, issue };
+}

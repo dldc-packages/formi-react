@@ -6,7 +6,7 @@ import { FormiIssuesBuilder } from './FormiIssuesBuilder';
 import { FormiFieldsStore } from './FormiFieldsStore';
 import { FormiFieldAny, FormiField } from './FormiField';
 import { FormiDefAny } from './FormiDef';
-import { FormiResult, FormiIssues, OnSubmit, FieldStateOf, OnSubmitActions, FieldStateAny } from './types';
+import { FormiResult, FormiIssues, OnSubmit, FieldStateOf, OnSubmitActions, FieldStateAny, FormiIssue } from './types';
 import { useFormiFieldState } from './useFormiFieldState';
 
 const IS_FORM_CONTROLLER = Symbol('IS_FORM_CONTROLLER');
@@ -123,7 +123,6 @@ export const FormiController = (() => {
     function submit(data: FormData, actions?: OnSubmitActions) {
       statesStore.dispatch({ type: 'Submit', data, fields: fieldsStore.getState() });
       if (hasErrors()) {
-        console.log('has errors');
         actions?.preventDefault();
         return;
       }
@@ -244,8 +243,9 @@ export const FormiController = (() => {
       FormiField.traverse(fieldsStore.getState(), (field, next) => {
         next();
         const fieldState = states.getOrThrow(field.key);
-        if (fieldState.value !== undefined) {
-          // has value, no issues
+        if (fieldState.isMounted === false) {
+          const issue: FormiIssue = { kind: 'FieldNotMounted' };
+          issues.push({ path: field.path.raw, issues: [issue] });
           return;
         }
         if (fieldState.issues) {

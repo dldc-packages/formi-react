@@ -5,8 +5,16 @@ import { FileInput } from './FileInput';
 import { TextInput } from './TextInput';
 
 const fieldsDef = field.object({
-  filename: field.zodString(z.string().min(1).max(20)),
-  file: field.file(),
+  filename: field.zodString(
+    z
+      .string()
+      .min(1)
+      .max(20)
+      .transform((v) => v.toLowerCase().replace(' ', '-'))
+  ),
+  file: field.nonEmptyfile((file) => {
+    return { success: true, value: file.size };
+  }),
 });
 
 const FORM_NAME = 'server';

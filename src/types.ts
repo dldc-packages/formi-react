@@ -74,6 +74,7 @@ export type FormiIssue =
   | { kind: 'UnexpectedString' }
   | { kind: 'MissingField' }
   | { kind: 'ZodIssue'; issue: z.ZodIssue }
+  | { kind: 'FieldNotMounted' }
   // generated when the validate fn throws an error
   | { kind: 'ValidationError'; error: unknown };
 

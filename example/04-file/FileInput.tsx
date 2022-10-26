@@ -4,7 +4,7 @@ import { IssueBox } from './IssueBox';
 
 type Props = {
   label: string;
-  field: FormiField_Value<File, FormiIssue>;
+  field: FormiField_Value<any, FormiIssue>;
 };
 
 export function FileInput({ label, field }: Props) {
