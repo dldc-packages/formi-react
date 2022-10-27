@@ -1,7 +1,10 @@
 import { useLayoutEffect as reactULE, useState, useEffect, useId, MutableRefObject, useRef, useMemo, useCallback } from 'react';
 import { FormiController } from './FormiController';
 import { FormiDefAny } from './FormiDef';
-import { FormiIssues, OnSubmit } from './types';
+import { FormiFieldAny } from './FormiField';
+import { FieldStateOf, FormiIssues, OnSubmit } from './types';
+import { FieldsBase, FieldsStates, useFieldsState as useFieldsStateBase } from './useFieldsState';
+import { useFieldState as useFieldStateBase } from './useFieldState';
 
 export type FormRefObject = MutableRefObject<HTMLFormElement | null>;
 export type FormRefCallback = (form: HTMLFormElement | null) => void;
@@ -16,9 +19,11 @@ export type UseFormControllerOptions<Def extends FormiDefAny> = {
 };
 
 export type UseFormControllerResult<Def extends FormiDefAny> = {
-  controller: FormiController<Def>;
-  refObject: FormRefObject;
-  ref: FormRefCallback;
+  readonly controller: FormiController<Def>;
+  readonly refObject: FormRefObject;
+  readonly ref: FormRefCallback;
+  readonly useFieldState: <FormField extends FormiFieldAny>(field: FormField) => FieldStateOf<FormField>;
+  readonly useFieldsState: <Fields extends FieldsBase>(fields: Fields) => FieldsStates<Fields>;
 };
 
 declare const window: any;
@@ -71,11 +76,27 @@ export function useFormController<Def extends FormiDefAny>({
     }
   }, [controller, issues]);
 
+  const useFieldState = useCallback(
+    function useFieldState<FormField extends FormiFieldAny>(field: FormField): FieldStateOf<FormField> {
+      return useFieldStateBase(field, controller);
+    },
+    [controller]
+  );
+
+  const useFieldsState = useCallback(
+    function useFieldsState<Fields extends FieldsBase>(fields: Fields): FieldsStates<Fields> {
+      return useFieldsStateBase(fields, controller);
+    },
+    [controller]
+  );
+
   return useMemo((): UseFormControllerResult<Def> => {
     return {
       controller,
       refObject: formRefObjectResolved,
       ref: refCallback,
+      useFieldState,
+      useFieldsState,
     };
-  }, [controller, formRefObjectResolved, refCallback]);
+  }, [controller, formRefObjectResolved, refCallback, useFieldState, useFieldsState]);
 }

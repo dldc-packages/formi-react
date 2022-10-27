@@ -5,9 +5,8 @@ import { FormiKey } from './FormiKey';
 import { FormiIssuesBuilder } from './FormiIssuesBuilder';
 import { FormiFieldsStore } from './FormiFieldsStore';
 import { FormiFieldAny, FormiField } from './FormiField';
-import { FormiDefAny } from './FormiDef';
-import { FormiResult, FormiIssues, OnSubmit, FieldStateOf, OnSubmitActions, FieldStateAny, FormiIssue } from './types';
-import { useFormiFieldState } from './useFormiFieldState';
+import { FormiDefAny, FormiIssue } from './FormiDef';
+import { FormiResult, FormiIssues, OnSubmit, OnSubmitActions, FieldStateAny } from './types';
 
 const IS_FORM_CONTROLLER = Symbol('IS_FORM_CONTROLLER');
 
@@ -29,8 +28,6 @@ export interface FormiController<T extends FormiDefAny> {
 
   readonly mount: (formEl: HTMLFormElement) => void;
   readonly unmount: () => void;
-
-  readonly useFieldState: <FormField extends FormiFieldAny>(field: FormField) => FieldStateOf<FormField>;
 }
 
 export type FormiControllerOptions<Def extends FormiDefAny> = {
@@ -86,8 +83,6 @@ export const FormiController = (() => {
 
       mount,
       unmount,
-
-      useFieldState,
     };
 
     return self;
@@ -198,10 +193,6 @@ export const FormiController = (() => {
         next();
       });
       return result;
-    }
-
-    function useFieldState<FormField extends FormiFieldAny>(field: FormField): FieldStateOf<FormField> {
-      return useFormiFieldState(field, self);
     }
 
     function hasErrors(): boolean {

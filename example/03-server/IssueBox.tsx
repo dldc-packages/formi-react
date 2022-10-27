@@ -1,8 +1,9 @@
 import React from 'react';
-import { Issue } from './ServerExample';
+import { FormiIssue } from '../../src';
+import { UsernameIssue } from './ServerExample';
 
 interface Props {
-  issue: Issue;
+  issue: UsernameIssue | FormiIssue;
 }
 
 export function IssueBox({ issue }: Props) {

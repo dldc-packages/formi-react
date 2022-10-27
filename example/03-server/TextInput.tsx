@@ -1,17 +1,17 @@
 import React from 'react';
-import { FormiField_Value, useFormiFieldState } from '../../src';
+import { FormiField_Value, FormiIssue, useFieldState } from '../../src';
 import { IssueBox } from './IssueBox';
-import { Issue } from './ServerExample';
+import { UsernameIssue } from './ServerExample';
 
 type Props = {
   label: string;
-  field: FormiField_Value<string, Issue>;
+  field: FormiField_Value<string, FormiIssue | UsernameIssue>;
   type: 'password' | 'text' | 'email';
   defaultValue?: string;
 };
 
 export function TextInput({ label, field, type, defaultValue }: Props) {
-  const state = useFormiFieldState(field);
+  const state = useFieldState(field);
 
   return (
     <div className="input">

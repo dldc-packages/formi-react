@@ -11,7 +11,7 @@ export interface FormiIssuesBuilder<Issue> {
 export const FormiIssuesBuilder = (() => {
   return Object.assign(create, {});
 
-  function create<Def extends FormiDefAny>(def: Def): FormiIssuesBuilder<FieldAllIssueOf<Def>> {
+  function create<Def extends FormiDefAny>(_def: Def): FormiIssuesBuilder<FieldAllIssueOf<Def>> {
     const map = new Map<FormiFieldAny, Array<any>>();
 
     return {
@@ -29,7 +29,7 @@ export const FormiIssuesBuilder = (() => {
     }
 
     function add<F extends FormiFieldAny>(field: F, issue: FieldIssueOf<F>) {
-      console.log('TODO: make sure field is in def', field, def);
+      // TODO: make sure field is in def ?
 
       const issues = map.get(field) ?? [];
       issues.push(issue);

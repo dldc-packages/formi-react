@@ -1,18 +1,18 @@
 import React from 'react';
 import { z } from 'zod';
-import { useFormiForm, field } from '../../src';
+import { useFormi, FormiDef } from '../../src';
 import { FileInput } from './FileInput';
 import { TextInput } from './TextInput';
 
-const fieldsDef = field.object({
-  filename: field.zodString(
+const fieldsDef = FormiDef.object({
+  filename: FormiDef.zodString(
     z
       .string()
       .min(1)
       .max(20)
       .transform((v) => v.toLowerCase().replace(' ', '-'))
   ),
-  file: field.nonEmptyfile((file) => {
+  file: FormiDef.nonEmptyfile().validate((file) => {
     return { success: true, value: file.size };
   }),
 });
@@ -20,7 +20,7 @@ const fieldsDef = field.object({
 const FORM_NAME = 'server';
 
 export function FileExample() {
-  const { fields, Form } = useFormiForm({
+  const { fields, Form } = useFormi({
     fields: fieldsDef,
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {

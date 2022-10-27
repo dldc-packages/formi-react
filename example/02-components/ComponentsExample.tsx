@@ -1,18 +1,18 @@
 import React from 'react';
 import { z } from 'zod';
-import { field, useFormiForm } from '../../src';
+import { FormiDef, useFormi } from '../../src';
 import { TextInput } from './TextInput';
 
-const simpleFields = field.object({
-  username: field.zodString(z.string().min(1).max(20)),
-  email: field.zodString(z.string().email()),
-  password: field.zodString(z.string().min(8)),
+const simpleFields = FormiDef.object({
+  username: FormiDef.zodString(z.string().min(1).max(20)),
+  email: FormiDef.zodString(z.string().email()),
+  password: FormiDef.zodString(z.string().min(8)),
 });
 
 export function ComponentsExample() {
-  const { fields, Form } = useFormiForm({
+  const { fields, Form } = useFormi({
     fields: simpleFields,
-    formName: 'simple',
+    formName: 'components',
     onSubmit: ({ value }, actions) => {
       alert(JSON.stringify(value, null, 2));
       actions.preventDefault();

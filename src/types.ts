@@ -1,7 +1,6 @@
 import * as f from './FormiField';
 import * as d from './FormiDef';
 import { FormiKey } from './FormiKey';
-import { z } from 'zod';
 import { RawPath } from './tools/Path';
 import { FormiIssuesBuilder } from './FormiIssuesBuilder';
 
@@ -67,16 +66,6 @@ export type FieldAllIssueOf<Def extends d.FormiDefAny> = Def extends d.FormiDef_
   : Def extends d.FormiDef_Object<infer Children, any, infer I>
   ? I | { [K in keyof Children]: FieldAllIssueOf<Children[K]> }[keyof Children]
   : never;
-
-export type FormiIssue =
-  | { kind: 'InvalidNumber'; value: string }
-  | { kind: 'UnexpectedFile' }
-  | { kind: 'UnexpectedString' }
-  | { kind: 'MissingField' }
-  | { kind: 'ZodIssue'; issue: z.ZodIssue }
-  | { kind: 'FieldNotMounted' }
-  // generated when the validate fn throws an error
-  | { kind: 'ValidationError'; error: unknown };
 
 export type FormiIssuesItem<Issue> = { path: RawPath; issues: Array<Issue> };
 export type FormiIssues<Issue> = Array<FormiIssuesItem<Issue>>;

@@ -4,7 +4,7 @@ import { FormiDefAny } from './FormiDef';
 import { FormiFieldOf } from './FormiField';
 import { useFormiController } from './useFormiContext';
 
-export function useFormiControllerFields<Def extends FormiDefAny>(controller?: FormiController<Def>): FormiFieldOf<Def> {
+export function useFields<Def extends FormiDefAny>(controller?: FormiController<Def>): FormiFieldOf<Def> {
   const ctrl = useFormiController(controller);
   const fields = useSyncExternalStore(ctrl.subscribeFields, () => ctrl.getFields());
 

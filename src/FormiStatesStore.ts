@@ -1,10 +1,10 @@
 import { SubscribeMethod, Subscription } from 'suub';
-import { FormiDefValidateFn } from './FormiDef';
+import { FormiIssueBase, getFormiDefValidateFn } from './FormiDef';
 import { FormiField, FormiFieldAny } from './FormiField';
 import { FormiKey } from './FormiKey';
 import { ImmutableImmuMap, ImmutableImmuMapDraft } from './tools/ImmuMap';
 import { Path } from './tools/Path';
-import { FieldStateAny, FormiIssue, FormiIssues } from './types';
+import { FieldStateAny, FormiIssues } from './types';
 import { expectNever, shallowEqual } from './utils';
 
 export type FieldsStateMap = ImmutableImmuMap<FormiKey, FieldStateAny>;
@@ -70,7 +70,7 @@ export const FormiStatesStore = (() => {
                 return prev;
               }
               const input = getInput(draft, field, action.data);
-              const result = runValidate(field.def.validate, input);
+              const result = runValidate(field, input);
               const isTouched = false;
               return {
                 ...prev,
@@ -84,8 +84,6 @@ export const FormiStatesStore = (() => {
         });
       }
       if (action.type === 'Change') {
-        console.log(action);
-
         return state.produce((draft) => {
           for (const field of action.fieldList) {
             const input = getInput(draft, field, action.data);
@@ -94,7 +92,7 @@ export const FormiStatesStore = (() => {
               // input is the same, stop validation
               break;
             }
-            const result = runValidate(field.def.validate, input);
+            const result = runValidate(field, input);
             const isTouched = true;
             const next: FieldStateAny = {
               ...prev,
@@ -118,7 +116,7 @@ export const FormiStatesStore = (() => {
                 return prev;
               }
               const input = getInput(draft, field, action.data);
-              const result = runValidate(field.def.validate, input);
+              const result = runValidate(field, input);
               const isTouched = true;
               return {
                 ...prev,
@@ -138,7 +136,7 @@ export const FormiStatesStore = (() => {
             next();
             draft.updateOrThrow(field.key, (prev) => {
               const input = getInput(draft, field, action.data);
-              const result = runValidate(field.def.validate, input);
+              const result = runValidate(field, input);
               const isTouched = false;
               return {
                 ...prev,
@@ -245,9 +243,15 @@ export const FormiStatesStore = (() => {
 
     type GetValueResult = { resolved: false } | { resolved: true; value: any };
 
-    function runValidate(validate: FormiDefValidateFn<any, any, any>, value: any): ValidateResult {
+    function runValidate(field: FormiFieldAny, value: any): ValidateResult {
+      const isCombined = field.kind === 'Object' || field.kind === 'Repeat';
+      if (value === null && isCombined) {
+        // Don't run validate if children are not resolved
+        return { status: 'unkown' };
+      }
+      const validateFn = getFormiDefValidateFn(field.def);
       try {
-        const result = validate(value);
+        const result = validateFn(value);
         if (result.success) {
           if (result.value === undefined) {
             throw new Error(`Expected a value to be returned from the validation function (got undefined).`);
@@ -263,7 +267,7 @@ export const FormiStatesStore = (() => {
         }
         return { status: 'error', issues };
       } catch (error) {
-        const issue: FormiIssue = { kind: 'ValidationError', error };
+        const issue: FormiIssueBase = { kind: 'ValidationError', error };
         return { status: 'error', issues: [issue] };
       }
     }

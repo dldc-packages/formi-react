@@ -5,9 +5,9 @@ import { FormiFieldsStore } from './FormiFieldsStore';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 
 /**
- * Create a FormController then subscribe to form state
+ * Initialize a standalone fields store (without a controller).
  */
-export function useFormiFields<Def extends FormiDefAny>(formName: string, fieldsDef: Def): FormiFieldOf<Def> {
+export function useStandaloneFieldsStore<Def extends FormiDefAny>(formName: string, fieldsDef: Def): FormiFieldOf<Def> {
   const [fieldsStore] = useState(() => FormiFieldsStore(formName, fieldsDef));
 
   const fields = useSyncExternalStore(fieldsStore.subscribe, () => fieldsStore.getState());

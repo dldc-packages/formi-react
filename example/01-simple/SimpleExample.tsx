@@ -1,15 +1,16 @@
 import React from 'react';
 import { z } from 'zod';
-import { field, useFormiForm } from '../../src';
+import { FormiDef, useFormi } from '../../src';
+import { IssueBox } from './IssueBox';
 
-const simpleFields = field.object({
-  username: field.zodString(z.string().min(1).max(20)),
-  email: field.zodString(z.string().email()),
-  password: field.zodString(z.string().min(1)),
+const simpleFields = FormiDef.object({
+  username: FormiDef.zodString(z.string().min(1).max(20)),
+  email: FormiDef.zodString(z.string().email()),
+  password: FormiDef.zodString(z.string().min(1)),
 });
 
 export function SimpleExample() {
-  const { fields, Form } = useFormiForm({
+  const { fields, Form, useFieldsState } = useFormi({
     fields: simpleFields,
     formName: 'simple',
     onSubmit: ({ value }, actions) => {
@@ -19,24 +20,28 @@ export function SimpleExample() {
     },
   });
 
+  const { username, email, password } = fields.children;
+
+  const states = useFieldsState(fields.children);
+
   return (
     <Form>
       <h2>Simple</h2>
-      <p>
-        This is a basic example of how to use Formi. In this example we don't display validation errors but you can't submit if there are
-        some errors.
-      </p>
+      <p>This is a basic example of how to use Formi.</p>
       <div className="input">
-        <label>Username</label>
-        <input type="text" name={fields.get('username').name} defaultValue="my-username" />
+        <label htmlFor={username.id}>Username</label>
+        <input type="text" id={username.id} name={username.name} defaultValue="my-username" />
+        <IssueBox issues={states.username.touchedIssues} />
       </div>
       <div className="input">
-        <label>Email</label>
-        <input type="text" name={fields.get('email').name} />
+        <label htmlFor={email.id}>Email</label>
+        <input type="text" id={email.id} name={email.name} />
+        <IssueBox issues={states.email.touchedIssues} />
       </div>
       <div className="input">
-        <label>Password</label>
-        <input type="password" name={fields.get('password').name} />
+        <label htmlFor={password.id}>Password</label>
+        <input type="password" id={password.id} name={password.name} />
+        <IssueBox issues={states.password.touchedIssues} />
       </div>
       <div className="buttons">
         <button type="submit">Submit</button>

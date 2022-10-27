@@ -6,12 +6,13 @@
   --nc-tx-1: #ffffff;
   --nc-tx-2: #eeeeee;
   --nc-bg-1: #000000;
-  --nc-bg-2: #002700;
-  --nc-bg-3: #005800;
-  --nc-lk-1: #00ff00;
-  --nc-lk-2: #00c200;
+  --nc-bg-2: #000d1f;
+  --nc-bg-3: #002958;
+  --nc-lk-1: #00ffd5;
+  --nc-lk-2: #00c2a2;
+  --nc-lk-3: #dd572e;
   --nc-lk-tx: #000000;
-  --nc-ac-1: #00ff00;
+  --nc-ac-1: #00ffd9;
   --nc-ac-tx: #000000;
 }
 
@@ -45,7 +46,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #012501 inset !important;
+  -webkit-box-shadow: 0 0 0 30px var(--nc-bg-2) inset !important;
 }
 input:-webkit-autofill {
   -webkit-text-fill-color: white !important;
@@ -64,7 +65,7 @@ input:-webkit-autofill {
 }
 
 p.error {
-  color: var(--nc-lk-1);
+  color: var(--nc-lk-3);
   margin: 0;
   font-size: 0.8rem;
   margin-left: 0.2rem;

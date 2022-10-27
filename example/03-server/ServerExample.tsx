@@ -1,16 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
-import { FormiController, FormiIssue, useFormiForm, withIssue } from '../../src';
+import { FormiController, useFormi, FormiDef } from '../../src';
 import { TextInput } from './TextInput';
 
-export type Issue = FormiIssue | { kind: 'UsernameAlreadyUsed' };
+export type UsernameIssue = { kind: 'UsernameAlreadyUsed' };
 
-const field = withIssue<Issue>();
-
-const fieldsDef = field.object({
-  username: field.zodString(z.string().min(1).max(20)),
-  email: field.zodString(z.string().email()),
-  password: field.zodString(z.string().min(3)),
+const fieldsDef = FormiDef.object({
+  username: FormiDef.zodString<string, UsernameIssue>(z.string().min(1).max(20)),
+  email: FormiDef.zodString(z.string().email()),
+  password: FormiDef.zodString(z.string().min(3)),
 });
 
 const FORM_NAME = 'server';
@@ -34,7 +32,7 @@ export function ServerExample() {
 
   const submitting = status.status === 'pending';
 
-  const { fields, Form, refObject } = useFormiForm({
+  const { fields, Form, refObject } = useFormi({
     fields: fieldsDef,
     formName: FORM_NAME,
     onSubmit: ({ formData }, actions) => {

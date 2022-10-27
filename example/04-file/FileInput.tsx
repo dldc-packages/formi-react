@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormiField_Value, FormiIssue, useFormiFieldState } from '../../src';
+import { FormiField_Value, FormiIssue, useFieldState } from '../../src';
 import { IssueBox } from './IssueBox';
 
 type Props = {
@@ -8,7 +8,7 @@ type Props = {
 };
 
 export function FileInput({ label, field }: Props) {
-  const state = useFormiFieldState(field);
+  const state = useFieldState(field);
 
   return (
     <div className="input">

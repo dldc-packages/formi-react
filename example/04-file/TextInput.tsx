@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormiField_Value, useFormiFieldState, FormiIssue } from '../../src';
+import { FormiField_Value, useFieldState, FormiIssue } from '../../src';
 import { IssueBox } from './IssueBox';
 
 type Props = {
@@ -10,7 +10,7 @@ type Props = {
 };
 
 export function TextInput({ label, field, type, defaultValue }: Props) {
-  const state = useFormiFieldState(field);
+  const state = useFieldState(field);
 
   return (
     <div className="input">
