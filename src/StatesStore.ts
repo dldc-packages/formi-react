@@ -2,21 +2,22 @@ import { SubscribeMethod, Subscription } from 'suub';
 import { FormiIssueBase, getFormiDefValidateFn } from './FormiDef';
 import { FormiField, FormiFieldAny } from './FormiField';
 import { FormiKey } from './FormiKey';
-import { ImmutableImmuMap, ImmutableImmuMapDraft } from './tools/ImmuMap';
+// import { ImmutableImmuMap, ImmutableImmuMapDraft } from './tools/ImmuMap';
+import { ImmuWeakMap, ImmuWeakMapDraft } from './tools/ImmuWeakMap';
 import { Path } from './tools/Path';
 import { FieldStateAny, FormiIssues } from './types';
 import { expectNever, shallowEqual } from './utils';
 
-export type FieldsStateMap = ImmutableImmuMap<FormiKey, FieldStateAny>;
-export type FieldsStateMapDraft = ImmutableImmuMapDraft<FormiKey, FieldStateAny>;
+export type FieldsStateMap = ImmuWeakMap<FormiKey, FieldStateAny>;
+export type FieldsStateMapDraft = ImmuWeakMapDraft<FormiKey, FieldStateAny>;
 
 type FormiStatesActions =
   | { type: 'Init'; fields: FormiFieldAny }
-  | { type: 'Mount'; data: FormData; fields: FormiFieldAny }
-  | { type: 'Submit'; data: FormData; fields: FormiFieldAny }
-  | { type: 'Reset'; data: FormData; fields: FormiFieldAny }
-  | { type: 'Change'; data: FormData; fieldList: ReadonlyArray<FormiFieldAny> }
-  | { type: 'SetIssues'; issues: FormiIssues<any>; fields: FormiFieldAny };
+  | { type: 'Mount'; fields: FormiFieldAny; data: FormData }
+  | { type: 'Submit'; fields: FormiFieldAny; data: FormData }
+  | { type: 'Reset'; fields: FormiFieldAny; data: FormData }
+  | { type: 'Change'; fields: FormiFieldAny; data: FormData; fieldList: ReadonlyArray<FormiFieldAny> }
+  | { type: 'SetIssues'; fields: FormiFieldAny; issues: FormiIssues<any> };
 
 export interface StatesStore {
   readonly subscribe: SubscribeMethod<FieldsStateMap>;
@@ -67,6 +68,7 @@ export const StatesStore = (() => {
             }
             initializeFieldStateMap(field, draft, undefined);
           });
+          return draft.commit(FormiField.getKeys(action.fields));
         });
       }
       if (action.type === 'Mount') {
@@ -90,6 +92,7 @@ export const StatesStore = (() => {
               };
             });
           });
+          return draft.commit(FormiField.getKeys(action.fields));
         });
       }
       if (action.type === 'Change') {
@@ -114,6 +117,7 @@ export const StatesStore = (() => {
             };
             draft.set(field.key, next);
           }
+          return draft.commit(FormiField.getKeys(action.fields));
         });
       }
       if (action.type === 'Submit') {
@@ -137,6 +141,7 @@ export const StatesStore = (() => {
               };
             });
           });
+          return draft.commit(FormiField.getKeys(action.fields));
         });
       }
       if (action.type === 'Reset') {
@@ -160,6 +165,7 @@ export const StatesStore = (() => {
               };
             });
           });
+          return draft.commit(FormiField.getKeys(action.fields));
         });
       }
       if (action.type === 'SetIssues') {
@@ -183,6 +189,7 @@ export const StatesStore = (() => {
               };
             });
           });
+          return draft.commit(FormiField.getKeys(action.fields));
         });
       }
       return expectNever(action, (action) => {
@@ -191,10 +198,10 @@ export const StatesStore = (() => {
     }
 
     function createInitialState(fields: FormiFieldAny, issues: FormiIssues<any> | undefined): FieldsStateMap {
-      const map = ImmutableImmuMap.empty<FormiKey, FieldStateAny>();
+      const map = ImmuWeakMap.empty<FormiKey, FieldStateAny>();
       const draft = map.draft();
       initializeFieldStateMap(fields, draft, issues);
-      return draft.commit();
+      return draft.commit(FormiField.getKeys(fields));
     }
 
     function getFieldIssues(field: FormiFieldAny, issues: FormiIssues<any> | undefined) {

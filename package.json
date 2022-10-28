@@ -44,6 +44,7 @@
     "typecheck:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
+    "nanoid": "^4.0.0",
     "suub": "^3.2.1",
     "use-sync-external-store": "^1.2.0"
   },

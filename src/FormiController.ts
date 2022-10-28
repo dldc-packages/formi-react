@@ -152,12 +152,13 @@ export const FormiController = (() => {
       const name = input.name;
       const data = new FormData(form);
       const fieldPath = Path.from(name);
-      const fieldList = FormiField.findAllByPath(fieldsStore.getState(), fieldPath);
+      const fields = fieldsStore.getState();
+      const fieldList = FormiField.findAllByPath(fields, fieldPath);
       if (!fieldList) {
         console.warn(`Field not found: ${name}`);
         return;
       }
-      statesStore.dispatch({ type: 'Change', data, fieldList });
+      statesStore.dispatch({ type: 'Change', fields, data, fieldList });
     }
 
     function handleReset() {

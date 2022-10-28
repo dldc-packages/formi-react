@@ -13,7 +13,7 @@ const fieldsDef = FormiDef.object({
       .transform((v) => v.toLowerCase().replace(' ', '-'))
   ),
   file: FormiDef.nonEmptyfile().validate((file) => {
-    return { success: true, value: file.size };
+    return { success: true, value: { file, size: file.size } };
   }),
 });
 
@@ -25,7 +25,8 @@ export function FileExample() {
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();
-      console.log(value);
+      window.alert('Result logged to the console');
+      console.info(value);
     },
   });
 

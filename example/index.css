@@ -52,6 +52,12 @@ input:-webkit-autofill {
   -webkit-text-fill-color: white !important;
 }
 
+h1 {
+  text-align: center;
+  color: #0adb26;
+  font-style: italic;
+}
+
 .buttons {
   display: flex;
   flex-direction: row;

@@ -21,22 +21,17 @@ export function RepeatExample() {
     },
   });
 
-  console.log(fields);
-
   return (
     <Form>
       <h2>Date</h2>
-      <p>
-        This example uses a custom <code>DateInput</code> that is composed of three inputs (year, month, day) and also expose a custom field
-        def.
-      </p>
+      <p>This example uses a dynamic form with a repeatable field.</p>
       <TextInput field={fields.children.name} label="Recipe name" type="text" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginLeft: '2rem' }}>
         {fields.children.ingredients.children.map((ingredientField, index) => {
           return (
             <IngredientInput
               field={ingredientField}
-              key={ingredientField.id}
+              key={ingredientField.key.id}
               onRemove={() => {
                 fields.children.ingredients.actions.remove(index);
               }}
