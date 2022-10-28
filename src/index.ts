@@ -9,7 +9,6 @@ export * from './useFieldsState';
 export * from './useFieldState';
 export * from './useFormi';
 export * from './useFormiContext';
-export * from './useFormiController';
 export * from './useStandaloneFieldsStore';
 
 export * from './tools/Path';

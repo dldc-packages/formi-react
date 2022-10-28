@@ -7,6 +7,7 @@ import { ComponentsExample } from './02-components/ComponentsExample';
 import { ServerExample } from './03-server/ServerExample';
 import { FileExample } from './04-file/FileExample';
 import { DateExample } from './05-date/DateExample';
+import { RepeatExample } from './06-repeat/RepeatExample';
 
 const STRICT_MODE = false;
 
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <ServerExample />
       <FileExample />
       <DateExample />
+      <RepeatExample />
     </div>
   </StrictMode>
 );

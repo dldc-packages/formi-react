@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FormiFieldOf } from './FormiField';
 import { FormiDefAny } from './FormiDef';
-import { FormiFieldsStore } from './FormiFieldsStore';
+import { FieldsStore } from './FieldsStore';
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 
 /**

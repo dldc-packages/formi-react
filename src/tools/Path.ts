@@ -13,6 +13,7 @@ export interface Path {
   readonly toString: () => string;
   readonly append: (...raw: ReadonlyArray<Key>) => Path;
   readonly splitHead: () => [Key | null, Path];
+  readonly splitHeadOrThrow: () => [Key, Path];
   [Symbol.iterator](): Iterator<Key>;
 }
 
@@ -41,6 +42,7 @@ export const Path = (() => {
       toString: serialize,
       append,
       splitHead,
+      splitHeadOrThrow,
       [Symbol.iterator](): Iterator<Key> {
         return this.raw[Symbol.iterator]();
       },
@@ -64,6 +66,14 @@ export const Path = (() => {
       }
       const [head, ...tail] = raw;
       return [head, Path(...tail)];
+    }
+
+    function splitHeadOrThrow(): [Key, Path] {
+      const [head, tail] = splitHead();
+      if (head === null) {
+        throw new Error(`Cannot split head of empty path`);
+      }
+      return [head, tail];
     }
   }
 

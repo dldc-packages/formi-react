@@ -1,9 +1,9 @@
 import { SubscribeMethod } from 'suub';
-import { FieldsStateMap, FormiStatesStore } from './FormiStatesStore';
+import { FieldsStateMap, StatesStore } from './StatesStore';
 import { Path } from './tools/Path';
 import { FormiKey } from './FormiKey';
 import { FormiIssuesBuilder } from './FormiIssuesBuilder';
-import { FormiFieldsStore } from './FormiFieldsStore';
+import { FieldsStore } from './FieldsStore';
 import { FormiFieldAny, FormiField } from './FormiField';
 import { FormiDefAny, FormiIssue } from './FormiDef';
 import { FormiResult, FormiIssues, OnSubmit, OnSubmitActions, FieldStateAny } from './types';
@@ -61,8 +61,12 @@ export const FormiController = (() => {
     let onSubmit: OnSubmit<T> | null = userOnSubmit ?? null;
     let formEl: HTMLFormElement | null = null;
 
-    const fieldsStore = FormiFieldsStore(formName, fieldsDef);
-    const statesStore = FormiStatesStore(fieldsStore.getState(), initialIssues);
+    const fieldsStore = FieldsStore(formName, fieldsDef);
+    const statesStore = StatesStore(fieldsStore.getState(), initialIssues);
+
+    fieldsStore.subscribe((fields) => {
+      statesStore.dispatch({ type: 'Init', fields });
+    });
 
     const self: FormiController<T> = {
       [IS_FORM_CONTROLLER]: true,
@@ -88,7 +92,7 @@ export const FormiController = (() => {
     return self;
 
     function findFieldByKeyOrThrow(key: FormiKey): FormiFieldAny {
-      return FormiField.findFieldByKeyOrThrow(fieldsStore.getState(), key);
+      return FormiField.findByKeyOrThrow(fieldsStore.getState(), key);
     }
 
     function setOnSubmit(newOnSubmit: OnSubmit<T>) {
@@ -148,7 +152,7 @@ export const FormiController = (() => {
       const name = input.name;
       const data = new FormData(form);
       const fieldPath = Path.from(name);
-      const fieldList = FormiField.findAllFieldsByPath(fieldsStore.getState(), fieldPath);
+      const fieldList = FormiField.findAllByPath(fieldsStore.getState(), fieldPath);
       if (!fieldList) {
         console.warn(`Field not found: ${name}`);
         return;
@@ -166,10 +170,12 @@ export const FormiController = (() => {
       if (formEl && formEl !== newFormEl) {
         unmount();
       }
-      formEl = newFormEl;
-      formEl.addEventListener('submit', handleSubmit);
-      formEl.addEventListener('change', handleChange);
-      formEl.addEventListener('reset', handleReset);
+      if (formEl === null) {
+        formEl = newFormEl;
+        formEl.addEventListener('submit', handleSubmit);
+        formEl.addEventListener('change', handleChange);
+        formEl.addEventListener('reset', handleReset);
+      }
       const data = new FormData(formEl);
       if (validateOnMount) {
         statesStore.dispatch({ type: 'Mount', data, fields: fieldsStore.getState() });

@@ -2,18 +2,10 @@ import { Path, PathLike } from './tools/Path';
 import { expectNever } from './utils';
 import { FormiKey } from './FormiKey';
 import { FormiDef_Value, FormiDef_Values, FormiDef_Repeat, FormiDef_Object, FormiDefAny } from './FormiDef';
+import { FieldsStoreDispatch } from './FieldsStore';
 
 function notImplemented(): never {
   throw new Error('Not implemented');
-}
-
-interface FormiFieldPrivateApi {
-  readonly findByKey: (key: FormiKey) => FormiFieldAny | null;
-  readonly findByKeyOrThrow: (key: FormiKey) => FormiFieldAny;
-  readonly findByPath: (path: PathLike) => FormiFieldAny | null;
-  readonly findByPathOrThrow: (path: PathLike) => FormiFieldAny;
-  readonly findAllByPath: (path: PathLike) => null | Array<FormiFieldAny>;
-  readonly getChildren: () => Array<FormiFieldAny>;
 }
 
 export type FormiFieldOf<Def> = Def extends FormiDef_Value<infer V, infer I>
@@ -31,100 +23,249 @@ export type FormiFieldAny = FormiField_ValueAny | FormiField_ValuesAny | FormiFi
 export type FormiFieldKind = FormiFieldAny['kind'];
 
 const IS_FORMI_FIELD = Symbol('IS_FORMI_FIELD');
-const FORMI_FIELD_INTERNAL = Symbol('FORMI_FIELD_INTERNAL');
+const FORMI_FIELD_DISPATCH = Symbol('FORMI_FIELD_DISPATCH');
 const FORMI_FIELD_TYPES = Symbol('FORMI_FIELD_TYPES');
 
 export interface FormiField<Value, Issue> {
   readonly [IS_FORMI_FIELD]: true;
   readonly [FORMI_FIELD_TYPES]: { readonly __value: Value; readonly __issue: Issue };
-  readonly [FORMI_FIELD_INTERNAL]: FormiFieldPrivateApi;
+  readonly [FORMI_FIELD_DISPATCH]: FieldsStoreDispatch;
+  readonly formName: string;
   readonly key: FormiKey;
   readonly path: Path;
   readonly id: string;
 }
 
 export const FormiField = (() => {
-  return Object.assign(createFrom, {
-    createFrom,
+  return {
+    createFromDef,
     create,
     traverse,
     isFormiField,
-    findFieldByKeyOrThrow,
-    findFieldByPath,
-    findFieldByPathOrThrow,
-    findAllFieldsByPath,
-  });
+    findByKey,
+    findByKeyOrThrow,
+    findByPath,
+    findByPathOrThrow,
+    findAllByPath,
+    getChildren,
+    updateIn,
+    setPath,
+    getDispatch,
+  };
 
-  function findAllFieldsByPath(formiField: FormiFieldAny, path: PathLike): null | Array<FormiFieldAny> {
-    return formiField[FORMI_FIELD_INTERNAL].findAllByPath(path);
-  }
-
-  function findFieldByPath(formiField: FormiFieldAny, path: PathLike): FormiFieldAny | null {
-    return formiField[FORMI_FIELD_INTERNAL].findByPath(path);
-  }
-
-  function findFieldByPathOrThrow(formiField: FormiFieldAny, path: PathLike): FormiFieldAny {
-    return formiField[FORMI_FIELD_INTERNAL].findByPathOrThrow(path);
-  }
-
-  function findFieldByKeyOrThrow(formiField: FormiFieldAny, key: FormiKey): FormiFieldAny {
-    return formiField[FORMI_FIELD_INTERNAL].findByKeyOrThrow(key);
-  }
-
-  function create<Value, Issue>(
-    formName: string,
-    key: FormiKey,
-    path: Path,
-    internal: Omit<FormiFieldPrivateApi, 'findByKeyOrThrow' | 'findByPathOrThrow' | 'findAllByPath'>
-  ): FormiField<Value, Issue> {
+  function create<Value, Issue>(formName: string, key: FormiKey, path: Path, dispatch: FieldsStoreDispatch): FormiField<Value, Issue> {
     return {
       [IS_FORMI_FIELD]: true,
       [FORMI_FIELD_TYPES]: {} as any,
-      [FORMI_FIELD_INTERNAL]: {
-        findByKey: internal.findByKey,
-        findByKeyOrThrow: createFindByKeyOrThrow(internal.findByKey),
-        findByPath: internal.findByPath,
-        findByPathOrThrow: createFindByPathOrThrow(internal.findByPath),
-        findAllByPath: createFindAllByPathOrThrow(internal.findByPath),
-        getChildren: internal.getChildren,
-      },
+      [FORMI_FIELD_DISPATCH]: dispatch,
+      formName,
       key,
       path,
       id: Path.serialize([formName, ...path]),
     };
   }
 
-  function createFrom<Def extends FormiDefAny>(formName: string, def: Def, path: Path): FormiFieldAny {
+  function createFromDef<Def extends FormiDefAny>(formName: string, def: Def, path: Path, dispatch: FieldsStoreDispatch): FormiFieldAny {
     const key = FormiKey();
     if (def.kind === 'Value') {
-      return FormiField_Value(formName, key, path, def);
+      return FormiField_Value(formName, key, path, dispatch, def);
     }
     if (def.kind === 'Values') {
-      return FormiField_Values(formName, key, path, def);
+      return FormiField_Values(formName, key, path, dispatch, def);
     }
     if (def.kind === 'Repeat') {
       const children = Array.from({ length: def.initialCount }, (_, index): FormiFieldAny => {
-        return createFrom(formName, def.children, path.append(index));
+        return createFromDef(formName, def.children, path.append(index), dispatch);
       });
-      return FormiField_Repeat(formName, key, path, def, children);
+      return FormiField_Repeat(formName, key, path, dispatch, def, children);
     }
     if (def.kind === 'Object') {
       const key = FormiKey();
       const children: Record<string, FormiFieldAny> = {};
       Object.entries(def.children).forEach(([key, child]) => {
         Path.validatePathItem(key);
-        children[key] = createFrom(formName, child as FormiDefAny, path.append(key));
+        children[key] = createFromDef(formName, child as FormiDefAny, path.append(key), dispatch);
       });
-      return FormiField_Object(formName, key, path, def, children);
+      return FormiField_Object(formName, key, path, dispatch, def, children);
     }
     return expectNever(def, () => {
       throw new Error('Unsupported def type');
     });
   }
 
+  function getDispatch(field: FormiFieldAny): FieldsStoreDispatch {
+    return field[FORMI_FIELD_DISPATCH];
+  }
+
+  function setPath(field: FormiFieldAny, path: Path): FormiFieldAny {
+    if (Path.equal(field.path, path)) {
+      return field;
+    }
+    if (field.kind === 'Value') {
+      return FormiField_Value.clone(field, path);
+    }
+    if (field.kind === 'Values') {
+      return FormiField_Values.clone(field, path);
+    }
+    if (field.kind === 'Repeat') {
+      const children = field.children.map((child, index) => setPath(child, path.append(index)));
+      return FormiField_Repeat.clone(field, path, children);
+    }
+    if (field.kind === 'Object') {
+      const children: Record<string, FormiFieldAny> = {};
+      Object.entries(field.children).forEach(([key, child]) => {
+        children[key] = setPath(child, path.append(key));
+      });
+      return FormiField_Object.clone(field, path, children);
+    }
+    return expectNever(field);
+  }
+
+  function getChildren(field: FormiFieldAny): Array<FormiFieldAny> {
+    if (field.kind === 'Value' || field.kind === 'Values') {
+      return [];
+    }
+    if (field.kind === 'Repeat') {
+      return field.children;
+    }
+    if (field.kind === 'Object') {
+      return Object.values(field.children);
+    }
+    return expectNever(field);
+  }
+
+  function findAllByPath(field: FormiFieldAny, path: PathLike): null | Array<FormiFieldAny> {
+    const pathResolved = Path.from(path);
+    let current = field;
+    const fields: Array<FormiFieldAny> = [current];
+    for (const pathItem of pathResolved) {
+      const next = findByPath(current, [pathItem]);
+      if (!next) {
+        return null;
+      }
+      current = next;
+      fields.unshift(current);
+    }
+    return fields;
+  }
+
+  function updateIn(field: FormiFieldAny, path: Path, updateFn: (prev: FormiFieldAny) => FormiFieldAny): FormiFieldAny {
+    if (path.length === 0) {
+      return updateFn(field);
+    }
+    if (field.kind === 'Value' || field.kind === 'Values') {
+      throw new Error('Cannot update value field');
+    }
+    if (field.kind === 'Repeat') {
+      const [index, rest] = path.splitHeadOrThrow();
+      const child = field.children[index as number];
+      if (child === undefined) {
+        return field;
+      }
+      const updated = FormiField.updateIn(child, rest, updateFn);
+      if (updated === child) {
+        return field;
+      }
+      const nextChildren = [...field.children];
+      nextChildren[index as number] = updated as any;
+      // return create(formName, key, path, dispatch, self.def, nextChildren);
+      return FormiField_Repeat(field.formName, field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
+    }
+    if (field.kind === 'Object') {
+      const [childKey, rest] = path.splitHeadOrThrow();
+      const child = field.children[childKey as string];
+      if (child === undefined) {
+        return field;
+      }
+      const updated = FormiField.updateIn(child, rest, updateFn);
+      if (updated === child) {
+        return field;
+      }
+      const nextChildren = { ...field.children };
+      (nextChildren as any)[childKey] = updated as any;
+      return FormiField_Object(field.formName, field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
+    }
+    return expectNever(field);
+  }
+
+  function findByKeyOrThrow(field: FormiFieldAny, key: FormiKey): FormiFieldAny {
+    const result = findByKey(field, key);
+    if (!result) {
+      throw new Error(`No field found for key ${key}`);
+    }
+    return result;
+  }
+
+  function findByKey(field: FormiFieldAny, key: FormiKey): FormiFieldAny | null {
+    if (field.key === key) {
+      return field;
+    }
+    if (field.kind === 'Value') {
+      return null;
+    }
+    if (field.kind === 'Values') {
+      return null;
+    }
+    if (field.kind === 'Repeat') {
+      for (const child of field.children) {
+        const result = findByKey(child, key);
+        if (result) {
+          return result;
+        }
+      }
+      return null;
+    }
+    if (field.kind === 'Object') {
+      for (const child of Object.values(field.children)) {
+        const result = findByKey(child, key);
+        if (result) {
+          return result;
+        }
+      }
+      return null;
+    }
+    return expectNever(field);
+  }
+
+  function findByPathOrThrow(field: FormiFieldAny, path: PathLike): FormiFieldAny {
+    const result = findByPath(field, path);
+    if (!result) {
+      throw new Error(`No field found for path ${path}`);
+    }
+    return result;
+  }
+
+  function findByPath(field: FormiFieldAny, path: PathLike): FormiFieldAny | null {
+    const [key, rest] = Path.from(path).splitHead();
+    if (key === null) {
+      return field;
+    }
+    if (field.kind === 'Value') {
+      return null;
+    }
+    if (field.kind === 'Values') {
+      return null;
+    }
+    if (field.kind === 'Repeat') {
+      const child = field.children[key as number];
+      if (!child) {
+        return null;
+      }
+      return findByPath(child, rest);
+    }
+    if (field.kind === 'Object') {
+      const child = field.children[key as string];
+      if (!child) {
+        return null;
+      }
+      return findByPath(child, rest);
+    }
+    return expectNever(field);
+  }
+
   function traverse<T>(formiField: FormiFieldAny, visitor: (field: FormiFieldAny, next: () => Array<T>) => T): T {
     function next(current: FormiFieldAny): Array<T> {
-      return current[FORMI_FIELD_INTERNAL].getChildren().map((child) => {
+      return getChildren(current).map((child) => {
         return visitor(child, () => next(child));
       });
     }
@@ -148,57 +289,37 @@ export const FormiField = (() => {
   }
 })();
 
-export interface FormiField_Value_Actions {
-  readonly reset: () => void;
-  readonly setValue: (value: FormDataEntryValue) => void;
-}
-
 export type FormiField_ValueAny = FormiField_Value<any, any>;
 
 export interface FormiField_Value<Value, Issue> extends FormiField<Value, Issue> {
   readonly kind: 'Value';
   readonly def: FormiDef_Value<Value, Issue>;
   readonly name: string;
-  readonly actions: FormiField_Value_Actions;
 }
 
 export const FormiField_Value = (() => {
   return Object.assign(create, {
     isFormiField_Value,
+    clone,
   });
 
   function create<Value, Issue>(
     formName: string,
     key: FormiKey,
     path: Path,
+    dispatch: FieldsStoreDispatch,
     def: FormiDef_Value<Value, Issue>
   ): FormiField_Value<Value, Issue> {
-    const self: FormiField_Value<Value, Issue> = {
-      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
+    return {
+      ...FormiField.create(formName, key, path, dispatch),
       def,
       kind: 'Value',
       name: path.serialize(),
-      actions: { reset: notImplemented, setValue: notImplemented },
     };
-    return self;
+  }
 
-    function getChildren(): Array<FormiFieldAny> {
-      return [];
-    }
-
-    function findByKey(key: FormiKey): FormiFieldAny | null {
-      if (key === self.key) {
-        return self;
-      }
-      return null;
-    }
-
-    function findByPath(path: PathLike): FormiFieldAny | null {
-      if (path.length !== 0) {
-        return null;
-      }
-      return self;
-    }
+  function clone<Value, Issue>(field: FormiField_Value<Value, Issue>, path: Path): FormiField_Value<Value, Issue> {
+    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
   }
 
   function isFormiField_Value(field: any): field is FormiField_Value<any, any> {
@@ -206,57 +327,37 @@ export const FormiField_Value = (() => {
   }
 })();
 
-export interface FormiField_Values_Actions {
-  readonly reset: () => void;
-  readonly setValues: (values: Array<FormDataEntryValue>) => void;
-}
-
 export type FormiField_ValuesAny = FormiField_Values<any, any>;
 
 export interface FormiField_Values<Value, Issue> extends FormiField<Value, Issue> {
   readonly kind: 'Values';
   readonly def: FormiDef_Values<Value, Issue>;
   readonly name: string;
-  readonly actions: FormiField_Values_Actions;
 }
 
 export const FormiField_Values = (() => {
   return Object.assign(create, {
     isFormiField_Values,
+    clone,
   });
 
   function create<Value, Issue>(
     formName: string,
     key: FormiKey,
     path: Path,
+    dispatch: FieldsStoreDispatch,
     def: FormiDef_Values<Value, Issue>
   ): FormiField_Values<Value, Issue> {
-    const root: FormiField_Values<Value, Issue> = {
-      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
+    return {
+      ...FormiField.create(formName, key, path, dispatch),
       def,
       kind: 'Values',
       name: path.serialize(),
-      actions: { reset: notImplemented, setValues: notImplemented },
     };
-    return root;
+  }
 
-    function getChildren(): Array<FormiFieldAny> {
-      return [];
-    }
-
-    function findByKey(key: FormiKey): FormiFieldAny | null {
-      if (key === root.key) {
-        return root;
-      }
-      return null;
-    }
-
-    function findByPath(path: PathLike): FormiFieldAny | null {
-      if (path.length !== 0) {
-        return null;
-      }
-      return root;
-    }
+  function clone<Value, Issue>(field: FormiField_Values<Value, Issue>, path: Path): FormiField_Values<Value, Issue> {
+    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
   }
 
   function isFormiField_Values(field: any): field is FormiField_Values<any, any> {
@@ -265,7 +366,6 @@ export const FormiField_Values = (() => {
 })();
 
 export interface FormiField_Repeat_Children_Actions {
-  readonly reset: () => void;
   readonly push: () => void;
   readonly remove: (index: number) => void;
   readonly unshift: () => void;
@@ -284,56 +384,52 @@ export interface FormiField_Repeat<Children extends FormiDefAny, Value, Issue> e
 export type FormiField_RepeatAny = FormiField_Repeat<FormiDefAny, any, any>;
 
 export const FormiField_Repeat = (() => {
-  return Object.assign(create, {});
+  return Object.assign(create, {
+    isFormiField_Repeat,
+    clone,
+  });
 
   function create<Children extends FormiDefAny, Value, Issue>(
     formName: string,
     key: FormiKey,
     path: Path,
+    dispatch: FieldsStoreDispatch,
     def: FormiDef_Repeat<Children, Value, Issue>,
     children: FormiField_Repeat_Children<Children>
   ): FormiField_Repeat<Children, Value, Issue> {
     const self: FormiField_Repeat<Children, Value, Issue> = {
-      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
+      ...FormiField.create(formName, key, path, dispatch),
       kind: 'Repeat',
       def,
       children,
-      actions: { reset: notImplemented, push: notImplemented, remove: notImplemented, unshift: notImplemented },
+      actions: { remove, push, unshift },
       get: notImplemented,
     };
     return self;
 
-    function getChildren(): Array<FormiFieldAny> {
-      return children;
+    function remove(index: number): void {
+      dispatch({ kind: 'RepeatAction', path: self.path, action: { kind: 'Remove', index } });
     }
 
-    function findByKey(key: FormiKey): FormiFieldAny | null {
-      if (key === self.key) {
-        return self;
-      }
-      for (const child of self.children) {
-        const result = child[FORMI_FIELD_INTERNAL].findByKey(key);
-        if (result) {
-          return result;
-        }
-      }
-      return null;
+    function push(): void {
+      dispatch({ kind: 'RepeatAction', path: self.path, action: { kind: 'Push' } });
     }
 
-    function findByPath(path: PathLike): FormiFieldAny | null {
-      const [key, rest] = Path.from(path).splitHead();
-      if (key === null) {
-        return self;
-      }
-      if (typeof key !== 'number') {
-        return null;
-      }
-      const child = self.children[key];
-      if (!child) {
-        return null;
-      }
-      return child[FORMI_FIELD_INTERNAL].findByPath(rest);
+    function unshift(): void {
+      dispatch({ kind: 'RepeatAction', path: self.path, action: { kind: 'Unshift' } });
     }
+  }
+
+  function clone<Children extends FormiDefAny, Value, Issue>(
+    field: FormiField_Repeat<Children, Value, Issue>,
+    path: Path,
+    children: FormiField_Repeat_Children<Children>
+  ): FormiField_Repeat<Children, Value, Issue> {
+    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
+  }
+
+  function isFormiField_Repeat(field: any): field is FormiField_Repeat<any, any, any> {
+    return FormiField.isFormiField(field, 'Repeat');
   }
 })();
 
@@ -341,45 +437,37 @@ export type FormiField_Object_Children<Children extends Record<string, FormiDefA
   [K in keyof Children]: FormiFieldOf<Children[K]>;
 };
 
-export interface FormiField_Object_Actions {
-  readonly reset: () => void;
-}
-
 export interface FormiField_Object<Children extends Record<string, FormiDefAny>, Value, Issue> extends FormiField<Value, Issue> {
   readonly kind: 'Object';
   readonly def: FormiDef_Object<Children, Value, Issue>;
   readonly children: FormiField_Object_Children<Children>;
-  readonly action: FormiField_Object_Actions;
   readonly get: <K extends keyof Children>(key: K) => FormiFieldOf<Children[K]>;
 }
 
 export type FormiField_ObjectAny = FormiField_Object<Record<string, FormiDefAny>, any, any>;
 
 export const FormiField_Object = (() => {
-  return Object.assign(create, {});
+  return Object.assign(create, {
+    isFormiField_Object,
+    clone,
+  });
 
   function create<Children extends Record<string, FormiDefAny>, Value, Issue>(
     formName: string,
     key: FormiKey,
     path: Path,
+    dispatch: FieldsStoreDispatch,
     def: FormiDef_Object<Children, Value, Issue>,
     children: FormiField_Object_Children<Children>
   ): FormiField_Object<Children, Value, Issue> {
-    const childrenArr = Array.from(Object.values(children));
-
     const self: FormiField_Object<Children, Value, Issue> = {
-      ...FormiField.create(formName, key, path, { findByKey, findByPath, getChildren }),
+      ...FormiField.create(formName, key, path, dispatch),
       kind: 'Object',
       def: def,
       children,
-      action: { reset: notImplemented },
       get,
     };
     return self;
-
-    function getChildren(): Array<FormiFieldAny> {
-      return childrenArr;
-    }
 
     function get<K extends keyof Children>(key: K): FormiFieldOf<Children[K]> {
       const child = children[key];
@@ -388,74 +476,17 @@ export const FormiField_Object = (() => {
       }
       return child;
     }
+  }
 
-    function findByKey(key: FormiKey): FormiFieldAny | null {
-      if (key === self.key) {
-        return self as FormiField_ObjectAny;
-      }
-      for (const child of Object.values(self.children)) {
-        const result = child[FORMI_FIELD_INTERNAL].findByKey(key);
-        if (result) {
-          return result;
-        }
-      }
-      return null;
-    }
+  function isFormiField_Object(field: any): field is FormiField_Object<any, any, any> {
+    return FormiField.isFormiField(field, 'Object');
+  }
 
-    function findByPath(path: PathLike): FormiFieldAny | null {
-      const [key, rest] = Path.from(path).splitHead();
-      if (key === null) {
-        return self as FormiField_ObjectAny;
-      }
-      if (typeof key !== 'string') {
-        return null;
-      }
-      const child = self.children[key];
-      if (!child) {
-        return null;
-      }
-      return child[FORMI_FIELD_INTERNAL].findByPath(rest);
-    }
+  function clone<Children extends Record<string, FormiDefAny>, Value, Issue>(
+    field: FormiField_Object<Children, Value, Issue>,
+    path: Path,
+    children: FormiField_Object_Children<Children>
+  ): FormiField_Object<Children, Value, Issue> {
+    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
   }
 })();
-
-function createFindByKeyOrThrow(findByKey: (key: FormiKey) => FormiFieldAny | null) {
-  return function findByKeyOrThrow(key: FormiKey): FormiFieldAny {
-    const field = findByKey(key);
-    if (!field) {
-      throw new Error(`No field found for key ${key}`);
-    }
-    return field;
-  };
-}
-
-function createFindByPathOrThrow(findByPath: (path: PathLike) => FormiFieldAny | null) {
-  return function findByPathOrThrow(path: PathLike): FormiFieldAny {
-    const field = findByPath(path);
-    if (!field) {
-      throw new Error(`No field found with path ${path}`);
-    }
-    return field;
-  };
-}
-
-function createFindAllByPathOrThrow(findByPath: (path: PathLike) => FormiFieldAny | null) {
-  return function findByPathOrThrow(path: PathLike): null | Array<FormiFieldAny> {
-    const pathResolved = Path.from(path);
-    const root = findByPath([]);
-    if (!root) {
-      return null;
-    }
-    let current = root;
-    const fields: Array<FormiFieldAny> = [current];
-    for (const pathItem of pathResolved) {
-      const next = current[FORMI_FIELD_INTERNAL].findByPath([pathItem]);
-      if (!next) {
-        return null;
-      }
-      current = next;
-      fields.unshift(current);
-    }
-    return fields;
-  };
-}

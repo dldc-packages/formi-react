@@ -11,26 +11,23 @@ export type FieldsStateMap = ImmutableImmuMap<FormiKey, FieldStateAny>;
 export type FieldsStateMapDraft = ImmutableImmuMapDraft<FormiKey, FieldStateAny>;
 
 type FormiStatesActions =
+  | { type: 'Init'; fields: FormiFieldAny }
   | { type: 'Mount'; data: FormData; fields: FormiFieldAny }
   | { type: 'Submit'; data: FormData; fields: FormiFieldAny }
   | { type: 'Reset'; data: FormData; fields: FormiFieldAny }
   | { type: 'Change'; data: FormData; fieldList: ReadonlyArray<FormiFieldAny> }
   | { type: 'SetIssues'; issues: FormiIssues<any>; fields: FormiFieldAny };
 
-export interface FormiStatesStore {
+export interface StatesStore {
   readonly subscribe: SubscribeMethod<FieldsStateMap>;
   readonly getState: () => FieldsStateMap;
   readonly dispatch: (action: FormiStatesActions) => FieldsStateMap;
-  // readonly hasErrors: () => boolean;
-  // // Get the final value of the form
-  // readonly getValueOrThrow: () => any;
-  // readonly getIssuesOrThrow: () => FormiIssues<any>;
 }
 
-export const FormiStatesStore = (() => {
+export const StatesStore = (() => {
   return create;
 
-  function create(fields: FormiFieldAny, issues: FormiIssues<any> | undefined): FormiStatesStore {
+  function create(fields: FormiFieldAny, issues: FormiIssues<any> | undefined): StatesStore {
     let state: FieldsStateMap = createInitialState(fields, issues);
     const subscription = Subscription<FieldsStateMap>();
 
@@ -60,6 +57,18 @@ export const FormiStatesStore = (() => {
     }
 
     function reducer(state: FieldsStateMap, action: FormiStatesActions): FieldsStateMap {
+      if (action.type === 'Init') {
+        return state.produce((draft) => {
+          FormiField.traverse(action.fields, (field, next) => {
+            const state = draft.get(field.key);
+            if (state) {
+              next();
+              return;
+            }
+            initializeFieldStateMap(field, draft, undefined);
+          });
+        });
+      }
       if (action.type === 'Mount') {
         return state.produce((draft) => {
           FormiField.traverse(action.fields, (field, next) => {

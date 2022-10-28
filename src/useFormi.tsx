@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { useLayoutEffect as reactULE, useEffect, useId, useRef, useState } from 'react';
 import { MutableRefObject, useCallback, useMemo } from 'react';
 import { FormiController } from './FormiController';
 import { FieldStateOf, FormiIssues, OnSubmit } from './types';
-import { useFormController, FormRefObject, FormRefCallback } from './useFormiController';
 import { FormiFieldAny, FormiFieldOf } from './FormiField';
 import { FormiDefAny } from './FormiDef';
 import { FormiContextProvider } from './useFormiContext';
 import { useFields } from './useFields';
-import { FieldsBase, FieldsStates } from './useFieldsState';
+import { FieldsBase, FieldsStates, useFieldsState as useFieldsStateBase } from './useFieldsState';
+import { useFieldState as useFieldStateBase } from './useFieldState';
+
+export type FormRefObject = MutableRefObject<HTMLFormElement | null>;
+export type FormRefCallback = (form: HTMLFormElement | null) => void;
+
+declare const window: any;
+
+const useLayoutEffect = typeof window !== 'undefined' ? reactULE : useEffect;
 
 export type UseFormiOptions<Def extends FormiDefAny> = {
   fields: Def;
@@ -34,23 +41,80 @@ export type UseFormiResult<Def extends FormiDefAny> = {
 /**
  * Create a FormController then subscribe to form state
  */
-export function useFormi<Def extends FormiDefAny>(options: UseFormiOptions<Def>): UseFormiResult<Def> {
-  const { controller, ref, refObject, useFieldState, useFieldsState } = useFormController(options);
+export function useFormi<Def extends FormiDefAny>({
+  fields: fieldsDef,
+  formName,
+  onSubmit,
+  validateOnMount,
+  formRefObject,
+  issues,
+}: UseFormiOptions<Def>): UseFormiResult<Def> {
+  const formId = useId();
+  const formNameResolved = formName ?? formId;
+  const defaultFormRefObject = useRef<HTMLFormElement | null>(null);
+
+  const formRefObjectResolved = formRefObject ?? defaultFormRefObject;
+
+  const refCallback = useCallback(
+    (form: HTMLFormElement | null) => {
+      if (form === formRefObjectResolved.current) {
+        return;
+      }
+      formRefObjectResolved.current = form;
+    },
+    [formRefObjectResolved]
+  );
+
+  const [controller] = useState(() =>
+    FormiController<Def>({ formName: formNameResolved, fields: fieldsDef, onSubmit, validateOnMount, initialIssues: issues })
+  );
+
+  const fields = useFields(controller);
+
+  useLayoutEffect(() => {
+    if (formRefObjectResolved.current) {
+      controller.mount(formRefObjectResolved.current);
+    }
+  }, [controller, formRefObjectResolved, fields]);
+
+  useLayoutEffect(() => {
+    if (onSubmit) {
+      controller.setOnSubmit(onSubmit);
+    }
+  }, [controller, onSubmit]);
+
+  useLayoutEffect(() => {
+    if (issues) {
+      controller.setIssues(issues);
+    }
+  }, [controller, issues]);
+
+  const useFieldState = useCallback(
+    function useFieldState<FormField extends FormiFieldAny>(field: FormField): FieldStateOf<FormField> {
+      return useFieldStateBase(field, controller);
+    },
+    [controller]
+  );
+
+  const useFieldsState = useCallback(
+    function useFieldsState<Fields extends FieldsBase>(fields: Fields): FieldsStates<Fields> {
+      return useFieldsStateBase(fields, controller);
+    },
+    [controller]
+  );
 
   const Form = useCallback(
     (props: Omit<HtmlFormProps, 'ref'>): JSX.Element => {
       return (
         <FormiContextProvider controller={controller}>
-          <form {...props} ref={ref} {...props} />
+          <form {...props} ref={refCallback} {...props} />
         </FormiContextProvider>
       );
     },
-    [controller, ref]
+    [controller, refCallback]
   );
 
-  const fields = useFields(controller);
-
   return useMemo((): UseFormiResult<Def> => {
-    return { controller, ref, refObject, Form, fields, useFieldState, useFieldsState };
-  }, [Form, controller, fields, ref, refObject, useFieldState, useFieldsState]);
+    return { controller, ref: refCallback, refObject: formRefObjectResolved, Form, fields, useFieldState, useFieldsState };
+  }, [Form, controller, fields, formRefObjectResolved, refCallback, useFieldState, useFieldsState]);
 }
