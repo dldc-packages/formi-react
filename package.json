@@ -37,6 +37,7 @@
     "release": "yarn run build && np",
     "test": "yarn run lint && jest --coverage",
     "test:cov:watch": "jest --coverage --watch --all",
+    "test:cov": "jest --coverage --all",
     "test:run": "jest",
     "test:watch": "jest --watch",
     "example:run": "vite example",
@@ -44,7 +45,6 @@
     "typecheck:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
-    "nanoid": "^4.0.0",
     "suub": "^3.2.1",
     "use-sync-external-store": "^1.2.0"
   },

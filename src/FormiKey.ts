@@ -1,4 +1,4 @@
-import { nanoid } from 'nanoid';
+import { nanoid } from './utils';
 
 const FORMI_KEY = Symbol('FORMI_KEY');
 

@@ -12,6 +12,7 @@ export interface ImmuWeakMap<K extends object, V> {
 export const ImmuWeakMap = (() => {
   return Object.assign(create, {
     empty,
+    isImmuWeakMap,
   });
 
   function create<K extends object, V>(data: WeakMap<K, V>): ImmuWeakMap<K, V> {
@@ -47,6 +48,10 @@ export const ImmuWeakMap = (() => {
     function produce(update: (draft: ImmuWeakMapDraft<K, V>) => ImmuWeakMap<K, V>): ImmuWeakMap<K, V> {
       return update(draft());
     }
+  }
+
+  function isImmuWeakMap(val: any): val is ImmuWeakMap<any, any> {
+    return val && val[IS_IMMU_WEAK_MAP] === true;
   }
 
   function empty<K extends object, V>(): ImmuWeakMap<K, V> {
