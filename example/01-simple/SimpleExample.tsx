@@ -3,6 +3,9 @@ import { z } from 'zod';
 import { FormiDef, useFormi } from '../../src';
 import { IssueBox } from './IssueBox';
 
+/**
+ * 1. Define the form schema
+ */
 const simpleFields = FormiDef.object({
   username: FormiDef.zodString(z.string().min(1).max(20)),
   email: FormiDef.zodString(z.string().email()),
@@ -10,20 +13,35 @@ const simpleFields = FormiDef.object({
 });
 
 export function SimpleExample() {
+  /**
+   * 2. Use the useFormi hook to create a form instance
+   */
   const { fields, Form, useFieldsState } = useFormi({
-    fields: simpleFields,
     formName: 'simple',
+    fields: simpleFields,
     onSubmit: ({ value }, actions) => {
+      // [Optional] Do something with the form value
       alert(JSON.stringify(value, null, 2));
+      // [Optional] Don't submit the form to the server
       actions.preventDefault();
+      // [Optional] Reset the form
       actions.reset();
     },
   });
 
+  /**
+   * 3. Access the fields of your form...
+   */
   const { username, email, password } = fields.children;
 
+  /**
+   * 4. Read the state of each field to display validation errors
+   */
   const states = useFieldsState(fields.children);
 
+  /**
+   * 5. Render the form
+   */
   return (
     <Form>
       <h2>Simple</h2>
