@@ -61,6 +61,17 @@ export function ComponentsExample() {
 }
 ```
 
+## How it works
+
+React Formi let the browser handle the state of each inputs (they are uncontrolled). But that does not mean that React Formi has no state. In fact React Formi is in charge of two things:
+
+- The state of the shape of the form (the structure, or schema of the form) and the names of the inputs.
+- The state of the validation and transformation of the form (field issues, submitted, etc).
+
+To do so, React Formi only needs a ref to the `form` element, then it listens the `change`, `reset` and `submit` events to update its state.
+
+**Note**: The `change` event of the `form` element is only triggered when the user `blurs` an input with a different value. This means that with React Formi you don't get _validation as you type_ (you can if you really want). This behavior is the same as the default one in teh browser and garantees that writing in an input is fast.
+
 # API
 
 ## `FormiDef`
