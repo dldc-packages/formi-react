@@ -17,13 +17,13 @@ export function RepeatExample() {
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();
-      alert(JSON.stringify(value, null, 2));
+      alert(JSON.stringify(value, null, 4));
     },
   });
 
   return (
     <Form>
-      <h2>Date</h2>
+      <h2>Repeat</h2>
       <p>This example uses a dynamic form with a repeatable field.</p>
       <TextInput field={fields.children.name} label="Recipe name" type="text" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginLeft: '2rem' }}>

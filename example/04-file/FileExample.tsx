@@ -10,7 +10,7 @@ const fieldsDef = FormiDef.object({
       .string()
       .min(1)
       .max(20)
-      .transform((v) => v.toLowerCase().replace(' ', '-'))
+      .transform((v) => v.toLowerCase().replaceAll(' ', '-'))
   ),
   file: FormiDef.nonEmptyfile().validate((file) => {
     return { success: true, value: { file, size: file.size } };

@@ -34,7 +34,6 @@ export interface FormiField<Value, Issue> {
   readonly [FORMI_FIELD_TYPES]: { readonly __value: Value; readonly __issue: Issue };
   readonly [FORMI_FIELD_DISPATCH]: FieldsStoreDispatch;
   readonly [FORMI_FIELD_KEYS]: Keys;
-  readonly formName: string;
   readonly key: FormiKey;
   readonly path: Path;
   readonly id: string;
@@ -58,47 +57,40 @@ export const FormiField = (() => {
     getKeys,
   };
 
-  function create<Value, Issue>(
-    formName: string,
-    key: FormiKey,
-    path: Path,
-    dispatch: FieldsStoreDispatch,
-    keys: Keys
-  ): FormiField<Value, Issue> {
+  function create<Value, Issue>(key: FormiKey, path: Path, dispatch: FieldsStoreDispatch, keys: Keys): FormiField<Value, Issue> {
     return {
       [IS_FORMI_FIELD]: true,
       [FORMI_FIELD_TYPES]: {} as any,
       [FORMI_FIELD_DISPATCH]: dispatch,
       [FORMI_FIELD_KEYS]: keys,
-      formName,
       key,
       path,
-      id: Path.serialize([formName, ...path]),
+      id: path.serialize(),
     };
   }
 
-  function createFromDef<Def extends FormiDefAny>(formName: string, def: Def, path: Path, dispatch: FieldsStoreDispatch): FormiFieldAny {
+  function createFromDef<Def extends FormiDefAny>(def: Def, path: Path, dispatch: FieldsStoreDispatch): FormiFieldAny {
     const key = FormiKey();
     if (def.kind === 'Value') {
-      return FormiField_Value(formName, key, path, dispatch, def);
+      return FormiField_Value(key, path, dispatch, def);
     }
     if (def.kind === 'Values') {
-      return FormiField_Values(formName, key, path, dispatch, def);
+      return FormiField_Values(key, path, dispatch, def);
     }
     if (def.kind === 'Repeat') {
       const children = Array.from({ length: def.initialCount }, (_, index): FormiFieldAny => {
-        return createFromDef(formName, def.children, path.append(index), dispatch);
+        return createFromDef(def.children, path.append(index), dispatch);
       });
-      return FormiField_Repeat(formName, key, path, dispatch, def, children);
+      return FormiField_Repeat(key, path, dispatch, def, children);
     }
     if (def.kind === 'Object') {
       const key = FormiKey();
       const children: Record<string, FormiFieldAny> = {};
       Object.entries(def.children).forEach(([key, child]) => {
         Path.validatePathItem(key);
-        children[key] = createFromDef(formName, child as FormiDefAny, path.append(key), dispatch);
+        children[key] = createFromDef(child as FormiDefAny, path.append(key), dispatch);
       });
-      return FormiField_Object(formName, key, path, dispatch, def, children);
+      return FormiField_Object(key, path, dispatch, def, children);
     }
     return expectNever(def, () => {
       throw new Error('Unsupported def type');
@@ -185,7 +177,7 @@ export const FormiField = (() => {
       const nextChildren = [...field.children];
       nextChildren[index as number] = updated as any;
       // return create(formName, key, path, dispatch, self.def, nextChildren);
-      return FormiField_Repeat(field.formName, field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
+      return FormiField_Repeat(field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
     }
     if (field.kind === 'Object') {
       const [childKey, rest] = path.splitHeadOrThrow();
@@ -199,7 +191,7 @@ export const FormiField = (() => {
       }
       const nextChildren = { ...field.children };
       (nextChildren as any)[childKey] = updated as any;
-      return FormiField_Object(field.formName, field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
+      return FormiField_Object(field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
     }
     return expectNever(field);
   }
@@ -320,14 +312,13 @@ export const FormiField_Value = (() => {
   });
 
   function create<Value, Issue>(
-    formName: string,
     key: FormiKey,
     path: Path,
     dispatch: FieldsStoreDispatch,
     def: FormiDef_Value<Value, Issue>
   ): FormiField_Value<Value, Issue> {
     return {
-      ...FormiField.create(formName, key, path, dispatch, [key]),
+      ...FormiField.create(key, path, dispatch, [key]),
       def,
       kind: 'Value',
       name: path.serialize(),
@@ -335,7 +326,7 @@ export const FormiField_Value = (() => {
   }
 
   function clone<Value, Issue>(field: FormiField_Value<Value, Issue>, path: Path): FormiField_Value<Value, Issue> {
-    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
+    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
   }
 
   function isFormiField_Value(field: any): field is FormiField_Value<any, any> {
@@ -358,14 +349,13 @@ export const FormiField_Values = (() => {
   });
 
   function create<Value, Issue>(
-    formName: string,
     key: FormiKey,
     path: Path,
     dispatch: FieldsStoreDispatch,
     def: FormiDef_Values<Value, Issue>
   ): FormiField_Values<Value, Issue> {
     return {
-      ...FormiField.create(formName, key, path, dispatch, [key]),
+      ...FormiField.create(key, path, dispatch, [key]),
       def,
       kind: 'Values',
       name: path.serialize(),
@@ -373,7 +363,7 @@ export const FormiField_Values = (() => {
   }
 
   function clone<Value, Issue>(field: FormiField_Values<Value, Issue>, path: Path): FormiField_Values<Value, Issue> {
-    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
+    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
   }
 
   function isFormiField_Values(field: any): field is FormiField_Values<any, any> {
@@ -406,7 +396,6 @@ export const FormiField_Repeat = (() => {
   });
 
   function create<Children extends FormiDefAny, Value, Issue>(
-    formName: string,
     key: FormiKey,
     path: Path,
     dispatch: FieldsStoreDispatch,
@@ -415,7 +404,7 @@ export const FormiField_Repeat = (() => {
   ): FormiField_Repeat<Children, Value, Issue> {
     const keys = [key, ...children.map(FormiField.getKeys).flat()];
     const self: FormiField_Repeat<Children, Value, Issue> = {
-      ...FormiField.create(formName, key, path, dispatch, keys),
+      ...FormiField.create(key, path, dispatch, keys),
       kind: 'Repeat',
       def,
       children,
@@ -442,7 +431,7 @@ export const FormiField_Repeat = (() => {
     path: Path,
     children: FormiField_Repeat_Children<Children>
   ): FormiField_Repeat<Children, Value, Issue> {
-    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
+    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
   }
 
   function isFormiField_Repeat(field: any): field is FormiField_Repeat<any, any, any> {
@@ -470,7 +459,6 @@ export const FormiField_Object = (() => {
   });
 
   function create<Children extends Record<string, FormiDefAny>, Value, Issue>(
-    formName: string,
     key: FormiKey,
     path: Path,
     dispatch: FieldsStoreDispatch,
@@ -479,7 +467,7 @@ export const FormiField_Object = (() => {
   ): FormiField_Object<Children, Value, Issue> {
     const keys = [key, ...Object.values(children).map(FormiField.getKeys).flat()];
     const self: FormiField_Object<Children, Value, Issue> = {
-      ...FormiField.create(formName, key, path, dispatch, keys),
+      ...FormiField.create(key, path, dispatch, keys),
       kind: 'Object',
       def: def,
       children,
@@ -505,6 +493,6 @@ export const FormiField_Object = (() => {
     path: Path,
     children: FormiField_Object_Children<Children>
   ): FormiField_Object<Children, Value, Issue> {
-    return create(field.formName, field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
+    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
   }
 })();

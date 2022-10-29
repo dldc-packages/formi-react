@@ -8,6 +8,8 @@ import { ServerExample } from './03-server/ServerExample';
 import { FileExample } from './04-file/FileExample';
 import { DateExample } from './05-date/DateExample';
 import { RepeatExample } from './06-repeat/RepeatExample';
+import { SingleInputExample } from './07-single-input/SingleInputExample';
+import { InputTypesExample } from './09-input-types/InputTypesExample';
 
 const STRICT_MODE = false;
 
@@ -23,6 +25,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <FileExample />
       <DateExample />
       <RepeatExample />
+      <SingleInputExample />
+      <InputTypesExample />
     </div>
   </StrictMode>
 );

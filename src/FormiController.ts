@@ -153,7 +153,12 @@ export const FormiController = (() => {
       const data = new FormData(form);
       const fieldPath = Path.from(name);
       const fields = fieldsStore.getState();
-      const fieldList = FormiField.findAllByPath(fields, fieldPath);
+      const [inputFormName, path] = fieldPath.splitHeadOrThrow();
+      if (inputFormName !== formName) {
+        console.warn('Input form name does not match form name');
+        return;
+      }
+      const fieldList = FormiField.findAllByPath(fields, path);
       if (!fieldList) {
         console.warn(`Field not found: ${name}`);
         return;

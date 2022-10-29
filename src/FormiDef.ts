@@ -19,11 +19,19 @@ export type FormiIssueBase = { kind: 'FieldNotMounted' } | { kind: 'ValidationEr
 export type FormiIssueString = FormiIssueBase | { kind: 'UnexpectedFile' };
 export type FormiIssueFile = FormiIssueBase | { kind: 'UnexpectedString' } | { kind: 'MissingField' };
 export type FormiIssueNumber = FormiIssueString | { kind: 'InvalidNumber'; value: string };
+export type FormiIssueCheckbox = FormiIssueString;
 export type FormiIssueNonEmptyFile = FormiIssueFile | { kind: 'EmptyFile' };
 
 export type FormiIssueZod = { kind: 'ZodIssue'; issue: z.ZodIssue };
 
-export type FormiIssue = FormiIssueBase | FormiIssueString | FormiIssueFile | FormiIssueNumber | FormiIssueNonEmptyFile | FormiIssueZod;
+export type FormiIssue =
+  | FormiIssueBase
+  | FormiIssueString
+  | FormiIssueFile
+  | FormiIssueNumber
+  | FormiIssueCheckbox
+  | FormiIssueNonEmptyFile
+  | FormiIssueZod;
 
 export interface FormiDef_Value<Value, Issue> {
   readonly [FORMI_DEF_INTERNAL]: {
@@ -99,11 +107,15 @@ export function getFormiDefValidateFn(def: FormiDefAny): FormiDefValidateFn<any,
 export const FormiDef = (() => {
   return {
     zodValidator,
+
     value,
     values,
     object,
     repeat,
+
     string,
+    number,
+    checkbox,
     file,
     nonEmptyfile,
     zodString,
@@ -131,6 +143,8 @@ export const FormiDef = (() => {
     return createWithValidate({ kind: 'Repeat', children: field, initialCount });
   }
 
+  // Utils
+
   function string<Issue = never>(): FormiDef_Value<string, FormiIssueString | Issue> {
     return value().validate<string, FormiIssueString>((entry) => {
       if (entry === null) {
@@ -153,6 +167,18 @@ export const FormiDef = (() => {
         return { success: false, issue: { kind: 'InvalidNumber', value: entry } };
       }
       return { success: true, value: numberValue };
+    });
+  }
+
+  function checkbox<Issue = never>(): FormiDef_Value<boolean, FormiIssueCheckbox | Issue> {
+    return value().validate<boolean, FormiIssueCheckbox>((entry) => {
+      if (entry === null) {
+        return { success: true, value: false };
+      }
+      if (typeof entry !== 'string') {
+        return { success: false, issue: { kind: 'UnexpectedFile' } };
+      }
+      return { success: true, value: true };
     });
   }
 

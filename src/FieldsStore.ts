@@ -20,7 +20,7 @@ export const FieldsStore = (() => {
   return create;
 
   function create(formName: string, def: FormiDefAny): FieldsStore {
-    let state = FormiField.createFromDef(formName, def, Path.from(), dispatch);
+    let state = FormiField.createFromDef(def, Path.from(formName), dispatch);
     const subscription = Subscription<FormiFieldAny>();
 
     return {
@@ -51,14 +51,14 @@ export const FieldsStore = (() => {
 
   function reducer(state: FormiFieldAny, action: FieldsAction): FormiFieldAny {
     if (action.kind === 'RepeatAction') {
-      return FormiField.updateIn(state, action.path, (field) => {
+      const pathInForm = action.path.shift();
+      return FormiField.updateIn(state, pathInForm, (field) => {
         if (field.kind !== 'Repeat') {
           throw new Error('Expected Repeat');
         }
         const repeatAction = action.action;
         if (repeatAction.kind === 'Push') {
           const newChild = FormiField.createFromDef(
-            state.formName,
             field.def.children,
             action.path.append(field.children.length),
             FormiField.getDispatch(field)
@@ -67,12 +67,7 @@ export const FieldsStore = (() => {
           return FormiField_Repeat.clone(field, field.path, nextChildren);
         }
         if (repeatAction.kind === 'Unshift') {
-          const newChild = FormiField.createFromDef(
-            state.formName,
-            field.def.children,
-            action.path.append(0),
-            FormiField.getDispatch(field)
-          );
+          const newChild = FormiField.createFromDef(field.def.children, action.path.append(0), FormiField.getDispatch(field));
           const nextChildren = [newChild, ...field.children].map((child, index) => FormiField.setPath(child, field.path.append(index)));
           return FormiField_Repeat.clone(field, field.path, nextChildren);
         }

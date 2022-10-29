@@ -29,8 +29,6 @@ export const FormiIssuesBuilder = (() => {
     }
 
     function add<F extends FormiFieldAny>(field: F, issue: FieldIssueOf<F>) {
-      // TODO: make sure field is in def ?
-
       const issues = map.get(field) ?? [];
       issues.push(issue);
       if (map.has(field) === false) {

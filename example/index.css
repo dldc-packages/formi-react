@@ -34,6 +34,9 @@ label {
   color: var(--nc-lk-1);
   opacity: 1;
 }
+label:has(input[type='checkbox']) {
+  opacity: 1;
+}
 
 input {
   margin: 0;

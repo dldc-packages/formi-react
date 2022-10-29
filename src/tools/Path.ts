@@ -12,6 +12,7 @@ export interface Path {
   readonly serialize: () => string;
   readonly toString: () => string;
   readonly append: (...raw: ReadonlyArray<Key>) => Path;
+  readonly shift: () => Path;
   readonly splitHead: () => [Key | null, Path];
   readonly splitHeadOrThrow: () => [Key, Path];
   [Symbol.iterator](): Iterator<Key>;
@@ -41,6 +42,7 @@ export const Path = (() => {
       serialize,
       toString: serialize,
       append,
+      shift,
       splitHead,
       splitHeadOrThrow,
       [Symbol.iterator](): Iterator<Key> {
@@ -54,6 +56,10 @@ export const Path = (() => {
         serialized = Path.serialize(self);
       }
       return serialized;
+    }
+
+    function shift(): Path {
+      return Path(...self.raw.slice(1));
     }
 
     function append(...raw: ReadonlyArray<Key>): Path {
