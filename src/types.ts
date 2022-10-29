@@ -78,4 +78,10 @@ export type FormiResult<Def extends d.FormiDefAny> =
       // empty issues to make it easy to add custom server validation
       customIssues: FormiIssuesBuilder<FieldAllIssueOf<Def>>;
     }
-  | { success: false; issues: FormiIssues<FieldAllIssueOf<Def>> };
+  | {
+      success: false;
+      issues: FormiIssues<FieldAllIssueOf<Def>>;
+      fields: f.FormiFieldOf<Def>;
+      // empty issues to make it easy to add custom server validation
+      customIssues: FormiIssuesBuilder<FieldAllIssueOf<Def>>;
+    };

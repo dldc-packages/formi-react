@@ -70,7 +70,7 @@ React Formi let the browser handle the state of each inputs (they are uncontroll
 
 To do so, React Formi only needs a ref to the `form` element, then it listens the `change`, `reset` and `submit` events to update its state.
 
-**Note**: The `change` event of the `form` element is only triggered when the user `blurs` an input with a different value. This means that with React Formi you don't get _validation as you type_ (you can if you really want). This behavior is the same as the default one in teh browser and garantees that writing in an input is fast.
+**Note**: The `change` event of the `form` element is only triggered when the user `blurs` an input with a different value. This means that with React Formi you don't get _validation as you type_ (you can if you really want). This behavior is the same as the default one in the browser and garantees that writing in an input is always fast.
 
 # API
 
@@ -263,6 +263,121 @@ const states = useFieldsState({
 
 // states.some.nested === useFieldState(fields.children.email)
 // states.arr[0] === useFieldState(fields.children.password)
+```
+
+### State of a field
+
+The state of a field is an object with the following properties:
+
+- `key: FormiKey` The key of the field (same as `field.key`)
+- `initialRawValue: any | undefined`: The initial raw value of the field.
+- `rawValue: any | undefined`: The raw value of the field.
+- `value: Value | undefined`: The value of the field of tha validation succeed (might be transformed).
+- `issues: null | Array<Issue>`: The issues of the field if the validation failed.
+- `touchedIssues: null | Array<Issue>`: ✨ Same as `issues` but is only set when `isTouched` is true.
+- `hasExternalIssues: boolean`: True if the field has external issues (passed to the `issues` option of `useFormi`).
+- `isMounted: boolean`: The field is mounted if the input is present in the `FormData`
+- `isTouched: boolean`: True if the field has been touched (changed by the user).
+- `isDirty: boolean`: True if the field is different from the initial value.
+- `isSubmitted: boolean`: True if the field has been submitted.
+
+**Note**: In most cases, all you need is the `touchedIssues` property !
+
+## Handling issues
+
+### Returning issues from the `validate` function
+
+In the `validate` function, if you return `success: false` you can return:
+
+- One issue with `issue` field
+- An array of issues with `issues` field
+- No issues
+
+An issue can be anything (they are not touched by React Formi) but it is recommended to use an object with a `kind` property to be able to identify the issue.
+
+```ts
+const formDef = FormiDef.object({
+  email: FormiDef.string().validate((value) => {
+    if (!isValidEmail(value)) {
+      return { success: false, issue: { kind: 'InvalidEmail' } };
+    }
+    return { success: true, value };
+  }),
+});
+```
+
+### State `issues` and `touchedIssues`
+
+When you read the state of a field with `useFieldState` or `useFieldsState`, the `issues` and `touchedIssues` properties are set if the validation failed. Then contains the same content but `touchedIssues` is only set when `isTouched` is true.
+
+### Passing external issues to `useFormi`
+
+You can pass external issues to `useFormi` with the `issues` option. This is useful if you want to display issues that come from the server for example.
+
+This option expect an array obj object with a `path` and `issues` properties.
+
+```ts
+const externalIssues = [
+  { path: ['user', 'email'], issues: [{ kind: 'InvalidEmail' }] },
+  { path: ['user', 'password'], issues: [{ kind: 'InvalidPassword' }] },
+];
+
+useFormi({
+  formName: 'user',
+  fields: FormiDef.object({
+    email: FormiDef.string(),
+    password: FormiDef.string(),
+  }),
+  issues: externalIssues,
+});
+```
+
+**Note**: As soon as the user change the value of a field, the external issues are removed.
+
+## Validating on the server
+
+You can validate a form on the server with `FormiController.validate`. For this to work correctly you **need** to pass a defined `formName` to `useFormi`.
+
+This function takes two arguments:
+
+- `options`: mostly the same options as `useFormi`
+  - `fields: FormiDef`: the definition of your form
+  - `formName: string`: the name of the form
+  - `onSubmit?: OnSubmit`
+  - `initialIssues?: FormiIssues`
+- `data`: the `FormData` to validate
+
+The function return an object with the following properties:
+
+- `fields`: The `FormiField` of the form. Exposed to be used with `customIssues` (see below)
+- `customIssues`: An instance of `FormiCustomIssues` to add custom issues to the form (empty)
+- `success: true`
+  - `value`: The output value of the form (might be transformed)
+- `success: false`
+  - `issues`: The issues of the form
+
+### The `customIssues` and `FormiCustomIssues`
+
+The `FormiIssuesBuilder` allows you to add custom issues to the form then create a object () that can be passed to `useFormi` with the `issues` option.
+
+```ts
+const result = FormiController.validate(
+  {
+    formName: 'user',
+    fields: FormiDef.object({
+      email: FormiDef.string(),
+      password: FormiDef.string(),
+    }),
+  },
+  formData
+);
+
+if (result.success) {
+  result.customIssues.add(result.fields.email, { kind: 'BannedUser' });
+}
+
+// send this to `useFormi({ issues })`
+result.customIssues.getIssues();
 ```
 
 ## Installation

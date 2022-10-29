@@ -104,12 +104,14 @@ export const FormiController = (() => {
     }
 
     function getResult(): FormiResult<T> {
+      const customIssues = FormiIssuesBuilder(fieldsDef);
+      const fields = fieldsStore.getState() as any;
       if (hasErrors() === false) {
         const value = getValueOrThrow();
-        return { success: true, value, fields: fieldsStore.getState() as any, customIssues: FormiIssuesBuilder(fieldsDef) };
+        return { fields, customIssues, success: true, value };
       }
       const issues = getIssuesOrThrow();
-      return { success: false, issues };
+      return { fields, customIssues, success: false, issues };
     }
 
     function getForm() {
