@@ -6,7 +6,11 @@ import { useFormiController } from './useFormiContext';
 
 export function useFields<Def extends FormiDefAny>(controller?: FormiController<Def>): FormiFieldOf<Def> {
   const ctrl = useFormiController(controller);
-  const fields = useSyncExternalStore(ctrl.subscribeFields, () => ctrl.getFields());
+  const fields = useSyncExternalStore(
+    ctrl.subscribeFields,
+    () => ctrl.getFields(),
+    () => ctrl.getFields()
+  );
 
   return fields as any;
 }

@@ -24,7 +24,7 @@ export function useFieldsState<Fields extends FieldsBase>(fields: Fields, contro
   const state = useSyncExternalStoreWithSelector(
     ctrl.subscribeStates,
     () => ctrl.getStates(),
-    null,
+    () => ctrl.getStates(),
     (s): any => {
       return select(fields);
       function select(f: FieldsBase): any {

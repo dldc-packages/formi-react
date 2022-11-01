@@ -130,7 +130,7 @@ export const FormiDef = (() => {
     return createWithValidate({ kind: 'Values' });
   }
 
-  function object<Children extends Record<string, any>>(
+  function object<Children extends Record<string, FormiDefAny>>(
     children: Children
   ): FormiDef_Object<Children, FormiDefValueOf_Object<Children>, FormiIssueBase> {
     return createWithValidate({ kind: 'Object', children });

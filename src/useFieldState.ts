@@ -10,7 +10,7 @@ export function useFieldState<FormField extends FormiFieldAny>(field: FormField,
   const state = useSyncExternalStoreWithSelector(
     ctrl.subscribeStates,
     () => ctrl.getStates(),
-    null,
+    () => ctrl.getStates(),
     (s): FieldStateOf<FormField> => {
       const fieldState = s.get(field.key);
       if (!fieldState) {
