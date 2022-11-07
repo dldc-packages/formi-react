@@ -1,15 +1,16 @@
 import React from 'react';
 import { z } from 'zod';
-import { FormiDef, FormiFieldOf } from '../../src';
+import { FormiField } from '../../src';
 import { TextInput } from './TextInput';
 
-export const ingredientFieldDef = FormiDef.object({
-  name: FormiDef.zodString(z.string().min(1)),
-  quantity: FormiDef.zodString(z.string().min(1)),
-});
+export const ingredientField = () =>
+  FormiField.group({
+    name: FormiField.string().zodValidate(z.string().min(1)),
+    quantity: FormiField.string().zodValidate(z.string().min(1)),
+  });
 
 interface Props {
-  field: FormiFieldOf<typeof ingredientFieldDef>;
+  field: ReturnType<typeof ingredientField>;
   onRemove: () => void;
 }
 

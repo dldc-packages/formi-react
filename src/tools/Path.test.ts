@@ -1,4 +1,4 @@
-import { RawPath, Path } from '..';
+import { Path, RawPath } from './Path';
 
 describe('serialize / parse', () => {
   const testCases: Array<[RawPath, string]> = [

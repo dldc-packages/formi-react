@@ -1,89 +1,101 @@
 import { SubscribeMethod } from 'suub';
-import { FieldsStateMap, StatesStore } from './StatesStore';
-import { Path } from './tools/Path';
-import { FormiKey } from './FormiKey';
+import { FormiFieldTree, FormiFieldTreeValue } from './FormiFieldTree';
+import { FormiIssues } from './FormiIssue';
 import { FormiIssuesBuilder } from './FormiIssuesBuilder';
-import { FieldsStore } from './FieldsStore';
-import { FormiFieldAny, FormiField } from './FormiField';
-import { FormiDefAny, FormiIssue } from './FormiDef';
-import { FormiResult, FormiIssues, OnSubmit, OnSubmitActions, FieldStateAny } from './types';
+import { FormiState, FormiStore } from './FormiStore';
+import { Path } from './tools/Path';
+
+export type OnSubmitActions = {
+  preventDefault: () => void;
+  stopPropagation: () => void;
+  reset: () => void;
+};
+
+export type OnSubmit<Tree extends FormiFieldTree> = (
+  data: { value: FormiFieldTreeValue<Tree>; formData: FormData },
+  actions: OnSubmitActions
+) => void;
+
+export type FormiResult<Tree extends FormiFieldTree> =
+  | {
+      success: true;
+      value: FormiFieldTreeValue<Tree>;
+      fields: Tree;
+      customIssues: FormiIssuesBuilder<unknown>;
+    }
+  | {
+      success: false;
+      issues: FormiIssues<unknown>;
+      fields: Tree;
+      customIssues: FormiIssuesBuilder<unknown>;
+    };
+
+export type FieldsUpdateFn<F extends FormiFieldTree> = (fields: F) => F;
 
 const IS_FORM_CONTROLLER = Symbol('IS_FORM_CONTROLLER');
 
-export interface FormiController<T extends FormiDefAny> {
+export interface FormiController<Tree extends FormiFieldTree> {
   readonly [IS_FORM_CONTROLLER]: true;
   readonly formName: string;
-  readonly getFields: () => FormiFieldAny;
-  readonly subscribeFields: SubscribeMethod<FormiFieldAny>;
-  readonly getStates: () => FieldsStateMap;
-  readonly subscribeStates: SubscribeMethod<FieldsStateMap>;
+
+  readonly getState: () => FormiState;
+  readonly subscribe: SubscribeMethod<FormiState>;
 
   readonly submit: (data: FormData) => void;
-  readonly getResult: () => FormiResult<T>;
+  readonly getResult: () => FormiResult<Tree>;
   readonly setIssues: (issues: FormiIssues<any>) => void;
+  readonly setOnSubmit: (onSubmit: OnSubmit<Tree>) => void;
+  readonly setFields: (update: Tree | ((prev: Tree) => Tree)) => void;
 
-  readonly findFieldByKeyOrThrow: (key: FormiKey) => FormiFieldAny;
-  readonly setOnSubmit: (onSubmit: OnSubmit<T>) => void;
-  readonly debugStates: () => Array<{ field: FormiFieldAny; state: FieldStateAny }>;
-
-  readonly mount: (formEl: HTMLFormElement) => void;
   readonly unmount: () => void;
+  readonly mount: (formEl: HTMLFormElement) => void;
 }
 
-export type FormiControllerOptions<Def extends FormiDefAny> = {
-  fields: Def;
+export type FormiControllerOptions<Tree extends FormiFieldTree> = {
   formName: string;
-  onSubmit?: OnSubmit<Def>;
-  validateOnMount?: boolean;
+  initialFields: Tree;
   initialIssues?: FormiIssues<any>;
+  onSubmit?: OnSubmit<Tree>;
+  validateOnMount?: boolean;
 };
 
-export type FormiControllerAny = FormiController<FormiDefAny>;
+export type FormiControllerAny = FormiController<any>;
 
 export const FormiController = (() => {
   return Object.assign(create, { validate });
 
-  function validate<T extends FormiDefAny>(options: FormiControllerOptions<T>, data: FormData): FormiResult<T> {
-    const controller = create<T>(options);
+  function validate<Tree extends FormiFieldTree>(options: FormiControllerOptions<Tree>, data: FormData): FormiResult<Tree> {
+    const controller = create<Tree>(options);
     controller.submit(data);
     return controller.getResult();
   }
 
-  function create<T extends FormiDefAny>({
+  function create<Tree extends FormiFieldTree>({
     formName,
     validateOnMount = true,
-    fields: fieldsDef,
-    onSubmit: userOnSubmit,
+    initialFields,
     initialIssues,
-  }: FormiControllerOptions<T>): FormiController<T> {
+    onSubmit: userOnSubmit,
+  }: FormiControllerOptions<Tree>): FormiController<Tree> {
     Path.validatePathItem(formName);
 
-    let onSubmit: OnSubmit<T> | null = userOnSubmit ?? null;
+    let onSubmit: OnSubmit<Tree> | null = userOnSubmit ?? null;
     let formEl: HTMLFormElement | null = null;
 
-    const fieldsStore = FieldsStore(formName, fieldsDef);
-    const statesStore = StatesStore(fieldsStore.getState(), initialIssues);
+    const store = FormiStore(initialFields, initialIssues);
 
-    fieldsStore.subscribe((fields) => {
-      statesStore.dispatch({ type: 'Init', fields });
-    });
-
-    const self: FormiController<T> = {
+    const self: FormiController<Tree> = {
       [IS_FORM_CONTROLLER]: true,
       formName,
 
-      getFields: fieldsStore.getState,
-      subscribeFields: fieldsStore.subscribe,
-      getStates: statesStore.getState,
-      subscribeStates: statesStore.subscribe,
+      getState: store.getState,
+      subscribe: store.subscribe,
 
       submit,
       getResult,
       setIssues,
-
       setOnSubmit,
-      findFieldByKeyOrThrow,
-      debugStates,
+      setFields,
 
       mount,
       unmount,
@@ -91,26 +103,27 @@ export const FormiController = (() => {
 
     return self;
 
-    function findFieldByKeyOrThrow(key: FormiKey): FormiFieldAny {
-      return FormiField.findByKeyOrThrow(fieldsStore.getState(), key);
-    }
-
-    function setOnSubmit(newOnSubmit: OnSubmit<T>) {
+    function setOnSubmit(newOnSubmit: OnSubmit<Tree>) {
       onSubmit = newOnSubmit;
     }
 
     function setIssues(issues: FormiIssues<any>) {
-      statesStore.dispatch({ type: 'SetIssues', issues, fields: fieldsStore.getState() });
+      store.dispatch({ type: 'SetIssues', issues });
     }
 
-    function getResult(): FormiResult<T> {
-      const customIssues = FormiIssuesBuilder(fieldsDef);
-      const fields = fieldsStore.getState() as any;
-      if (hasErrors() === false) {
-        const value = getValueOrThrow();
+    function setFields(fields: Tree | ((prev: Tree) => Tree)) {
+      store.dispatch({ type: 'SetFields', fields: fields as any });
+    }
+
+    function getResult(): FormiResult<Tree> {
+      const { rootField } = store.getState();
+      const fields = rootField.children as Tree;
+      const customIssues = FormiIssuesBuilder(fields) as FormiIssuesBuilder<unknown>;
+      if (store.hasErrors() === false) {
+        const value = store.getValueOrThrow();
         return { fields, customIssues, success: true, value };
       }
-      const issues = getIssuesOrThrow();
+      const issues = store.getIssuesOrThrow();
       return { fields, customIssues, success: false, issues };
     }
 
@@ -122,12 +135,12 @@ export const FormiController = (() => {
     }
 
     function submit(data: FormData, actions?: OnSubmitActions) {
-      statesStore.dispatch({ type: 'Submit', data, fields: fieldsStore.getState() });
-      if (hasErrors()) {
+      store.dispatch({ type: 'Submit', data });
+      if (store.hasErrors()) {
         actions?.preventDefault();
         return;
       }
-      const value = getValueOrThrow();
+      const value = store.getValueOrThrow();
       if (onSubmit && actions) {
         onSubmit({ value, formData: data }, actions);
       }
@@ -152,26 +165,34 @@ export const FormiController = (() => {
       const form = getForm();
       const input = target as HTMLInputElement;
       const name = input.name;
-      const data = new FormData(form);
-      const fieldPath = Path.from(name);
-      const fields = fieldsStore.getState();
-      const [inputFormName, path] = fieldPath.splitHeadOrThrow();
-      if (inputFormName !== formName) {
-        console.warn('Input form name does not match form name');
+      if (!name) {
+        // ignore inputs without name
         return;
       }
-      const fieldList = FormiField.findAllByPath(fields, path);
+      const data = new FormData(form);
+      const fieldPath = Path.from(name);
+      const [inputFormName, path] = fieldPath.splitHead();
+      if (!inputFormName) {
+        // input name does not match formi name -> ignore it
+        return;
+      }
+      if (inputFormName !== formName) {
+        // input form name does not match form name -> ignore it
+        return;
+      }
+      const fields = store.getState().rootField;
+      const fieldList = FormiFieldTree.findAllByPath(fields, path);
       if (!fieldList) {
         console.warn(`Field not found: ${name}`);
         return;
       }
-      statesStore.dispatch({ type: 'Change', fields, data, fieldList });
+      store.dispatch({ type: 'Change', data, fieldList });
     }
 
     function handleReset() {
       const form = getForm();
       const data = new FormData(form);
-      statesStore.dispatch({ type: 'Reset', data, fields: fieldsStore.getState() });
+      store.dispatch({ type: 'Reset', data });
     }
 
     function mount(newFormEl: HTMLFormElement) {
@@ -186,7 +207,7 @@ export const FormiController = (() => {
       }
       const data = new FormData(formEl);
       if (validateOnMount) {
-        statesStore.dispatch({ type: 'Mount', data, fields: fieldsStore.getState() });
+        store.dispatch({ type: 'Mount', data });
       }
     }
 
@@ -195,69 +216,6 @@ export const FormiController = (() => {
         formEl.removeEventListener('submit', handleSubmit);
         formEl.removeEventListener('change', handleChange);
       }
-    }
-
-    function debugStates(): Array<{ field: FormiFieldAny; state: FieldStateAny }> {
-      const result: Array<{ field: FormiFieldAny; state: FieldStateAny }> = [];
-      const fields = fieldsStore.getState();
-      const states = statesStore.getState();
-      FormiField.traverse(fields, (field, next) => {
-        const state = states.get(field.key) as FieldStateAny;
-        result.push({ field, state });
-        next();
-      });
-      return result;
-    }
-
-    function hasErrors(): boolean {
-      let errorFound = false;
-      const states = statesStore.getState();
-      FormiField.traverse(fieldsStore.getState(), (field, next) => {
-        if (errorFound) {
-          return;
-        }
-        const fieldState = states.getOrThrow(field.key);
-        if (fieldState.isMounted === false) {
-          errorFound = true;
-          return;
-        }
-        if (fieldState.issues) {
-          errorFound = true;
-          return;
-        }
-        next();
-      });
-      return errorFound;
-    }
-
-    function getValueOrThrow(): any {
-      const states = statesStore.getState();
-      const rootState = states.getOrThrow(fieldsStore.getState().key);
-      if (rootState.isMounted === false) {
-        throw new Error(`Cannot get values from unmounted form`);
-      }
-      if (rootState.value === undefined) {
-        throw new Error('No value');
-      }
-      return rootState.value;
-    }
-
-    function getIssuesOrThrow(): FormiIssues<any> {
-      const states = statesStore.getState();
-      const issues: FormiIssues<any> = [];
-      FormiField.traverse(fieldsStore.getState(), (field, next) => {
-        next();
-        const fieldState = states.getOrThrow(field.key);
-        if (fieldState.isMounted === false) {
-          const issue: FormiIssue = { kind: 'FieldNotMounted' };
-          issues.push({ path: field.path.raw, issues: [issue] });
-          return;
-        }
-        if (fieldState.issues) {
-          issues.push({ path: field.path.raw, issues: fieldState.issues });
-        }
-      });
-      return issues;
     }
   }
 })();

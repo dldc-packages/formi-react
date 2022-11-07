@@ -1,17 +1,17 @@
-import { FormiDefAny } from './FormiDef';
-import { FormiFieldAny } from './FormiField';
-import { FieldAllIssueOf, FieldIssueOf, FormiIssues, FormiIssuesItem } from './types';
+import { FormiFieldAny, FormiFieldIssue } from './FormiField';
+import { FormiFieldTree } from './FormiFieldTree';
+import { FormiIssues, FormiIssuesItem } from './FormiIssue';
 
-export interface FormiIssuesBuilder<Issue> {
-  readonly add: <F extends FormiFieldAny>(field: F, issue: FieldIssueOf<F>) => void;
-  readonly getIssues: () => FormiIssues<Issue>;
+export interface FormiIssuesBuilder<AnyIssue> {
+  readonly add: <F extends FormiFieldAny>(field: F, issue: FormiFieldIssue<F>) => void;
+  readonly getIssues: () => FormiIssues<AnyIssue>;
   readonly hasIssues: () => boolean;
 }
 
 export const FormiIssuesBuilder = (() => {
   return Object.assign(create, {});
 
-  function create<Def extends FormiDefAny>(_def: Def): FormiIssuesBuilder<FieldAllIssueOf<Def>> {
+  function create<Tree extends FormiFieldTree, AnyIssue>(tree: Tree): FormiIssuesBuilder<AnyIssue> {
     const map = new Map<FormiFieldAny, Array<any>>();
 
     return {
@@ -20,15 +20,15 @@ export const FormiIssuesBuilder = (() => {
       hasIssues,
     };
 
-    function getIssues(): FormiIssues<FieldAllIssueOf<Def>> {
-      return issuesFromMap(map);
+    function getIssues(): FormiIssues<AnyIssue> {
+      return issuesFromMap(tree, map);
     }
 
     function hasIssues(): boolean {
       return map.size > 0;
     }
 
-    function add<F extends FormiFieldAny>(field: F, issue: FieldIssueOf<F>) {
+    function add<F extends FormiFieldAny>(field: F, issue: FormiFieldIssue<F>) {
       const issues = map.get(field) ?? [];
       issues.push(issue);
       if (map.has(field) === false) {
@@ -37,14 +37,18 @@ export const FormiIssuesBuilder = (() => {
     }
   }
 
-  function issuesFromMap<Issue>(map: Map<FormiFieldAny, Array<Issue>>): FormiIssues<Issue> {
+  function issuesFromMap<Issue>(tree: FormiFieldTree, map: Map<FormiFieldAny, Array<Issue>>): FormiIssues<Issue> {
     const issues = Array.from(map.entries())
       .map(([field, issues]): FormiIssuesItem<Issue> | null => {
         if (issues.length === 0) {
           return null;
         }
+        const path = FormiFieldTree.fieldPath(tree, field);
+        if (path === null) {
+          throw new Error(`Field not found in tree`);
+        }
         return {
-          path: field.path.raw,
+          path: path.raw,
           issues,
         };
       })

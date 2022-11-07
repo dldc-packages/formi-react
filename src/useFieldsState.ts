@@ -1,40 +1,39 @@
-import { FormiField, FormiFieldAny } from './FormiField';
-import { FieldStateOf } from './types';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { FormiControllerAny } from './FormiController';
+import { FormiField, FormiFieldAny } from './FormiField';
+import { FormiFieldTree } from './FormiFieldTree';
+import { FieldStateOf } from './FormiStore';
 import { useFormiController } from './useFormiContext';
 
-export type FieldsBase = null | FormiFieldAny | FieldsBase[] | { [key: string]: FieldsBase };
-
-export type FieldsStates<F extends FieldsBase> = F extends null
+export type FieldsStates<Tree extends FormiFieldTree> = Tree extends null
   ? null
-  : F extends FormiFieldAny
-  ? FieldStateOf<F>
-  : F extends FieldsBase[]
-  ? FieldsStates<F[number]>[]
-  : F extends { [key: string]: FieldsBase }
-  ? { [K in keyof F]: FieldsStates<F[K]> }
+  : Tree extends FormiFieldAny
+  ? FieldStateOf<Tree>
+  : Tree extends Array<infer Inner extends FormiFieldTree>
+  ? ReadonlyArray<FieldsStates<Inner>>
+  : Tree extends Record<string, FormiFieldAny>
+  ? { [K in keyof Tree]: FieldsStates<Tree[K]> }
   : never;
 
 const IS_OBJECT = Symbol('IS_OBJECT');
 
-export function useFieldsState<Fields extends FieldsBase>(fields: Fields, controller?: FormiControllerAny): FieldsStates<Fields> {
+export function useFieldsState<Tree extends FormiFieldTree>(fields: Tree, controller?: FormiControllerAny): FieldsStates<Tree> {
   const ctrl = useFormiController(controller);
 
   const state = useSyncExternalStoreWithSelector(
-    ctrl.subscribeStates,
-    () => ctrl.getStates(),
-    () => ctrl.getStates(),
+    ctrl.subscribe,
+    () => ctrl.getState().states,
+    () => ctrl.getState().states,
     (s): any => {
       return select(fields);
-      function select(f: FieldsBase): any {
+      function select(f: FormiFieldTree): any {
         if (f === null) {
           return null;
         }
         if (Array.isArray(f)) {
           return f.map(select);
         }
-        if (FormiField.isFormiField(f)) {
+        if (FormiField.utils.isFormiField(f)) {
           const fieldState = s.get(f.key);
           if (!fieldState) {
             throw new Error('No field state, return default ?');

@@ -1,15 +1,14 @@
 import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import { FormiController } from './FormiController';
-import { FormiDefAny } from './FormiDef';
-import { FormiFieldOf } from './FormiField';
+import { FormiFieldTree } from './FormiFieldTree';
 import { useFormiController } from './useFormiContext';
 
-export function useFields<Def extends FormiDefAny>(controller?: FormiController<Def>): FormiFieldOf<Def> {
+export function useFields<Tree extends FormiFieldTree>(controller?: FormiController<Tree>): Tree {
   const ctrl = useFormiController(controller);
   const fields = useSyncExternalStore(
-    ctrl.subscribeFields,
-    () => ctrl.getFields(),
-    () => ctrl.getFields()
+    ctrl.subscribe,
+    () => ctrl.getState().rootField.children,
+    () => ctrl.getState().rootField.children
   );
 
   return fields as any;

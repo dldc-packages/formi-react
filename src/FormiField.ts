@@ -1,498 +1,254 @@
-import { Path, PathLike } from './tools/Path';
-import { expectNever } from './utils';
+import { z } from 'zod';
+import { FormiFieldTree, FormiFieldTreeValue } from './FormiFieldTree';
+import {
+  FormiIssue,
+  FormiIssueBase,
+  FormiIssueNonEmptyFile,
+  FormiIssueNotFile,
+  FormiIssueNotString,
+  FormiIssueNumber,
+  FormiIssueZod,
+} from './FormiIssue';
 import { FormiKey } from './FormiKey';
-import { FormiDef_Value, FormiDef_Values, FormiDef_Repeat, FormiDef_Object, FormiDefAny } from './FormiDef';
-import { FieldsStoreDispatch } from './FieldsStore';
 
-function notImplemented(): never {
-  throw new Error('Not implemented');
-}
+const FIELD_INTERNAL = Symbol('FIELD_INTERNAL');
 
-export type FormiFieldOf<Def> = Def extends FormiDef_Value<infer V, infer I>
-  ? FormiField_Value<V, I>
-  : Def extends FormiDef_Values<infer V, infer I>
-  ? FormiField_Values<V, I>
-  : Def extends FormiDef_Repeat<infer C, infer V, infer I>
-  ? FormiField_Repeat<C, V, I>
-  : Def extends FormiDef_Object<infer C, infer V, infer I>
-  ? FormiField_Object<C, V, I>
-  : never;
+export type ValidateSuccess<Value> = { success: true; value: Value };
+export type ValidateFailure<Issue> = { success: false; issue?: Issue; issues?: Array<Issue> };
+export type ValidateResult<Value, Issue> = ValidateSuccess<Value> | ValidateFailure<Issue>;
 
-export type FormiFieldAny = FormiField_ValueAny | FormiField_ValuesAny | FormiField_RepeatAny | FormiField_ObjectAny;
+export type ValidateFn<Input, Value, Issue> = (value: Input) => ValidateResult<Value, Issue>;
 
-export type FormiFieldKind = FormiFieldAny['kind'];
+export type ChildrenUpdateFn<Children> = (prev: Children) => Children;
 
-const IS_FORMI_FIELD = Symbol('IS_FORMI_FIELD');
-const FORMI_FIELD_DISPATCH = Symbol('FORMI_FIELD_DISPATCH');
-const FORMI_FIELD_KEYS = Symbol('FORMI_FIELD_KEYS');
-const FORMI_FIELD_TYPES = Symbol('FORMI_FIELD_TYPES');
+export type FormiFieldAny = FormiField<any, any, any>;
 
-export type Keys = ReadonlyArray<FormiKey>;
+export type FormiFieldInput<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__input'];
+export type FormiFieldValue<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__value'];
+export type FormiFieldIssue<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__issue'];
 
-export interface FormiField<Value, Issue> {
-  readonly [IS_FORMI_FIELD]: true;
-  readonly [FORMI_FIELD_TYPES]: { readonly __value: Value; readonly __issue: Issue };
-  readonly [FORMI_FIELD_DISPATCH]: FieldsStoreDispatch;
-  readonly [FORMI_FIELD_KEYS]: Keys;
+export type FormiFieldKind = 'Value' | 'Values' | 'Group';
+
+export interface FormiField<Value, Issue = FormiIssue, Children extends FormiFieldTree = null, Input = unknown> {
+  readonly [FIELD_INTERNAL]: {
+    readonly validateFn: ValidateFn<any, Value, Issue>;
+    readonly __input: Input;
+    readonly __value: Value;
+    readonly __issue: Issue;
+  };
+  readonly kind: FormiFieldKind;
+  readonly children: Children;
   readonly key: FormiKey;
-  readonly path: Path;
-  readonly id: string;
+
+  readonly validate: <NextValue = Value, NextIssue = never>(
+    validateFn: ValidateFn<Value, NextValue, Issue | NextIssue>
+  ) => FormiField<NextValue, Issue | NextIssue, Children, Input>;
+
+  readonly zodValidate: <NextValue = Value>(schema: z.Schema<NextValue>) => FormiField<NextValue, Issue | FormiIssueZod, Children, Input>;
+
+  readonly withChildren: (children: Children | ChildrenUpdateFn<Children>) => FormiField<Value, Issue, Children, Input>;
 }
 
 export const FormiField = (() => {
   return {
-    createFromDef,
-    create,
-    traverse,
-    isFormiField,
-    findByKey,
-    findByKeyOrThrow,
-    findByPath,
-    findByPathOrThrow,
-    findAllByPath,
-    getChildren,
-    updateIn,
-    setPath,
-    getDispatch,
-    getKeys,
-  };
+    utils: {
+      getValidate,
+      zodValidator,
+      isFormiField,
+      isNotNull,
+      isNotFile,
+      isNumber,
+      isDefined,
+    },
+    // primitives
+    value,
+    values,
+    group,
+    // common
+    string,
+    optionalString,
+    number,
+    optionalNumber,
+    checkbox,
+    file,
+    nonEmptyfile,
+  } as const;
 
-  function create<Value, Issue>(key: FormiKey, path: Path, dispatch: FieldsStoreDispatch, keys: Keys): FormiField<Value, Issue> {
+  function create<Value, Issue, Children extends FormiFieldTree, Input>(
+    kind: FormiFieldKind,
+    key: FormiKey,
+    children: Children,
+    validateFn: ValidateFn<any, Value, Issue> = (value) => ({
+      success: true,
+      value,
+    })
+  ): FormiField<Value, Issue, Children, Input> {
+    const currentValidateFn = validateFn;
+
     return {
-      [IS_FORMI_FIELD]: true,
-      [FORMI_FIELD_TYPES]: {} as any,
-      [FORMI_FIELD_DISPATCH]: dispatch,
-      [FORMI_FIELD_KEYS]: keys,
+      [FIELD_INTERNAL]: {
+        __input: {} as Input,
+        __value: {} as Value,
+        __issue: {} as Issue,
+        validateFn,
+      },
+      kind,
+      children,
       key,
-      path,
-      id: path.serialize(),
+      validate,
+      zodValidate,
+      withChildren,
     };
+
+    function validate<NextValue = Value, NextIssue = never>(
+      validateFn: ValidateFn<Value, NextValue, Issue | NextIssue>
+    ): FormiField<NextValue, Issue | NextIssue, Children, Input> {
+      const nextValidate = (input: any) => {
+        const prev = currentValidateFn(input);
+        if (!prev.success) {
+          return prev;
+        }
+        return validateFn(prev.value);
+      };
+      return create(kind, key, children, nextValidate);
+    }
+
+    function withChildren(update: Children | ChildrenUpdateFn<Children>): FormiField<Value, Issue, Children, Input> {
+      const nextChildren = typeof update === 'function' ? update(children) : update;
+      return create(kind, key, nextChildren, validateFn);
+    }
+
+    function zodValidate<NextValue = Value>(schema: z.Schema<NextValue>): FormiField<NextValue, Issue | FormiIssueZod, Children, Input> {
+      return validate(zodValidator(schema));
+    }
   }
 
-  function createFromDef<Def extends FormiDefAny>(def: Def, path: Path, dispatch: FieldsStoreDispatch): FormiFieldAny {
-    const key = FormiKey();
-    if (def.kind === 'Value') {
-      return FormiField_Value(key, path, dispatch, def);
-    }
-    if (def.kind === 'Values') {
-      return FormiField_Values(key, path, dispatch, def);
-    }
-    if (def.kind === 'Repeat') {
-      const children = Array.from({ length: def.initialCount }, (_, index): FormiFieldAny => {
-        return createFromDef(def.children, path.append(index), dispatch);
-      });
-      return FormiField_Repeat(key, path, dispatch, def, children);
-    }
-    if (def.kind === 'Object') {
-      const key = FormiKey();
-      const children: Record<string, FormiFieldAny> = {};
-      Object.entries(def.children).forEach(([key, child]) => {
-        Path.validatePathItem(key);
-        children[key] = createFromDef(child as FormiDefAny, path.append(key), dispatch);
-      });
-      return FormiField_Object(key, path, dispatch, def, children);
-    }
-    return expectNever(def, () => {
-      throw new Error('Unsupported def type');
+  // primitives
+
+  function value(): FormiField<FormDataEntryValue | null, FormiIssueBase, null, FormDataEntryValue | null> {
+    return create('Value', FormiKey(), null);
+  }
+
+  function values(): FormiField<Array<FormDataEntryValue> | null, FormiIssueBase, null, Array<FormDataEntryValue> | null> {
+    return create('Values', FormiKey(), null);
+  }
+
+  function group<Children extends FormiFieldTree>(
+    children: Children
+  ): FormiField<FormiFieldTreeValue<Children>, FormiIssueBase, Children, FormiFieldTreeValue<Children>> {
+    return create('Group', FormiKey(), children);
+  }
+
+  // common
+
+  function string<Issue = never>(): FormiField<string, FormiIssueNotFile | Issue, null> {
+    return value().validate(isNotFile).validate(isNotNull);
+  }
+
+  function optionalString<Issue = never>(): FormiField<string | null, FormiIssueNotFile | Issue, null> {
+    return value().validate(isNotFile);
+  }
+
+  function number<Issue = never>(): FormiField<number, FormiIssueNotFile | FormiIssueNumber | Issue, null> {
+    return string().validate(isNumber).validate(isNotNull);
+  }
+
+  function optionalNumber<Issue = never>(): FormiField<null | number, FormiIssueNotFile | FormiIssueNumber | Issue, null> {
+    return string().validate(isNumber);
+  }
+
+  function checkbox<Issue = never>(): FormiField<boolean, Issue | FormiIssueNotFile, null> {
+    return value().validate(isNotFile).validate(isDefined);
+  }
+
+  function file<Issue = never>(): FormiField<File, FormiIssueNotString | Issue, null> {
+    return value().validate<File, FormiIssueNotString>((entry) => {
+      if (entry === null) {
+        return { success: false, issue: { kind: 'MissingField' } };
+      }
+      if (typeof entry === 'string') {
+        return { success: false, issue: { kind: 'UnexpectedString' } };
+      }
+      return { success: true, value: entry };
     });
   }
 
-  function getKeys(field: FormiFieldAny): Keys {
-    return field[FORMI_FIELD_KEYS];
-  }
-
-  function getDispatch(field: FormiFieldAny): FieldsStoreDispatch {
-    return field[FORMI_FIELD_DISPATCH];
-  }
-
-  function setPath(field: FormiFieldAny, path: Path): FormiFieldAny {
-    if (Path.equal(field.path, path)) {
-      return field;
-    }
-    if (field.kind === 'Value') {
-      return FormiField_Value.clone(field, path);
-    }
-    if (field.kind === 'Values') {
-      return FormiField_Values.clone(field, path);
-    }
-    if (field.kind === 'Repeat') {
-      const children = field.children.map((child, index) => setPath(child, path.append(index)));
-      return FormiField_Repeat.clone(field, path, children);
-    }
-    if (field.kind === 'Object') {
-      const children: Record<string, FormiFieldAny> = {};
-      Object.entries(field.children).forEach(([key, child]) => {
-        children[key] = setPath(child, path.append(key));
-      });
-      return FormiField_Object.clone(field, path, children);
-    }
-    return expectNever(field);
-  }
-
-  function getChildren(field: FormiFieldAny): Array<FormiFieldAny> {
-    if (field.kind === 'Value' || field.kind === 'Values') {
-      return [];
-    }
-    if (field.kind === 'Repeat') {
-      return field.children;
-    }
-    if (field.kind === 'Object') {
-      return Object.values(field.children);
-    }
-    return expectNever(field);
-  }
-
-  function findAllByPath(field: FormiFieldAny, path: PathLike): null | Array<FormiFieldAny> {
-    const pathResolved = Path.from(path);
-    let current = field;
-    const fields: Array<FormiFieldAny> = [current];
-    for (const pathItem of pathResolved) {
-      const next = findByPath(current, [pathItem]);
-      if (!next) {
-        return null;
+  function nonEmptyfile<Issue = never>(): FormiField<File, FormiIssueNotString | FormiIssueNonEmptyFile | Issue, null> {
+    return file().validate((val) => {
+      if (val.size === 0) {
+        return failure<FormiIssueNonEmptyFile>({ kind: 'EmptyFile' });
       }
-      current = next;
-      fields.unshift(current);
-    }
-    return fields;
+      return success(val);
+    });
   }
 
-  function updateIn(field: FormiFieldAny, path: Path, updateFn: (prev: FormiFieldAny) => FormiFieldAny): FormiFieldAny {
-    if (path.length === 0) {
-      return updateFn(field);
-    }
-    if (field.kind === 'Value' || field.kind === 'Values') {
-      throw new Error('Cannot update value field');
-    }
-    if (field.kind === 'Repeat') {
-      const [index, rest] = path.splitHeadOrThrow();
-      const child = field.children[index as number];
-      if (child === undefined) {
-        return field;
-      }
-      const updated = FormiField.updateIn(child, rest, updateFn);
-      if (updated === child) {
-        return field;
-      }
-      const nextChildren = [...field.children];
-      nextChildren[index as number] = updated as any;
-      // return create(formName, key, path, dispatch, self.def, nextChildren);
-      return FormiField_Repeat(field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
-    }
-    if (field.kind === 'Object') {
-      const [childKey, rest] = path.splitHeadOrThrow();
-      const child = field.children[childKey as string];
-      if (child === undefined) {
-        return field;
-      }
-      const updated = FormiField.updateIn(child, rest, updateFn);
-      if (updated === child) {
-        return field;
-      }
-      const nextChildren = { ...field.children };
-      (nextChildren as any)[childKey] = updated as any;
-      return FormiField_Object(field.key, field.path, field[FORMI_FIELD_DISPATCH], field.def, nextChildren);
-    }
-    return expectNever(field);
+  // utils
+
+  function getValidate(field: FormiFieldAny): ValidateFn<any, any, any> {
+    return field[FIELD_INTERNAL].validateFn;
   }
 
-  function findByKeyOrThrow(field: FormiFieldAny, key: FormiKey): FormiFieldAny {
-    const result = findByKey(field, key);
-    if (!result) {
-      throw new Error(`No field found for key ${key}`);
-    }
-    return result;
+  function isFormiField(field: any): field is FormiField<any, any, any> {
+    return field && field[FIELD_INTERNAL];
   }
 
-  function findByKey(field: FormiFieldAny, key: FormiKey): FormiFieldAny | null {
-    if (field.key === key) {
-      return field;
-    }
-    if (field.kind === 'Value') {
-      return null;
-    }
-    if (field.kind === 'Values') {
-      return null;
-    }
-    if (field.kind === 'Repeat') {
-      for (const child of field.children) {
-        const result = findByKey(child, key);
-        if (result) {
-          return result;
-        }
+  function zodValidator<T>(schema: z.Schema<T>): ValidateFn<any, T, FormiIssueZod> {
+    return (value) => {
+      const result = schema.safeParse(value);
+      if (result.success) {
+        return { success: true, value: result.data };
       }
-      return null;
-    }
-    if (field.kind === 'Object') {
-      for (const child of Object.values(field.children)) {
-        const result = findByKey(child, key);
-        if (result) {
-          return result;
-        }
+      const issues = result.error.issues.map((issue): FormiIssueZod => ({ kind: 'ZodIssue', issue }));
+      if (issues.length === 1) {
+        return { success: false, issue: issues[0] };
       }
-      return null;
-    }
-    return expectNever(field);
-  }
-
-  function findByPathOrThrow(field: FormiFieldAny, path: PathLike): FormiFieldAny {
-    const result = findByPath(field, path);
-    if (!result) {
-      throw new Error(`No field found for path ${path}`);
-    }
-    return result;
-  }
-
-  function findByPath(field: FormiFieldAny, path: PathLike): FormiFieldAny | null {
-    const [key, rest] = Path.from(path).splitHead();
-    if (key === null) {
-      return field;
-    }
-    if (field.kind === 'Value') {
-      return null;
-    }
-    if (field.kind === 'Values') {
-      return null;
-    }
-    if (field.kind === 'Repeat') {
-      const child = field.children[key as number];
-      if (!child) {
-        return null;
-      }
-      return findByPath(child, rest);
-    }
-    if (field.kind === 'Object') {
-      const child = field.children[key as string];
-      if (!child) {
-        return null;
-      }
-      return findByPath(child, rest);
-    }
-    return expectNever(field);
-  }
-
-  function traverse<T>(formiField: FormiFieldAny, visitor: (field: FormiFieldAny, next: () => Array<T>) => T): T {
-    function next(current: FormiFieldAny): Array<T> {
-      return getChildren(current).map((child) => {
-        return visitor(child, () => next(child));
-      });
-    }
-    return visitor(formiField, () => next(formiField));
-  }
-
-  function isFormiField(field: any, kind?: FormiFieldKind): field is FormiFieldAny {
-    if (field && field[IS_FORMI_FIELD]) {
-      const kinds: Record<FormiFieldKind, null> = {
-        Value: null,
-        Values: null,
-        Repeat: null,
-        Object: null,
-      };
-      if (kind) {
-        return field.kind === kind;
-      }
-      return Object.keys(kinds).includes(field.kind);
-    }
-    return false;
-  }
-})();
-
-export type FormiField_ValueAny = FormiField_Value<any, any>;
-
-export interface FormiField_Value<Value, Issue> extends FormiField<Value, Issue> {
-  readonly kind: 'Value';
-  readonly def: FormiDef_Value<Value, Issue>;
-  readonly name: string;
-}
-
-export const FormiField_Value = (() => {
-  return Object.assign(create, {
-    isFormiField_Value,
-    clone,
-  });
-
-  function create<Value, Issue>(
-    key: FormiKey,
-    path: Path,
-    dispatch: FieldsStoreDispatch,
-    def: FormiDef_Value<Value, Issue>
-  ): FormiField_Value<Value, Issue> {
-    return {
-      ...FormiField.create(key, path, dispatch, [key]),
-      def,
-      kind: 'Value',
-      name: path.serialize(),
+      return { success: false, issues: issues };
     };
   }
 
-  function clone<Value, Issue>(field: FormiField_Value<Value, Issue>, path: Path): FormiField_Value<Value, Issue> {
-    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
+  function isNotNull<Value>(input: Value | null): ValidateResult<Value, FormiIssueBase> {
+    if (input === null) {
+      return failure<FormiIssueBase>({ kind: 'MissingField' });
+    }
+    return success<Value>(input);
   }
 
-  function isFormiField_Value(field: any): field is FormiField_Value<any, any> {
-    return FormiField.isFormiField(field, 'Value');
+  function isNotFile<Value>(input: Value | File): ValidateResult<Value, FormiIssueNotFile> {
+    if (input instanceof File) {
+      return failure<FormiIssueNotFile>({ kind: 'UnexpectedFile' });
+    }
+    return success<Value>(input);
+  }
+
+  function isNumber(input: string): ValidateResult<number | null, FormiIssueNumber> {
+    if (input === '' || input === null) {
+      return success<number | null>(null);
+    }
+    const numberValue = Number(input);
+    if (Number.isNaN(numberValue)) {
+      return failure<FormiIssueNumber>({ kind: 'InvalidNumber', value: input });
+    }
+    return success<number>(numberValue);
+  }
+
+  function isDefined(input: any): ValidateResult<boolean, FormiIssueBase> {
+    if (input === null || input === undefined) {
+      return success(false);
+    }
+    return success(true);
   }
 })();
 
-export type FormiField_ValuesAny = FormiField_Values<any, any>;
-
-export interface FormiField_Values<Value, Issue> extends FormiField<Value, Issue> {
-  readonly kind: 'Values';
-  readonly def: FormiDef_Values<Value, Issue>;
-  readonly name: string;
+export function success<Value>(value: Value): ValidateSuccess<Value> {
+  return { success: true, value };
 }
 
-export const FormiField_Values = (() => {
-  return Object.assign(create, {
-    isFormiField_Values,
-    clone,
-  });
-
-  function create<Value, Issue>(
-    key: FormiKey,
-    path: Path,
-    dispatch: FieldsStoreDispatch,
-    def: FormiDef_Values<Value, Issue>
-  ): FormiField_Values<Value, Issue> {
-    return {
-      ...FormiField.create(key, path, dispatch, [key]),
-      def,
-      kind: 'Values',
-      name: path.serialize(),
-    };
+export function failure<Issue>(issue?: Issue | Array<Issue>): ValidateFailure<Issue> {
+  if (issue === undefined) {
+    return { success: false };
   }
-
-  function clone<Value, Issue>(field: FormiField_Values<Value, Issue>, path: Path): FormiField_Values<Value, Issue> {
-    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def);
+  if (Array.isArray(issue)) {
+    return { success: false, issues: issue };
   }
-
-  function isFormiField_Values(field: any): field is FormiField_Values<any, any> {
-    return FormiField.isFormiField(field, 'Values');
-  }
-})();
-
-export interface FormiField_Repeat_Children_Actions {
-  readonly push: () => void;
-  readonly remove: (index: number) => void;
-  readonly unshift: () => void;
+  return { success: false, issue };
 }
-
-export type FormiField_Repeat_Children<Children extends FormiDefAny> = Array<FormiFieldOf<Children>>;
-
-export interface FormiField_Repeat<Children extends FormiDefAny, Value, Issue> extends FormiField<Value, Issue> {
-  readonly kind: 'Repeat';
-  readonly def: FormiDef_Repeat<Children, Value, Issue>;
-  readonly children: FormiField_Repeat_Children<Children>;
-  readonly actions: FormiField_Repeat_Children_Actions;
-  readonly get: <K extends keyof Children>(index: number) => FormiFieldOf<Children[K & number]>;
-}
-
-export type FormiField_RepeatAny = FormiField_Repeat<FormiDefAny, any, any>;
-
-export const FormiField_Repeat = (() => {
-  return Object.assign(create, {
-    isFormiField_Repeat,
-    clone,
-  });
-
-  function create<Children extends FormiDefAny, Value, Issue>(
-    key: FormiKey,
-    path: Path,
-    dispatch: FieldsStoreDispatch,
-    def: FormiDef_Repeat<Children, Value, Issue>,
-    children: FormiField_Repeat_Children<Children>
-  ): FormiField_Repeat<Children, Value, Issue> {
-    const keys = [key, ...children.map(FormiField.getKeys).flat()];
-    const self: FormiField_Repeat<Children, Value, Issue> = {
-      ...FormiField.create(key, path, dispatch, keys),
-      kind: 'Repeat',
-      def,
-      children,
-      actions: { remove, push, unshift },
-      get: notImplemented,
-    };
-    return self;
-
-    function remove(index: number): void {
-      dispatch({ kind: 'RepeatAction', path: self.path, action: { kind: 'Remove', index } });
-    }
-
-    function push(): void {
-      dispatch({ kind: 'RepeatAction', path: self.path, action: { kind: 'Push' } });
-    }
-
-    function unshift(): void {
-      dispatch({ kind: 'RepeatAction', path: self.path, action: { kind: 'Unshift' } });
-    }
-  }
-
-  function clone<Children extends FormiDefAny, Value, Issue>(
-    field: FormiField_Repeat<Children, Value, Issue>,
-    path: Path,
-    children: FormiField_Repeat_Children<Children>
-  ): FormiField_Repeat<Children, Value, Issue> {
-    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
-  }
-
-  function isFormiField_Repeat(field: any): field is FormiField_Repeat<any, any, any> {
-    return FormiField.isFormiField(field, 'Repeat');
-  }
-})();
-
-export type FormiField_Object_Children<Children extends Record<string, FormiDefAny>> = {
-  [K in keyof Children]: FormiFieldOf<Children[K]>;
-};
-
-export interface FormiField_Object<Children extends Record<string, FormiDefAny>, Value, Issue> extends FormiField<Value, Issue> {
-  readonly kind: 'Object';
-  readonly def: FormiDef_Object<Children, Value, Issue>;
-  readonly children: FormiField_Object_Children<Children>;
-  readonly get: <K extends keyof Children>(key: K) => FormiFieldOf<Children[K]>;
-}
-
-export type FormiField_ObjectAny = FormiField_Object<Record<string, FormiDefAny>, any, any>;
-
-export const FormiField_Object = (() => {
-  return Object.assign(create, {
-    isFormiField_Object,
-    clone,
-  });
-
-  function create<Children extends Record<string, FormiDefAny>, Value, Issue>(
-    key: FormiKey,
-    path: Path,
-    dispatch: FieldsStoreDispatch,
-    def: FormiDef_Object<Children, Value, Issue>,
-    children: FormiField_Object_Children<Children>
-  ): FormiField_Object<Children, Value, Issue> {
-    const keys = [key, ...Object.values(children).map(FormiField.getKeys).flat()];
-    const self: FormiField_Object<Children, Value, Issue> = {
-      ...FormiField.create(key, path, dispatch, keys),
-      kind: 'Object',
-      def: def,
-      children,
-      get,
-    };
-    return self;
-
-    function get<K extends keyof Children>(key: K): FormiFieldOf<Children[K]> {
-      const child = children[key];
-      if (!child) {
-        throw new Error(`No such child: ${String(key)}`);
-      }
-      return child;
-    }
-  }
-
-  function isFormiField_Object(field: any): field is FormiField_Object<any, any, any> {
-    return FormiField.isFormiField(field, 'Object');
-  }
-
-  function clone<Children extends Record<string, FormiDefAny>, Value, Issue>(
-    field: FormiField_Object<Children, Value, Issue>,
-    path: Path,
-    children: FormiField_Object_Children<Children>
-  ): FormiField_Object<Children, Value, Issue> {
-    return create(field.key, path, field[FORMI_FIELD_DISPATCH], field.def, children);
-  }
-})();

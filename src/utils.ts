@@ -1,3 +1,21 @@
+export const nanoid = (() => {
+  // https://github.com/ai/nanoid/blob/main/non-secure/index.js
+  const urlAlphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+
+  return nanoid;
+
+  function nanoid(size = 21) {
+    let id = '';
+    // A compact alternative for `for (var i = 0; i < step; i++)`.
+    let i = size;
+    while (i--) {
+      // `| 0` is more compact and faster than `Math.floor()`.
+      id += urlAlphabet[(Math.random() * 64) | 0];
+    }
+    return id;
+  }
+})();
+
 export function expectNever(val: never, inner?: (val: any) => void): never {
   if (inner) {
     inner(val);
@@ -39,21 +57,3 @@ export function shallowEqual(left: any, right: any): boolean {
   }
   return true;
 }
-
-export const nanoid = (() => {
-  // https://github.com/ai/nanoid/blob/main/non-secure/index.js
-  const urlAlphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
-
-  return nanoid;
-
-  function nanoid(size = 21) {
-    let id = '';
-    // A compact alternative for `for (var i = 0; i < step; i++)`.
-    let i = size;
-    while (i--) {
-      // `| 0` is more compact and faster than `Math.floor()`.
-      id += urlAlphabet[(Math.random() * 64) | 0];
-    }
-    return id;
-  }
-})();

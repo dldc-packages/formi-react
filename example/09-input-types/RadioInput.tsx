@@ -1,24 +1,25 @@
-import React from 'react';
-import { FormiField_Value, useFieldState, FormiIssue } from '../../src';
+import React, { useId } from 'react';
+import { FormiField, FormiIssue, useFieldState } from '../../src';
 import { IssueBox } from './IssueBox';
 
 type Props = {
   label: string;
-  field: FormiField_Value<string, FormiIssue>;
+  field: FormiField<string, FormiIssue>;
   options: Array<{ value: string; label: string }>;
 };
 
 export function RadioInput({ label, field, options }: Props) {
   const state = useFieldState(field);
+  const id = useId();
 
   return (
     <div className="input">
       <label>{label}</label>
       {options.map((option) => {
-        const id = `${field.id}-${option.value}`;
+        const optionId = `${id}-${option.value}`;
         return (
           <div key={id}>
-            <input type="radio" id={id} name={field.name} value={option.value} />
+            <input type="radio" id={optionId} name={state.name} value={option.value} />
             <label htmlFor={id}>{option.label}</label>
           </div>
         );

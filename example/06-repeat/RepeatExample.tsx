@@ -1,19 +1,19 @@
 import React from 'react';
 import { z } from 'zod';
-import { FormiDef, useFormi } from '../../src';
-import { ingredientFieldDef, IngredientInput } from './IngredientInput';
+import { FormiField, useFormi } from '../../src';
+import { ingredientField, IngredientInput } from './IngredientInput';
 import { TextInput } from './TextInput';
 
 const FORM_NAME = 'repeat';
 
-const fieldsDef = FormiDef.object({
-  name: FormiDef.zodString(z.string().min(1)),
-  ingredients: FormiDef.repeat(ingredientFieldDef, 1),
-});
+const initialFields = {
+  name: FormiField.string().zodValidate(z.string().min(1)),
+  ingredients: [ingredientField()],
+};
 
 export function RepeatExample() {
-  const { fields, Form } = useFormi({
-    fields: fieldsDef,
+  const { fields, Form, setFields } = useFormi({
+    initialFields,
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();
@@ -25,15 +25,19 @@ export function RepeatExample() {
     <Form>
       <h2>Repeat</h2>
       <p>This example uses a dynamic form with a repeatable field.</p>
-      <TextInput field={fields.children.name} label="Recipe name" type="text" />
+      <TextInput field={fields.name} label="Recipe name" type="text" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginLeft: '2rem' }}>
-        {fields.children.ingredients.children.map((ingredientField, index) => {
+        {fields.ingredients.map((ingredientField, index) => {
           return (
             <IngredientInput
               field={ingredientField}
               key={ingredientField.key.id}
               onRemove={() => {
-                fields.children.ingredients.actions.remove(index);
+                setFields((prev) => {
+                  const ingredients = [...prev.ingredients];
+                  ingredients.splice(index, 1);
+                  return { ...prev, ingredients };
+                });
               }}
             />
           );
@@ -41,7 +45,7 @@ export function RepeatExample() {
         <div>
           <button
             onClick={() => {
-              fields.children.ingredients.actions.push();
+              setFields((prev) => ({ ...prev, ingredients: [...prev.ingredients, ingredientField()] }));
             }}
             type="button"
           >

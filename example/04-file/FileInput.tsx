@@ -1,19 +1,20 @@
-import React from 'react';
-import { FormiField_Value, FormiIssue, useFieldState } from '../../src';
+import React, { useId } from 'react';
+import { FormiField, FormiIssue, useFieldState } from '../../src';
 import { IssueBox } from './IssueBox';
 
 type Props = {
   label: string;
-  field: FormiField_Value<any, FormiIssue>;
+  field: FormiField<any, FormiIssue>;
 };
 
 export function FileInput({ label, field }: Props) {
   const state = useFieldState(field);
+  const id = useId();
 
   return (
     <div className="input">
-      <label htmlFor={field.id}>{label}</label>
-      <input id={field.id} type="file" name={field.name} />
+      <label htmlFor={id}>{label}</label>
+      <input id={id} type="file" name={state.name} />
       {state.touchedIssues && <IssueBox issue={state.touchedIssues[0]} />}
     </div>
   );
