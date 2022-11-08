@@ -15,10 +15,10 @@ test('Traverse', () => {
   const expectedNextFn = expect.any(Function);
 
   expect(onTraverse).toHaveBeenCalledTimes(4);
-  expect(onTraverse).toHaveBeenNthCalledWith(1, tree.a[0], expectedNextFn);
-  expect(onTraverse).toHaveBeenNthCalledWith(2, tree.a[1], expectedNextFn);
-  expect(onTraverse).toHaveBeenNthCalledWith(3, tree.b, expectedNextFn);
-  expect(onTraverse).toHaveBeenNthCalledWith(4, tree.c, expectedNextFn);
+  expect(onTraverse).toHaveBeenNthCalledWith(1, tree.a[0], expect.objectContaining({ raw: ['a', 0] }), expectedNextFn);
+  expect(onTraverse).toHaveBeenNthCalledWith(2, tree.a[1], expect.objectContaining({ raw: ['a', 1] }), expectedNextFn);
+  expect(onTraverse).toHaveBeenNthCalledWith(3, tree.b, expect.objectContaining({ raw: ['b'] }), expectedNextFn);
+  expect(onTraverse).toHaveBeenNthCalledWith(4, tree.c, expect.objectContaining({ raw: ['c'] }), expectedNextFn);
 });
 
 test('Traverse nested fields', () => {
@@ -32,7 +32,7 @@ test('Traverse nested fields', () => {
     }),
   };
 
-  const onTraverse = jest.fn((_field, next) => {
+  const onTraverse = jest.fn((_field, _path, next) => {
     next();
     return null;
   });
