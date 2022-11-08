@@ -82,7 +82,7 @@ export const FormiController = (() => {
     let onSubmit: OnSubmit<Tree> | null = userOnSubmit ?? null;
     let formEl: HTMLFormElement | null = null;
 
-    const store = FormiStore(initialFields, initialIssues);
+    const store = FormiStore(formName, initialFields, initialIssues);
 
     const self: FormiController<Tree> = {
       [IS_FORM_CONTROLLER]: true,

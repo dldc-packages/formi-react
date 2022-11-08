@@ -12,6 +12,7 @@ export interface Path {
   readonly serialize: () => string;
   readonly toString: () => string;
   readonly append: (...raw: ReadonlyArray<Key>) => Path;
+  readonly prepend: (...raw: ReadonlyArray<Key>) => Path;
   readonly shift: () => Path;
   readonly splitHead: () => [Key | null, Path];
   readonly splitHeadOrThrow: () => [Key, Path];
@@ -42,6 +43,7 @@ export const Path = (() => {
       serialize,
       toString: serialize,
       append,
+      prepend,
       shift,
       splitHead,
       splitHeadOrThrow,
@@ -64,6 +66,10 @@ export const Path = (() => {
 
     function append(...raw: ReadonlyArray<Key>): Path {
       return Path(...self.raw, ...raw);
+    }
+
+    function prepend(...raw: ReadonlyArray<Key>): Path {
+      return Path(...raw, ...self.raw);
     }
 
     function splitHead(): [Key | null, Path] {

@@ -18,7 +18,7 @@ export function RadioInput({ label, field, options }: Props) {
       {options.map((option) => {
         const optionId = `${id}-${option.value}`;
         return (
-          <div key={id}>
+          <div key={optionId}>
             <input type="radio" id={optionId} name={state.name} value={option.value} />
             <label htmlFor={id}>{option.label}</label>
           </div>

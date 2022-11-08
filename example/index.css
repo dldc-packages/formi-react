@@ -40,6 +40,7 @@ label:has(input[type='checkbox']) {
 
 input {
   margin: 0;
+  margin-bottom: 0 !important;
 }
 input:focus {
   outline: 2px solid var(--nc-lk-1);
@@ -49,6 +50,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
+  box-shadow: 0 0 0 30px var(--nc-bg-2) inset !important;
   -webkit-box-shadow: 0 0 0 30px var(--nc-bg-2) inset !important;
 }
 input:-webkit-autofill {

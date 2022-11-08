@@ -38,15 +38,21 @@ export function DateInput({ label, field }: Props) {
     <div className="input">
       <label>{label}</label>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-        <input type="text" name={yearState.name} placeholder="year" />
-        <input type="text" name={monthState.name} placeholder="month" />
-        <input type="text" name={dayState.name} placeholder="day" />
+        <div>
+          <input type="text" name={yearState.name} placeholder="year" />
+          <IssueBox issues={yearState.touchedIssues} />
+        </div>
+        <div>
+          <input type="text" name={monthState.name} placeholder="month" />
+          <IssueBox issues={monthState.touchedIssues} />
+        </div>
+        <div>
+          <input type="text" name={dayState.name} placeholder="day" />
+          <IssueBox issues={dayState.touchedIssues} />
+        </div>
       </div>
       <IssueBox issues={state.touchedIssues} />
-      <IssueBox issues={yearState.touchedIssues} />
-      <IssueBox issues={monthState.touchedIssues} />
-      <IssueBox issues={dayState.touchedIssues} />
-      {state.value && <p>Value: {state.value.toISOString()}</p>}
+      {state.value && <p>Value: {state.value.toLocaleString()}</p>}
     </div>
   );
 }

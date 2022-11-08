@@ -57,3 +57,15 @@ export function shallowEqual(left: any, right: any): boolean {
   }
   return true;
 }
+
+export function isSetEqual<T>(left: ReadonlySet<T>, right: ReadonlySet<T>): boolean {
+  if (left.size !== right.size) {
+    return false;
+  }
+  for (const val of left) {
+    if (!right.has(val)) {
+      return false;
+    }
+  }
+  return true;
+}

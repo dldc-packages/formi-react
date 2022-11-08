@@ -24,7 +24,7 @@ export function useFieldsState<Tree extends FormiFieldTree>(fields: Tree, contro
     ctrl.subscribe,
     () => ctrl.getState().states,
     () => ctrl.getState().states,
-    (s): any => {
+    (states): any => {
       return select(fields);
       function select(f: FormiFieldTree): any {
         if (f === null) {
@@ -34,9 +34,9 @@ export function useFieldsState<Tree extends FormiFieldTree>(fields: Tree, contro
           return f.map(select);
         }
         if (FormiField.utils.isFormiField(f)) {
-          const fieldState = s.get(f.key);
+          const fieldState = states.get(f.key);
           if (!fieldState) {
-            throw new Error('No field state, return default ?');
+            throw new Error(`No field state for ${f.key.id}`);
           }
           return fieldState;
         }

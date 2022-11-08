@@ -50,12 +50,12 @@ export function SimpleExample() {
       </div>
       <div className="input">
         <label htmlFor={emailId}>Email</label>
-        <input type="text" id={emailId} name={states.username.name} />
+        <input type="text" id={emailId} name={states.email.name} />
         <IssueBox issues={states.email.touchedIssues} />
       </div>
       <div className="input">
         <label htmlFor={passwordId}>Password</label>
-        <input type="password" id={passwordId} name={states.username.name} />
+        <input type="password" id={passwordId} name={states.password.name} />
         <IssueBox issues={states.password.touchedIssues} />
       </div>
       <div className="buttons">

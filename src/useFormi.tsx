@@ -18,11 +18,11 @@ const useLayoutEffect = typeof window !== 'undefined' ? reactULE : useEffect;
 
 export type UseFormiOptions<Tree extends FormiFieldTree> = {
   initialFields: Tree;
-  issues?: FormiIssues<any>;
   formName?: string;
   onSubmit?: OnSubmit<Tree>;
   validateOnMount?: boolean;
   formRefObject?: MutableRefObject<HTMLFormElement | null>;
+  issues?: FormiIssues<any>;
 };
 
 type HtmlFormProps = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>;

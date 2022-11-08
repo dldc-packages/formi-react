@@ -5,7 +5,7 @@ import { Input } from './Input';
 import { RadioInput } from './RadioInput';
 import { SelectInput } from './SelectInput';
 
-const FORM_NAME = 'single-input';
+const FORM_NAME = 'input-types';
 
 const initialFields = {
   text: FormiField.string(),

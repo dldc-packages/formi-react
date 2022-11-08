@@ -25,6 +25,7 @@ export const FormiFieldTree = (() => {
     findAllByPath,
     fieldPath,
     wrap,
+    unwrap,
     getChildren,
   };
 
@@ -33,6 +34,13 @@ export const FormiFieldTree = (() => {
       return fields;
     }
     return FormiField.group(fields);
+  }
+
+  function unwrap(fields: FormiFieldAny, wrapped: boolean): FormiFieldTree {
+    if (wrapped) {
+      return fields.children;
+    }
+    return fields;
   }
 
   function traverse<T>(tree: FormiFieldTree, visitor: (field: FormiFieldAny, path: Path, next: () => Array<T>) => T): Array<T> {
