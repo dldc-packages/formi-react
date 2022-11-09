@@ -1,30 +1,29 @@
 import React from 'react';
 import { z } from 'zod';
-import { FormiField, FormiIssueBase, useFieldState, ValidateResult } from '../../src';
+import { FormiField, FormiFieldFromBuilder, FormiIssueBase, useFieldState, ValidateResult } from '../../src';
 import { IssueBox } from './IssueBox';
 
 export type DateFieldIssue = FormiIssueBase | { kind: 'TheWorldEndsIn2048' };
 
-export const dateField = () =>
-  FormiField.group({
-    year: FormiField.number().zodValidate(z.number().int().min(1900, 'Min year is 1900').max(2100, 'Max year is 2100')),
-    month: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid month').max(12, 'Invalid month')),
-    day: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid day').max(31, 'Invalid day')),
-  }).validate((data): ValidateResult<Date, DateFieldIssue> => {
-    if (data === null) {
-      return { success: false };
-    }
-    const date = new Date(data.year, data.month - 1, data.day);
-    // Offset to get correct time with timezone
-    if (date.getFullYear() >= 2048) {
-      return { success: false, issue: { kind: 'TheWorldEndsIn2048' } };
-    }
-    return { success: true, value: date };
-  });
+export const dateField = FormiField.group({
+  year: FormiField.number().zodValidate(z.number().int().min(1900, 'Min year is 1900').max(2100, 'Max year is 2100')).use(),
+  month: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid month').max(12, 'Invalid month')).use(),
+  day: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid day').max(31, 'Invalid day')).use(),
+}).validate((data): ValidateResult<Date, DateFieldIssue> => {
+  if (data === null) {
+    return { success: false };
+  }
+  const date = new Date(data.year, data.month - 1, data.day);
+  // Offset to get correct time with timezone
+  if (date.getFullYear() >= 2048) {
+    return { success: false, issue: { kind: 'TheWorldEndsIn2048' } };
+  }
+  return { success: true, value: date };
+});
 
 type Props = {
   label: string;
-  field: ReturnType<typeof dateField>;
+  field: FormiFieldFromBuilder<typeof dateField>;
 };
 
 export function DateInput({ label, field }: Props) {

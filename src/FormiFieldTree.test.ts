@@ -3,9 +3,9 @@ import { FormiFieldTree } from './FormiFieldTree';
 
 test('Traverse', () => {
   const tree = {
-    a: [FormiField.value(), FormiField.value()],
-    b: FormiField.value(),
-    c: FormiField.group(null),
+    a: [FormiField.value().use(), FormiField.value().use()],
+    b: FormiField.value().use(),
+    c: FormiField.group(null).use(),
   };
 
   const onTraverse = jest.fn();
@@ -23,13 +23,13 @@ test('Traverse', () => {
 
 test('Traverse nested fields', () => {
   const tree = {
-    a1: [FormiField.value(), FormiField.value()],
+    a1: [FormiField.value().use(), FormiField.value().use()],
     a2: FormiField.group({
-      b1: FormiField.value(),
-      b2: FormiField.group(null),
+      b1: FormiField.value().use(),
+      b2: FormiField.group(null).use(),
       b3: null,
       b4: null,
-    }),
+    }).use(),
   };
 
   const onTraverse = jest.fn((_field, _path, next) => {
@@ -46,12 +46,12 @@ test('Traverse nested fields', () => {
 
 test('Find path', () => {
   const tree = {
-    a1: [FormiField.value(), FormiField.value()],
+    a1: [FormiField.value().use(), FormiField.value().use()],
     a2: FormiField.group({
-      b1: FormiField.value(),
-      b2: FormiField.group(null),
+      b1: FormiField.value().use(),
+      b2: FormiField.group(null).use(),
       b3: null,
-    }),
+    }).use(),
   };
 
   expect(FormiFieldTree.fieldPath(tree, tree.a1[0])?.raw).toEqual(['a1', 0]);

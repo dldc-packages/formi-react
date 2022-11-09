@@ -6,9 +6,9 @@ import { TextInput } from './TextInput';
 export type UsernameIssue = { kind: 'UsernameAlreadyUsed' };
 
 const fieldsDef = {
-  username: FormiField.string<UsernameIssue>().zodValidate(z.string().min(1).max(20)),
-  email: FormiField.string().zodValidate(z.string().email()),
-  password: FormiField.string().zodValidate(z.string().min(3)),
+  username: FormiField.string().withIssue<UsernameIssue>().zodValidate(z.string().min(1).max(20)).use(),
+  email: FormiField.string().zodValidate(z.string().email()).use(),
+  password: FormiField.string().zodValidate(z.string().min(3)).use(),
 };
 
 const FORM_NAME = 'server';

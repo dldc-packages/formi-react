@@ -4,17 +4,21 @@ import { FormiField, useFormi } from '../../src';
 import { FileInput } from './FileInput';
 import { TextInput } from './TextInput';
 
+const filenameField = FormiField.string().zodValidate(
+  z
+    .string()
+    .min(1)
+    .max(20)
+    .transform((v) => v.toLowerCase().replaceAll(' ', '-'))
+);
+
 const fieldsDef = {
-  filename: FormiField.string().zodValidate(
-    z
-      .string()
-      .min(1)
-      .max(20)
-      .transform((v) => v.toLowerCase().replaceAll(' ', '-'))
-  ),
-  file: FormiField.nonEmptyfile().validate((file) => {
-    return { success: true, value: { file, size: file.size } };
-  }),
+  filename: filenameField.use(),
+  file: FormiField.nonEmptyfile()
+    .validate((file) => {
+      return { success: true, value: { file, size: file.size } };
+    })
+    .use(),
 };
 
 const FORM_NAME = 'server';

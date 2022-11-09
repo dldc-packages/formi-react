@@ -1,6 +1,6 @@
 import { SubscribeMethod, Subscription } from 'suub';
 import { FieldsUpdateFn } from './FormiController';
-import { FormiField, FormiFieldAny, FormiFieldInput, FormiFieldIssue, FormiFieldValue } from './FormiField';
+import { FormiField, FormiFieldAny, FormiFieldChildren, FormiFieldIssue, FormiFieldValue, InputBase } from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
 import { FormiIssue, FormiIssueBase, FormiIssues } from './FormiIssue';
 import { FormiKey } from './FormiKey';
@@ -8,14 +8,14 @@ import { ImmuWeakMap, ImmuWeakMapDraft } from './tools/ImmuWeakMap';
 import { Path } from './tools/Path';
 import { expectNever, isSetEqual, shallowEqual } from './utils';
 
-export interface FieldState<Value, Issue, Input> {
+export interface FieldState<Value, Issue, Children extends FormiFieldTree> {
   readonly key: FormiKey;
   readonly path: Path;
   readonly name: string; // path as string
   readonly keys: ReadonlySet<FormiKey>;
 
-  readonly initialRawValue: Input | undefined;
-  readonly rawValue: Input | undefined;
+  readonly initialRawValue: InputBase<Children> | undefined;
+  readonly rawValue: InputBase<Children> | undefined;
   readonly value: Value | undefined;
   readonly issues: null | Array<Issue>;
   readonly touchedIssues: null | Array<Issue>;
@@ -26,7 +26,11 @@ export interface FieldState<Value, Issue, Input> {
   readonly isSubmitted: boolean;
 }
 
-export type FieldStateOf<Field extends FormiFieldAny> = FieldState<FormiFieldValue<Field>, FormiFieldIssue<Field>, FormiFieldInput<Field>>;
+export type FieldStateOf<Field extends FormiFieldAny> = FieldState<
+  FormiFieldValue<Field>,
+  FormiFieldIssue<Field>,
+  FormiFieldChildren<Field>
+>;
 
 export type FieldStateAny = FieldState<any, any, any>;
 
@@ -127,19 +131,19 @@ export const FormiStore = (() => {
       if (action.type === 'Change') {
         return updateStates(state, (draft) => {
           for (const field of action.fieldList) {
-            const input = getInput(draft, field, action.data);
+            const inputRes = getInput(draft, field, action.data);
             const prev = draft.getOrThrow(field.key);
-            if (prev.isMounted && shallowEqual(prev.rawValue, input.value)) {
+            if (prev.isMounted && shallowEqual(prev.rawValue, inputRes.input)) {
               // input is the same, stop validation
               break;
             }
-            const result = runValidate(field, input);
+            const result = runValidate(field, inputRes);
             const isTouched = true;
             const next: FieldStateAny = {
               ...prev,
               isTouched,
               hasExternalIssues: false,
-              ...inputToPartialState(prev, input),
+              ...inputToPartialState(prev, inputRes),
               ...validateResultToPartialState(result, isTouched),
             };
             draft.set(field.key, next);
@@ -171,14 +175,14 @@ export const FormiStore = (() => {
         return updateStates(state, (draft, fields) => {
           FormiFieldTree.traverse(fields, (field, _path, next) => {
             next();
-            draft.updateOrThrow(field.key, (prev) => {
-              const input = getInput(draft, field, action.data);
-              const result = runValidate(field, input);
+            draft.updateOrThrow(field.key, (prev): FieldStateAny => {
+              const inputRes = getInput(draft, field, action.data);
+              const result = runValidate(field, inputRes);
               const isTouched = false;
               return {
                 ...prev,
-                initialRawValue: input.value,
-                rawValue: input.value,
+                initialRawValue: inputRes.input ?? undefined,
+                rawValue: inputRes.input ?? undefined,
                 isDirty: false,
                 isMounted: true,
                 isTouched,
@@ -348,14 +352,13 @@ export const FormiStore = (() => {
     type ValidateResult = { status: 'success'; value: unknown } | { status: 'error'; issues: any[] } | { status: 'unkown' };
 
     function runValidate(field: FormiFieldAny, input: GetInputResult): ValidateResult {
-      const isGroup = field.kind === 'Group';
-      if (isGroup && input.resolved === false) {
+      if (input.resolved === false) {
         // Don't run validate if children are not resolved
         return { status: 'unkown' };
       }
-      const validateFn = FormiField.utils.getValidate(field);
+      const validateFn = field.validate;
       try {
-        const result = validateFn(input.value);
+        const result = validateFn(input.input as any);
         if (result.success) {
           if (result.value === undefined) {
             throw new Error(`Expected a value to be returned from the validation function (got undefined).`);
@@ -376,60 +379,52 @@ export const FormiStore = (() => {
       }
     }
 
-    type GetInputResult = { resolved: false; value: null } | { resolved: true; value: unknown };
+    type GetInputTreeResult = { resolved: false; input: null } | { resolved: true; input: unknown };
 
-    function getTreeInput(draft: FieldsStateMapDraft, field: FormiFieldTree): GetInputResult {
+    function getTreeInput(draft: FieldsStateMapDraft, field: FormiFieldTree): GetInputTreeResult {
       if (field === null) {
-        return { resolved: true, value: null };
+        return { resolved: true, input: null };
       }
       if (FormiField.utils.isFormiField(field)) {
         const state = draft.getOrThrow(field.key);
         const value = getValue(state);
         if (value.resolved === false) {
-          return { resolved: false, value: null };
+          return { resolved: false, input: null };
         }
-        return { resolved: true, value: value.value };
+        return { resolved: true, input: value.value };
       }
       if (Array.isArray(field)) {
         const values: Array<any> = [];
         for (const item of field) {
           const result = getTreeInput(draft, item);
           if (result.resolved === false) {
-            return { resolved: false, value: null };
+            return { resolved: false, input: null };
           }
-          values.push(result.value);
+          values.push(result.input);
         }
-        return { resolved: true, value: values };
+        return { resolved: true, input: values };
       }
-      const value: Record<string, any> = {};
+      const input: Record<string, any> = {};
       for (const [key, item] of Object.entries(field)) {
         const result = getTreeInput(draft, item);
         if (result.resolved === false) {
-          return { resolved: false, value: null };
+          return { resolved: false, input: null };
         }
-        value[key] = result.value;
+        input[key] = result.input;
       }
-      return { resolved: true, value };
+      return { resolved: true, input };
     }
+
+    type GetInputResult = { resolved: false; input: null } | { resolved: true; input: InputBase<FormiFieldTree> };
 
     function getInput(draft: FieldsStateMapDraft, field: FormiFieldAny, data: FormData): GetInputResult {
       const state = draft.getOrThrow(field.key);
-      if (field.kind === 'Value') {
-        const value = data.get(state.name);
-        return { resolved: true, value };
+      const values = data.getAll(state.name);
+      const children = getTreeInput(draft, field.children);
+      if (children.resolved === false) {
+        return { resolved: false, input: null };
       }
-      if (field.kind === 'Values') {
-        if (data.has(state.name) === false) {
-          return { resolved: false, value: null };
-        }
-        return { resolved: true, value: data.getAll(state.name) };
-      }
-      if (field.kind === 'Group') {
-        return getTreeInput(draft, field.children);
-      }
-      return expectNever(field.kind, (fieldKind) => {
-        throw new Error(`Unhandled field kind ${fieldKind}`);
-      });
+      return { resolved: true, input: { values, children: children.input } };
     }
 
     type GetValueResult = { resolved: false } | { resolved: true; value: any };
@@ -447,11 +442,7 @@ export const FormiStore = (() => {
       return { resolved: true, value: state.value };
     }
 
-    type PartialFieldState_Result = {
-      value: any;
-      issues: any[] | null;
-      touchedIssues: any[] | null;
-    };
+    type PartialFieldState_Result = Pick<FieldStateAny, 'value' | 'issues' | 'touchedIssues'>;
 
     function validateResultToPartialState(result: ValidateResult, isTouched: boolean): PartialFieldState_Result {
       if (result.status === 'success') {
@@ -466,29 +457,24 @@ export const FormiStore = (() => {
       return expectNever(result);
     }
 
-    type PartialFieldState_Input = {
-      isMounted: boolean;
-      isDirty: boolean;
-      initialRawValue: unknown | undefined;
-      rawValue: unknown | undefined;
-    };
+    type PartialFieldState_Input = Pick<FieldStateAny, 'isMounted' | 'isDirty' | 'initialRawValue' | 'rawValue'>;
 
-    function inputToPartialState(prev: FieldStateAny, input: GetInputResult): PartialFieldState_Input {
+    function inputToPartialState(prev: FieldStateAny, inputRes: GetInputResult): PartialFieldState_Input {
       const { isMounted, initialRawValue, rawValue, isDirty } = prev;
-      if (input.resolved === false) {
+      if (inputRes.resolved === false) {
         // ignore
         return { isMounted, initialRawValue, rawValue, isDirty };
       }
       if (isMounted === false) {
         // mount the field
-        return { isMounted: true, initialRawValue, rawValue: input.value, isDirty: false };
+        return { isMounted: true, initialRawValue, rawValue: inputRes.input, isDirty: false };
       }
       // mounted
-      if (shallowEqual(rawValue, input.value)) {
+      if (shallowEqual(rawValue, inputRes.input)) {
         // same input, ignore
         return { isMounted, initialRawValue, rawValue, isDirty };
       }
-      return { isMounted, initialRawValue, rawValue: input.value, isDirty: shallowEqual(input.value, initialRawValue) === false };
+      return { isMounted, initialRawValue, rawValue: inputRes.input, isDirty: shallowEqual(inputRes.input, initialRawValue) === false };
     }
 
     function hasErrors(): boolean {

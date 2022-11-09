@@ -7,8 +7,8 @@ import { TextInput } from './TextInput';
 const FORM_NAME = 'repeat';
 
 const initialFields = {
-  name: FormiField.string().zodValidate(z.string().min(1)),
-  ingredients: [ingredientField()],
+  name: FormiField.string().zodValidate(z.string().min(1)).use(),
+  ingredients: [ingredientField.use()],
 };
 
 export function RepeatExample() {
@@ -45,7 +45,7 @@ export function RepeatExample() {
         <div>
           <button
             onClick={() => {
-              setFields((prev) => ({ ...prev, ingredients: [...prev.ingredients, ingredientField()] }));
+              setFields((prev) => ({ ...prev, ingredients: [...prev.ingredients, ingredientField.use()] }));
             }}
             type="button"
           >

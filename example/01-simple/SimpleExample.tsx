@@ -7,9 +7,9 @@ import { IssueBox } from './IssueBox';
  * 1. Define the form schema
  */
 const simpleFields = {
-  username: FormiField.string().zodValidate(z.string().min(1).max(20)),
-  email: FormiField.string().zodValidate(z.string().email()),
-  password: FormiField.string().zodValidate(z.string().min(1)),
+  username: FormiField.string().zodValidate(z.string().min(1).max(20)).use(),
+  email: FormiField.string().zodValidate(z.string().email()).use(),
+  password: FormiField.string().zodValidate(z.string().min(1)).use(),
 };
 
 export function SimpleExample() {

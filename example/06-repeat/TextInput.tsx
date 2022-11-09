@@ -17,7 +17,7 @@ export function TextInput({ label, field, type = 'text', defaultValue }: Props) 
     <div className="input">
       <label htmlFor={id}>{label}</label>
       <input id={id} type={type} name={state.name} defaultValue={defaultValue} />
-      {state.value && state.value !== state.rawValue && <p>Transformed value: {state.value}</p>}
+      {state.value && <p>Transformed value: {state.value}</p>}
       <IssueBox issues={state.touchedIssues} />
     </div>
   );

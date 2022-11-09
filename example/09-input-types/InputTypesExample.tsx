@@ -8,10 +8,12 @@ import { SelectInput } from './SelectInput';
 const FORM_NAME = 'input-types';
 
 const initialFields = {
-  text: FormiField.string(),
-  number: FormiField.number(),
-  checkbox: FormiField.checkbox(),
-  radio: FormiField.string().zodValidate(z.enum(['a', 'b', 'c'])),
+  text: FormiField.string().use(),
+  number: FormiField.number().use(),
+  checkbox: FormiField.checkbox().use(),
+  radio: FormiField.string()
+    .zodValidate(z.enum(['a', 'b', 'c']))
+    .use(),
   select: FormiField.string()
     .zodValidate(z.enum(['a', 'b', 'c', '']))
     .validate((value) => {
@@ -19,7 +21,8 @@ const initialFields = {
         return { success: false, issue: { kind: 'MissingField' } };
       }
       return { success: true, value };
-    }),
+    })
+    .use(),
 };
 
 export function InputTypesExample() {

@@ -7,11 +7,18 @@ import {
   FormiIssueNotFile,
   FormiIssueNotString,
   FormiIssueNumber,
+  FormiIssueSingle,
   FormiIssueZod,
 } from './FormiIssue';
 import { FormiKey } from './FormiKey';
 
 const FIELD_INTERNAL = Symbol('FIELD_INTERNAL');
+const FIELD_BUILDER_INTERNAL = Symbol('FIELD_BUILDER_INTERNAL');
+
+export type InputBase<Children extends FormiFieldTree> = {
+  values: Array<FormDataEntryValue>;
+  children: FormiFieldTreeValue<Children>;
+};
 
 export type ValidateSuccess<Value> = { success: true; value: Value };
 export type ValidateFailure<Issue> = { success: false; issue?: Issue; issues?: Array<Issue> };
@@ -21,88 +28,148 @@ export type ValidateFn<Input, Value, Issue> = (value: Input) => ValidateResult<V
 
 export type ChildrenUpdateFn<Children> = (prev: Children) => Children;
 
-export type FormiFieldAny = FormiField<any, any, any>;
-
-export type FormiFieldInput<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__input'];
-export type FormiFieldValue<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__value'];
-export type FormiFieldIssue<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__issue'];
-
-export type FormiFieldKind = 'Value' | 'Values' | 'Group';
-
-export interface FormiField<Value, Issue = FormiIssue, Children extends FormiFieldTree = null, Input = unknown> {
+export interface FormiField<Value, Issue = FormiIssue, Children extends FormiFieldTree = null> {
   readonly [FIELD_INTERNAL]: {
-    readonly validateFn: ValidateFn<any, Value, Issue>;
-    readonly __input: Input;
+    readonly builder: FormiFieldBuilder<Value, Issue, Children>;
     readonly __value: Value;
     readonly __issue: Issue;
   };
-  readonly kind: FormiFieldKind;
   readonly children: Children;
   readonly key: FormiKey;
+  readonly validate: ValidateFn<InputBase<Children>, Value, Issue>;
+
+  readonly withChildren: (children: Children | ChildrenUpdateFn<Children>) => FormiField<Value, Issue, Children>;
+}
+
+export type FormiFieldAny = FormiField<any, any, any>;
+
+export type FormiFieldValue<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__value'];
+export type FormiFieldIssue<F extends FormiFieldAny> = F[typeof FIELD_INTERNAL]['__issue'];
+export type FormiFieldChildren<F extends FormiFieldAny> = F['children'];
+
+export type FormiFieldFromBuilder<Builder extends FormiFieldBuilderAny> = FormiField<
+  Builder[typeof FIELD_BUILDER_INTERNAL]['__value'],
+  Builder[typeof FIELD_BUILDER_INTERNAL]['__issue'],
+  Builder['children']
+>;
+
+export type FormiFieldBuilderAny = FormiFieldBuilder<any, any, any>;
+
+export interface FormiFieldBuilder<Value, Issue = FormiIssue, Children extends FormiFieldTree = null> {
+  readonly [FIELD_BUILDER_INTERNAL]: {
+    readonly validateFn: ValidateFn<InputBase<Children>, Value, Issue>;
+    readonly __value: Value;
+    readonly __issue: Issue;
+  };
+  readonly children: Children;
 
   readonly validate: <NextValue = Value, NextIssue = never>(
     validateFn: ValidateFn<Value, NextValue, Issue | NextIssue>
-  ) => FormiField<NextValue, Issue | NextIssue, Children, Input>;
+  ) => FormiFieldBuilder<NextValue, Issue | NextIssue, Children>;
+  readonly zodValidate: <NextValue = Value>(schema: z.Schema<NextValue>) => FormiFieldBuilder<NextValue, Issue | FormiIssueZod, Children>;
+  readonly withIssue: <NextIssue>() => FormiFieldBuilder<Value, Issue | NextIssue, Children>;
 
-  readonly zodValidate: <NextValue = Value>(schema: z.Schema<NextValue>) => FormiField<NextValue, Issue | FormiIssueZod, Children, Input>;
-
-  readonly withChildren: (children: Children | ChildrenUpdateFn<Children>) => FormiField<Value, Issue, Children, Input>;
+  readonly use: () => FormiField<Value, Issue, Children>;
 }
 
 export const FormiField = (() => {
+  const base: FormiFieldBuilder<InputBase<null>, FormiIssueBase, null> = createFieldBuilder(null, (input) => success(input));
+
+  const value = base.validate(isSingleValue);
+  const values = base.validate((input) => success(input.values));
+
+  const optionalString = value.validate(isNotFile);
+  const string = optionalString.validate(isNotNull);
+  const optionalNumber = optionalString.validate(isNumber);
+  const number = optionalNumber.validate(isNotNull);
+  const checkbox = optionalString.validate(isDefined);
+
+  const file = value.validate(isFile);
+  const nonEmptyfile = file.validate(isNonEmptyFile);
+
+  function group<Children extends FormiFieldTree>(
+    children: Children
+  ): FormiFieldBuilder<FormiFieldTreeValue<Children>, FormiIssueBase, Children> {
+    return createFieldBuilder<FormiFieldTreeValue<Children>, FormiIssueBase, Children>(children, (input) => success(input.children));
+  }
+
   return {
     utils: {
-      getValidate,
       zodValidator,
       isFormiField,
       isNotNull,
       isNotFile,
       isNumber,
       isDefined,
+      isFile,
+      isNonEmptyFile,
     },
-    // primitives
-    value,
-    values,
+    create: createFieldBuilder,
+    value: () => value,
+    values: () => values,
+    string: () => string,
+    optionalString: () => optionalString,
+    number: () => number,
+    optionalNumber: () => optionalNumber,
+    checkbox: () => checkbox,
+    file: () => file,
+    nonEmptyfile: () => nonEmptyfile,
+
     group,
-    // common
-    string,
-    optionalString,
-    number,
-    optionalNumber,
-    checkbox,
-    file,
-    nonEmptyfile,
   } as const;
 
-  function create<Value, Issue, Children extends FormiFieldTree, Input>(
-    kind: FormiFieldKind,
+  function createField<Value, Issue, Children extends FormiFieldTree>(
+    builder: FormiFieldBuilder<Value, Issue, Children>,
     key: FormiKey,
-    children: Children,
-    validateFn: ValidateFn<any, Value, Issue> = (value) => ({
-      success: true,
-      value,
-    })
-  ): FormiField<Value, Issue, Children, Input> {
-    const currentValidateFn = validateFn;
-
+    children: Children
+  ): FormiField<Value, Issue, Children> {
     return {
       [FIELD_INTERNAL]: {
-        __input: {} as Input,
+        builder,
         __value: {} as Value,
         __issue: {} as Issue,
-        validateFn,
       },
-      kind,
       children,
       key,
+      validate: builder[FIELD_BUILDER_INTERNAL].validateFn,
+      withChildren: (update: Children | ChildrenUpdateFn<Children>) => {
+        const nextChildren = typeof update === 'function' ? update(children) : update;
+        return createField(builder, key, nextChildren);
+      },
+    };
+  }
+
+  function createFieldBuilder<Value, Issue, Children extends FormiFieldTree>(
+    children: Children,
+    validateFn: ValidateFn<InputBase<Children>, Value, Issue>
+  ): FormiFieldBuilder<Value, Issue, Children> {
+    const currentValidateFn = validateFn;
+
+    const self: FormiFieldBuilder<Value, Issue, Children> = {
+      [FIELD_BUILDER_INTERNAL]: {
+        validateFn,
+        __value: {} as Value,
+        __issue: {} as Issue,
+      },
+      children,
       validate,
       zodValidate,
-      withChildren,
+      withIssue,
+      use,
     };
+    return self;
+
+    function use(): FormiField<Value, Issue, Children> {
+      return createField(self, FormiKey(), children);
+    }
+
+    function withIssue<NextIssue>(): FormiFieldBuilder<Value, Issue | NextIssue, Children> {
+      return self;
+    }
 
     function validate<NextValue = Value, NextIssue = never>(
       validateFn: ValidateFn<Value, NextValue, Issue | NextIssue>
-    ): FormiField<NextValue, Issue | NextIssue, Children, Input> {
+    ): FormiFieldBuilder<NextValue, Issue | NextIssue, Children> {
       const nextValidate = (input: any) => {
         const prev = currentValidateFn(input);
         if (!prev.success) {
@@ -110,83 +177,15 @@ export const FormiField = (() => {
         }
         return validateFn(prev.value);
       };
-      return create(kind, key, children, nextValidate);
+      return createFieldBuilder(children, nextValidate);
     }
 
-    function withChildren(update: Children | ChildrenUpdateFn<Children>): FormiField<Value, Issue, Children, Input> {
-      const nextChildren = typeof update === 'function' ? update(children) : update;
-      return create(kind, key, nextChildren, validateFn);
-    }
-
-    function zodValidate<NextValue = Value>(schema: z.Schema<NextValue>): FormiField<NextValue, Issue | FormiIssueZod, Children, Input> {
+    function zodValidate<NextValue = Value>(schema: z.Schema<NextValue>): FormiFieldBuilder<NextValue, Issue | FormiIssueZod, Children> {
       return validate(zodValidator(schema));
     }
   }
 
-  // primitives
-
-  function value(): FormiField<FormDataEntryValue | null, FormiIssueBase, null, FormDataEntryValue | null> {
-    return create('Value', FormiKey(), null);
-  }
-
-  function values(): FormiField<Array<FormDataEntryValue> | null, FormiIssueBase, null, Array<FormDataEntryValue> | null> {
-    return create('Values', FormiKey(), null);
-  }
-
-  function group<Children extends FormiFieldTree>(
-    children: Children
-  ): FormiField<FormiFieldTreeValue<Children>, FormiIssueBase, Children, FormiFieldTreeValue<Children>> {
-    return create('Group', FormiKey(), children);
-  }
-
-  // common
-
-  function string<Issue = never>(): FormiField<string, FormiIssueNotFile | Issue, null> {
-    return value().validate(isNotFile).validate(isNotNull);
-  }
-
-  function optionalString<Issue = never>(): FormiField<string | null, FormiIssueNotFile | Issue, null> {
-    return value().validate(isNotFile);
-  }
-
-  function number<Issue = never>(): FormiField<number, FormiIssueNotFile | FormiIssueNumber | Issue, null> {
-    return string().validate(isNumber).validate(isNotNull);
-  }
-
-  function optionalNumber<Issue = never>(): FormiField<null | number, FormiIssueNotFile | FormiIssueNumber | Issue, null> {
-    return string().validate(isNumber);
-  }
-
-  function checkbox<Issue = never>(): FormiField<boolean, Issue | FormiIssueNotFile, null> {
-    return value().validate(isNotFile).validate(isDefined);
-  }
-
-  function file<Issue = never>(): FormiField<File, FormiIssueNotString | Issue, null> {
-    return value().validate<File, FormiIssueNotString>((entry) => {
-      if (entry === null) {
-        return { success: false, issue: { kind: 'MissingField' } };
-      }
-      if (typeof entry === 'string') {
-        return { success: false, issue: { kind: 'UnexpectedString' } };
-      }
-      return { success: true, value: entry };
-    });
-  }
-
-  function nonEmptyfile<Issue = never>(): FormiField<File, FormiIssueNotString | FormiIssueNonEmptyFile | Issue, null> {
-    return file().validate((val) => {
-      if (val.size === 0) {
-        return failure<FormiIssueNonEmptyFile>({ kind: 'EmptyFile' });
-      }
-      return success(val);
-    });
-  }
-
   // utils
-
-  function getValidate(field: FormiFieldAny): ValidateFn<any, any, any> {
-    return field[FIELD_INTERNAL].validateFn;
-  }
 
   function isFormiField(field: any): field is FormiField<any, any, any> {
     return field && field[FIELD_INTERNAL];
@@ -206,6 +205,19 @@ export const FormiField = (() => {
     };
   }
 
+  function isSingleValue(input: InputBase<null>): ValidateResult<FormDataEntryValue | null, FormiIssueSingle> {
+    if (input.values === null) {
+      return success(null);
+    }
+    if (input.values.length === 0) {
+      return success(null);
+    }
+    if (input.values.length === 1) {
+      return success(input.values[0]);
+    }
+    return failure({ kind: 'UnexpectedMultipleValues' });
+  }
+
   function isNotNull<Value>(input: Value | null): ValidateResult<Value, FormiIssueBase> {
     if (input === null) {
       return failure<FormiIssueBase>({ kind: 'MissingField' });
@@ -220,7 +232,7 @@ export const FormiField = (() => {
     return success<Value>(input);
   }
 
-  function isNumber(input: string): ValidateResult<number | null, FormiIssueNumber> {
+  function isNumber(input: string | null): ValidateResult<number | null, FormiIssueNumber> {
     if (input === '' || input === null) {
       return success<number | null>(null);
     }
@@ -236,6 +248,23 @@ export const FormiField = (() => {
       return success(false);
     }
     return success(true);
+  }
+
+  function isFile(entry: FormDataEntryValue | null): ValidateResult<File, FormiIssueNotString> {
+    if (entry === null) {
+      return { success: false, issue: { kind: 'MissingField' } };
+    }
+    if (typeof entry === 'string') {
+      return { success: false, issue: { kind: 'UnexpectedString' } };
+    }
+    return { success: true, value: entry };
+  }
+
+  function isNonEmptyFile(input: File): ValidateResult<File, FormiIssueNonEmptyFile> {
+    if (input.size === 0) {
+      return failure<FormiIssueNonEmptyFile>({ kind: 'EmptyFile' });
+    }
+    return success(input);
   }
 })();
 

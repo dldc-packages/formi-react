@@ -6,17 +6,19 @@ import { IssueBox } from './IssueBox';
 export type DateExampleIssue = FormiIssue | { kind: 'StartDateAfterEndDate' };
 
 const initialFields = FormiField.group({
-  startDate: dateField(),
-  endDate: dateField(),
-}).validate((data): ValidateResult<NonNullable<typeof data>, DateExampleIssue> => {
-  if (data === null) {
-    return { success: false };
-  }
-  if (data.startDate > data.endDate) {
-    return { success: false, issue: { kind: 'StartDateAfterEndDate' } };
-  }
-  return { success: true, value: data };
-});
+  startDate: dateField.use(),
+  endDate: dateField.use(),
+})
+  .validate((data): ValidateResult<NonNullable<typeof data>, DateExampleIssue> => {
+    if (data === null) {
+      return { success: false };
+    }
+    if (data.startDate > data.endDate) {
+      return { success: false, issue: { kind: 'StartDateAfterEndDate' } };
+    }
+    return { success: true, value: data };
+  })
+  .use();
 
 const FORM_NAME = 'date';
 

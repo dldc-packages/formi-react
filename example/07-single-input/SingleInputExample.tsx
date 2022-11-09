@@ -5,7 +5,7 @@ import { IssueBox } from './IssueBox';
 
 const FORM_NAME = 'single-input';
 
-const initialFields = FormiField.string().zodValidate(z.string().min(1));
+const initialFields = FormiField.string().zodValidate(z.string().min(1)).use();
 
 export function SingleInputExample() {
   const { fields, Form, useFieldState } = useFormi({

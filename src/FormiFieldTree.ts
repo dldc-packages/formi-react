@@ -33,7 +33,7 @@ export const FormiFieldTree = (() => {
     if (FormiField.utils.isFormiField(fields)) {
       return fields;
     }
-    return FormiField.group(fields);
+    return FormiField.group(fields).use();
   }
 
   function unwrap(fields: FormiFieldAny, wrapped: boolean): FormiFieldTree {
