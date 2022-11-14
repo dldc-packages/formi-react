@@ -16,12 +16,14 @@ export interface Path {
   readonly shift: () => Path;
   readonly splitHead: () => [Key | null, Path];
   readonly splitHeadOrThrow: () => [Key, Path];
+  readonly splitTail: () => [Path, Key | null];
+  readonly splitTailOrThrow: () => [Path, Key];
   [Symbol.iterator](): Iterator<Key>;
 }
 
 export const Path = (() => {
-  const NOT_ALLOWED = /\[|\]|\./; // . or [ or ]
-  const SPLITTER = /(\[\d+\]|\.)/g;
+  const NOT_ALLOWED = /\[|\]|\.| /; // space, dot, [ or ]
+  const SPLITTER = /(\[\d+\]|\.)/g; // . or [0] or [1] or [2] or ...
 
   return Object.assign(create, {
     create: create,
@@ -47,6 +49,8 @@ export const Path = (() => {
       shift,
       splitHead,
       splitHeadOrThrow,
+      splitTail,
+      splitTailOrThrow,
       [Symbol.iterator](): Iterator<Key> {
         return this.raw[Symbol.iterator]();
       },
@@ -87,6 +91,22 @@ export const Path = (() => {
       }
       return [head, tail];
     }
+
+    function splitTail(): [Path, Key | null] {
+      if (raw.length === 0) {
+        return [Path(), null];
+      }
+      const [head, ...tail] = raw;
+      return [Path(...tail), head];
+    }
+
+    function splitTailOrThrow(): [Path, Key] {
+      const [tail, head] = splitTail();
+      if (head === null) {
+        throw new Error(`Cannot split tail of empty path`);
+      }
+      return [tail, head];
+    }
   }
 
   function equal(a: PathLike, b: PathLike): boolean {
@@ -100,6 +120,9 @@ export const Path = (() => {
   }
 
   function validatePathItem(item: string): string {
+    if (item.length === 0) {
+      throw new Error(`Path item cannot be empty`);
+    }
     if (NOT_ALLOWED.test(item)) {
       throw new Error(`Path item cannot contain . or [ or ]`);
     }

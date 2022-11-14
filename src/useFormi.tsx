@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useCallback, useEffect, useId, useLayoutEffect as reactULE, useMemo, useRef, useState } from 'react';
-import { FormiController, OnSubmit } from './FormiController';
+import { FormiController, FormiControllerOptions } from './FormiController';
 import { FormiFieldAny } from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
 import { FormiIssues } from './FormiIssue';
@@ -16,13 +16,14 @@ declare const window: any;
 
 const useLayoutEffect = typeof window !== 'undefined' ? reactULE : useEffect;
 
-export type UseFormiOptions<Tree extends FormiFieldTree> = {
-  initialFields: Tree;
+export type UseFormiOptions<Tree extends FormiFieldTree> = Omit<
+  FormiControllerOptions<Tree>,
+  'formName' | 'initialIssues' | 'initialFields'
+> & {
   formName?: string;
-  onSubmit?: OnSubmit<Tree>;
-  validateOnMount?: boolean;
   formRefObject?: MutableRefObject<HTMLFormElement | null>;
   issues?: FormiIssues<any>;
+  fields: Tree;
 };
 
 type HtmlFormProps = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>;
@@ -44,7 +45,7 @@ export type UseFormiResult<Tree extends FormiFieldTree> = {
  */
 export function useFormi<Tree extends FormiFieldTree>({
   formName,
-  initialFields,
+  fields,
   issues,
   onSubmit,
   validateOnMount,
@@ -67,22 +68,26 @@ export function useFormi<Tree extends FormiFieldTree>({
   );
 
   const [controller] = useState(() =>
-    FormiController<Tree>({ formName: formNameResolved, initialFields, initialIssues: issues, onSubmit, validateOnMount })
+    FormiController<Tree>({ formName: formNameResolved, initialFields: fields, initialIssues: issues, onSubmit, validateOnMount })
   );
 
-  const fields = useFields<Tree>(controller);
+  const connectedFields = useFields<Tree>(controller);
 
   useLayoutEffect(() => {
     if (formRefObjectResolved.current) {
       controller.mount(formRefObjectResolved.current);
     }
-  }, [controller, formRefObjectResolved, fields]);
+  }, [controller, formRefObjectResolved, connectedFields]);
 
   useLayoutEffect(() => {
     if (onSubmit) {
       controller.setOnSubmit(onSubmit);
     }
   }, [controller, onSubmit]);
+
+  useLayoutEffect(() => {
+    controller.setFields(fields);
+  }, [controller, fields]);
 
   useLayoutEffect(() => {
     if (issues) {
@@ -121,10 +126,10 @@ export function useFormi<Tree extends FormiFieldTree>({
       ref: refCallback,
       refObject: formRefObjectResolved,
       Form,
-      fields,
+      fields: connectedFields,
       useFieldState,
       useFieldsState,
       setFields: controller.setFields,
     };
-  }, [Form, controller, fields, formRefObjectResolved, refCallback, useFieldState, useFieldsState]);
+  }, [Form, controller, connectedFields, formRefObjectResolved, refCallback, useFieldState, useFieldsState]);
 }

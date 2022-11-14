@@ -1,4 +1,6 @@
 import { SubscribeMethod } from 'suub';
+import { FieldNamer } from './FieldNamer';
+import { FormiFieldAny } from './FormiField';
 import { FormiFieldTree, FormiFieldTreeValue } from './FormiFieldTree';
 import { FormiIssues } from './FormiIssue';
 import { FormiIssuesBuilder } from './FormiIssuesBuilder';
@@ -51,21 +53,44 @@ export interface FormiController<Tree extends FormiFieldTree> {
   readonly mount: (formEl: HTMLFormElement) => void;
 }
 
-export type FormiControllerOptions<Tree extends FormiFieldTree> = {
+export interface FormiControllerOptions<Tree extends FormiFieldTree> {
   formName: string;
   initialFields: Tree;
+  namedFields?: Record<string, FormiFieldAny>;
   initialIssues?: FormiIssues<any>;
   onSubmit?: OnSubmit<Tree>;
   validateOnMount?: boolean;
-};
+}
 
 export type FormiControllerAny = FormiController<any>;
+
+export type ValidateStrictness =
+  | 'exact' // onlly allow fields that are in the initialFields
+  | 'shape' // allow array to have more items (of the same type) than the initialFields
+  | 'loose'; // allow any fields (unsafe result)
 
 export const FormiController = (() => {
   return Object.assign(create, { validate });
 
-  function validate<Tree extends FormiFieldTree>(options: FormiControllerOptions<Tree>, data: FormData): FormiResult<Tree> {
+  function validate<Tree extends FormiFieldTree>(
+    options: FormiControllerOptions<Tree>,
+    data: FormData,
+    strictness: 'loose'
+  ): FormiResult<any>;
+  function validate<Tree extends FormiFieldTree>(
+    options: FormiControllerOptions<Tree>,
+    data: FormData,
+    strictness: ValidateStrictness
+  ): FormiResult<Tree>;
+  function validate<Tree extends FormiFieldTree>(options: FormiControllerOptions<Tree>, data: FormData): FormiResult<Tree>;
+  function validate<Tree extends FormiFieldTree>(
+    options: FormiControllerOptions<Tree>,
+    data: FormData,
+    strictness: ValidateStrictness = 'shape'
+  ): FormiResult<Tree> {
     const controller = create<Tree>(options);
+    const fields = extractFieldsFromData(data, strictness);
+    controller.setFields(fields as Tree);
     controller.submit(data);
     return controller.getResult();
   }
@@ -76,13 +101,16 @@ export const FormiController = (() => {
     initialFields,
     initialIssues,
     onSubmit: userOnSubmit,
+    namedFields,
   }: FormiControllerOptions<Tree>): FormiController<Tree> {
     Path.validatePathItem(formName);
 
     let onSubmit: OnSubmit<Tree> | null = userOnSubmit ?? null;
     let formEl: HTMLFormElement | null = null;
 
-    const store = FormiStore(formName, initialFields, initialIssues);
+    const namer = FieldNamer(initialFields, namedFields ?? {});
+
+    const store = FormiStore(formName, initialFields, initialIssues, namer);
 
     const self: FormiController<Tree> = {
       [IS_FORM_CONTROLLER]: true,
@@ -218,4 +246,6 @@ export const FormiController = (() => {
       }
     }
   }
+
+  function extractFieldsFromData(data: FormData, strictness: ValidateStrictness): FormiFieldTree {}
 })();

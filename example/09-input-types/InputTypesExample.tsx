@@ -27,7 +27,7 @@ const initialFields = {
 
 export function InputTypesExample() {
   const { fields, Form } = useFormi({
-    initialFields,
+    fields: initialFields,
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();

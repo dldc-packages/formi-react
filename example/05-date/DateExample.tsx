@@ -24,7 +24,7 @@ const FORM_NAME = 'date';
 
 export function DateExample() {
   const { fields, Form, useFieldState } = useFormi({
-    initialFields: initialFields,
+    fields: initialFields,
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();

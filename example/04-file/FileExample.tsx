@@ -25,7 +25,7 @@ const FORM_NAME = 'server';
 
 export function FileExample() {
   const { fields, Form } = useFormi({
-    initialFields: fieldsDef,
+    fields: fieldsDef,
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();

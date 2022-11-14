@@ -13,7 +13,7 @@ const initialFields = {
 
 export function RepeatExample() {
   const { fields, Form, setFields } = useFormi({
-    initialFields,
+    fields: initialFields,
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();

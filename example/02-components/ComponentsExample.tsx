@@ -17,7 +17,7 @@ export function ComponentsExample() {
    * 2. Use the useFormi hook to create a form instance
    */
   const { fields, Form } = useFormi({
-    initialFields: simpleFields,
+    fields: simpleFields,
     formName: 'components',
     onSubmit: ({ value }, actions) => {
       // [Optional] Do something with the form value

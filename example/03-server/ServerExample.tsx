@@ -33,7 +33,7 @@ export function ServerExample() {
   const submitting = status.status === 'pending';
 
   const { fields, Form, refObject } = useFormi({
-    initialFields: fieldsDef,
+    fields: fieldsDef,
     formName: FORM_NAME,
     onSubmit: ({ formData }, actions) => {
       actions.preventDefault();

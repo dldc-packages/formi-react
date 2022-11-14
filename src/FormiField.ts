@@ -95,8 +95,9 @@ export const FormiField = (() => {
 
   return {
     utils: {
-      zodValidator,
       isFormiField,
+      getBuilder,
+      zodValidator,
       isNotNull,
       isNotFile,
       isNumber,
@@ -189,6 +190,10 @@ export const FormiField = (() => {
 
   function isFormiField(field: any): field is FormiField<any, any, any> {
     return field && field[FIELD_INTERNAL];
+  }
+
+  function getBuilder(field: FormiFieldAny): FormiFieldBuilderAny {
+    return field[FIELD_INTERNAL].builder;
   }
 
   function zodValidator<T>(schema: z.Schema<T>): ValidateFn<any, T, FormiIssueZod> {

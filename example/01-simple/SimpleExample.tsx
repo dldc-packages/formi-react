@@ -18,7 +18,7 @@ export function SimpleExample() {
    */
   const { fields, Form, useFieldsState } = useFormi({
     formName: 'simple',
-    initialFields: simpleFields,
+    fields: simpleFields,
     onSubmit: ({ value }, actions) => {
       // [Optional] Do something with the form value
       alert(JSON.stringify(value, null, 2));

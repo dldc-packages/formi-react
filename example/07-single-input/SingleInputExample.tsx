@@ -9,7 +9,7 @@ const initialFields = FormiField.string().zodValidate(z.string().min(1)).use();
 
 export function SingleInputExample() {
   const { fields, Form, useFieldState } = useFormi({
-    initialFields,
+    fields: initialFields,
     formName: FORM_NAME,
     onSubmit: ({ value }, actions) => {
       actions.preventDefault();
