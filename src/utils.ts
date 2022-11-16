@@ -1,3 +1,5 @@
+import { FormiInternalErrors } from './FormiError';
+
 export const nanoid = (() => {
   // https://github.com/ai/nanoid/blob/main/non-secure/index.js
   const urlAlphabet = 'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
@@ -20,7 +22,7 @@ export function expectNever(val: never, inner?: (val: any) => void): never {
   if (inner) {
     inner(val);
   }
-  throw new Error('Unexpected Never');
+  throw FormiInternalErrors.create.Internal_UnexpectedNever(val);
 }
 
 export function shallowEqual(left: any, right: any): boolean {

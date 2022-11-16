@@ -11,6 +11,9 @@ describe('serialize / parse', () => {
     [[1, 'c', 'd'], '[1].c.d'],
     [['a', 'b', 'c', 9], 'a.b.c[9]'],
     [[0, 1, 2], '[0][1][2]'],
+    [['____'], '____'],
+    [['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'], 'a.b.c.d.e.f.g.h.i'],
+    [['$$', 0, '---'], '$$[0].---'],
   ];
 
   test.each(testCases)('Path %j serialize to %s', (path, expected) => {

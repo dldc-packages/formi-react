@@ -1,5 +1,6 @@
 import { createContext, createElement, useContext } from 'react';
 import { FormiControllerAny } from './FormiController';
+import { FormiErrors } from './FormiError';
 
 const FormiContext = createContext<FormiControllerAny | null>(null);
 
@@ -15,7 +16,7 @@ export function FormiContextProvider({ controller, children }: FormiContextProvi
 export function useFormiContext(): FormiControllerAny {
   const controller = useContext(FormiContext);
   if (!controller) {
-    throw new Error('No FormiContext found');
+    throw FormiErrors.create.MissingFormiContext();
   }
   return controller;
 }
@@ -28,7 +29,7 @@ export function useFormiController(controller?: FormiControllerAny): FormiContro
   const controllerContext = useMaybeFormiContext();
   const ctrl = controller ?? controllerContext;
   if (!ctrl) {
-    throw new Error('No controller found, either pass it as argument or use FormiContext');
+    throw FormiErrors.create.MissingFormiController();
   }
   return ctrl;
 }

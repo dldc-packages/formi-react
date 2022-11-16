@@ -5,6 +5,8 @@ export * from './FormiIssue';
 export * from './FormiIssuesBuilder';
 export * from './FormiKey';
 export * from './FormiStore';
+export * from './tools/ImmuWeakMap';
+export * from './tools/Path';
 export * from './useFields';
 export * from './useFieldsState';
 export * from './useFieldState';

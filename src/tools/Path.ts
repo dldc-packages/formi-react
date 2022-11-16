@@ -1,7 +1,20 @@
+import { ErreursMap } from 'erreur';
+
 export type Key = string | number;
 export type RawPath = ReadonlyArray<Key>;
 
 const IS_PATH = Symbol('IS_PATH');
+
+const ALLOWED_CHARS = /[A-Za-z0-9$=_-]+/; // . or [ or ]
+const SPLITTER = /(\[\d+\]|\.)/g;
+
+export const PathErrors = new ErreursMap({
+  CannotSplitEmpty: () => ({ message: `Cannot split head of empty path` }),
+  InvalidStringPathItem: (item: string) => ({ message: `String Path item cannot contain . or [ or ] (received "${item}")` }),
+  InvalidNumberPathItem: (item: number) => ({ message: `Number Path item must be a positive (or 0) integer (received "${item}")` }),
+});
+
+export type PathError = typeof PathErrors.infered;
 
 export type PathLike = RawPath | Path;
 
@@ -21,9 +34,6 @@ export interface Path {
 }
 
 export const Path = (() => {
-  const NOT_ALLOWED = /\[|\]|\./; // . or [ or ]
-  const SPLITTER = /(\[\d+\]|\.)/g;
-
   return Object.assign(create, {
     create: create,
     isPath,
@@ -85,7 +95,7 @@ export const Path = (() => {
     function splitHeadOrThrow(): [Key, Path] {
       const [head, tail] = splitHead();
       if (head === null) {
-        throw new Error(`Cannot split head of empty path`);
+        throw PathErrors.create.CannotSplitEmpty();
       }
       return [head, tail];
     }
@@ -101,11 +111,17 @@ export const Path = (() => {
     return Boolean(path && path[IS_PATH] === true);
   }
 
-  function validatePathItem(item: string): string {
-    if (NOT_ALLOWED.test(item)) {
-      throw new Error(`Path item cannot contain . or [ or ]`);
+  function validatePathItem<V extends Key>(item: V): V {
+    if (typeof item === 'number') {
+      if (Number.isInteger(item) && item >= 0 && item < Number.MAX_SAFE_INTEGER) {
+        return item;
+      }
+      throw PathErrors.create.InvalidNumberPathItem(item);
     }
-    return item;
+    if (ALLOWED_CHARS.test(item)) {
+      return item;
+    }
+    throw PathErrors.create.InvalidStringPathItem(item);
   }
 
   /**

@@ -1,5 +1,6 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { FormiControllerAny } from './FormiController';
+import { FormiErrors } from './FormiError';
 import { FormiField, FormiFieldAny } from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
 import { FieldStateOf } from './FormiStore';
@@ -36,7 +37,7 @@ export function useFieldsState<Tree extends FormiFieldTree>(fields: Tree, contro
         if (FormiField.utils.isFormiField(f)) {
           const fieldState = states.get(f.key);
           if (!fieldState) {
-            throw new Error(`No field state for ${f.key.id}`);
+            throw FormiErrors.create.MissingFieldState(f);
           }
           return fieldState;
         }

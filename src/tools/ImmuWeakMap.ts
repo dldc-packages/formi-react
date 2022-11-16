@@ -1,3 +1,12 @@
+import { ErreursMap } from 'erreur';
+
+export const ImmuWeakMapErrors = new ErreursMap({
+  MissingKey: (key: any) => ({ message: `Unexpected missing key "${key}"`, key }),
+  CannotUpdateUnregisteredKey: (key: any) => ({ message: `Cannot update unregistered key "${key}"`, key }),
+});
+
+export type ImmuWeakMapError = typeof ImmuWeakMapErrors.infered;
+
 const IS_IMMU_WEAK_MAP = Symbol('IS_IMMU_WEAK_MAP');
 
 export interface ImmuWeakMap<K extends object, V> {
@@ -32,7 +41,7 @@ export const ImmuWeakMap = (() => {
 
     function getOrThrow(key: K): V {
       if (has(key) === false) {
-        throw new Error(`Unexpected missing [${key}] in ImmuWeakMap`);
+        throw ImmuWeakMapErrors.create.MissingKey(key);
       }
       return get(key) as any;
     }
@@ -104,7 +113,7 @@ export const ImmuWeakMapDraft = (() => {
     function updateOrThrow(key: K, updater: (prev: V) => V): void {
       const prevVal = get(key);
       if (prevVal === undefined) {
-        throw new Error(`Cannot update non-existing key: ${key}`);
+        throw ImmuWeakMapErrors.create.CannotUpdateUnregisteredKey(key);
       }
       const nextVal = updater(prevVal);
       set(key, nextVal);
@@ -122,7 +131,7 @@ export const ImmuWeakMapDraft = (() => {
 
     function getOrThrow(key: K): V {
       if (has(key) === false) {
-        throw new Error(`Unexpected missing [${key}] in ImmuWeakMap`);
+        throw ImmuWeakMapErrors.create.MissingKey(key);
       }
       return get(key) as any;
     }

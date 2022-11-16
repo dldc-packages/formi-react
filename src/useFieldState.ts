@@ -1,5 +1,6 @@
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { FormiControllerAny } from './FormiController';
+import { FormiErrors } from './FormiError';
 import { FormiFieldAny } from './FormiField';
 import { FieldStateOf } from './FormiStore';
 import { useFormiController } from './useFormiContext';
@@ -14,7 +15,7 @@ export function useFieldState<FormField extends FormiFieldAny>(field: FormField,
     (s): FieldStateOf<FormField> => {
       const fieldState = s.get(field.key);
       if (!fieldState) {
-        throw new Error('No field state, return default ?');
+        throw FormiErrors.create.MissingFieldState(field);
       }
       return fieldState as FieldStateOf<FormField>;
     }

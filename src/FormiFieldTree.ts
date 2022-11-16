@@ -1,3 +1,4 @@
+import { FormiErrors } from './FormiError';
 import { FormiField, FormiFieldAny } from './FormiField';
 import { Path } from './tools/Path';
 
@@ -79,7 +80,7 @@ export const FormiFieldTree = (() => {
       return null;
     }
     if (found.length > 1) {
-      throw new Error(`Field found multiple times in tree`);
+      throw FormiErrors.create.ReusedField(tree, field, found);
     }
     return found[0];
   }

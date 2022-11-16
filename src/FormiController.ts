@@ -1,4 +1,5 @@
 import { SubscribeMethod } from 'suub';
+import { FormiErrors } from './FormiError';
 import { FormiFieldTree, FormiFieldTreeValue } from './FormiFieldTree';
 import { FormiIssues } from './FormiIssue';
 import { FormiIssuesBuilder } from './FormiIssuesBuilder';
@@ -140,7 +141,7 @@ export const FormiController = (() => {
 
     function getForm() {
       if (!formEl) {
-        throw new Error('[react-formi]: Form ref not passed');
+        throw FormiErrors.create.MissingFormRef(formName);
       }
       return formEl;
     }

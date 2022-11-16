@@ -1,5 +1,6 @@
 import { SubscribeMethod, Subscription } from 'suub';
 import { FieldsUpdateFn } from './FormiController';
+import { FormiErrors, FormiInternalErrors } from './FormiError';
 import { FormiField, FormiFieldAny, FormiFieldChildren, FormiFieldIssue, FormiFieldValue, InputBase } from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
 import { FormiIssue, FormiIssueBase, FormiIssues } from './FormiIssue';
@@ -250,7 +251,7 @@ export const FormiStore = (() => {
         };
       }
       return expectNever(action, (action) => {
-        throw new Error(`Unhandled action ${JSON.stringify(action ?? null)}`);
+        throw FormiInternalErrors.create.Internal_UnhandledAction(action);
       });
     }
 
@@ -338,7 +339,7 @@ export const FormiStore = (() => {
           item.keys.forEach((key) => {
             const current = keysMap.get(key);
             if (current) {
-              throw new Error(`Duplicate key ${key} (${current.serialize()} and ${item.path.serialize()})`);
+              throw FormiInternalErrors.create.Internal_DuplicateKey(key, current, item.path);
             }
             keysMap.set(key, item.path);
           });
@@ -361,7 +362,7 @@ export const FormiStore = (() => {
         const result = validateFn(input.input as any);
         if (result.success) {
           if (result.value === undefined) {
-            throw new Error(`Expected a value to be returned from the validation function (got undefined).`);
+            throw FormiErrors.create.ValidateSuccessWithoutValue(field, input.input);
           }
           return { status: 'success', value: result.value };
         }
@@ -502,10 +503,10 @@ export const FormiStore = (() => {
       const { states, rootField } = getState();
       const rootState = states.getOrThrow(rootField.key);
       if (rootState.isMounted === false) {
-        throw new Error(`Cannot get values from unmounted form`);
+        throw FormiErrors.create.GetValueUnmountedForm(formName);
       }
       if (rootState.value === undefined) {
-        throw new Error('No value');
+        throw FormiErrors.create.GetValueUnresolved(formName);
       }
       return rootState.value;
     }
