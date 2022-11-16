@@ -65,7 +65,18 @@ export const FormiController = (() => {
   return Object.assign(create, { validate });
 
   function validate<Tree extends FormiFieldTree>(options: FormiControllerOptions<Tree>, data: FormData): FormiResult<Tree> {
-    const controller = create<Tree>(options);
+    const formPaths: Path[] = [];
+    Array.from(data.keys())
+      .map((p) => Path.from(p))
+      .forEach((path) => {
+        const [formName, fieldPath] = path.splitHead();
+        if (formName !== options.formName) {
+          return;
+        }
+        formPaths.push(fieldPath);
+      });
+    const fields = FormiFieldTree.restoreFromPaths(options.initialFields, formPaths);
+    const controller = create<Tree>({ ...options, initialFields: fields });
     controller.submit(data);
     return controller.getResult();
   }

@@ -9,6 +9,7 @@ export interface Path {
   readonly [IS_PATH]: true;
   readonly raw: RawPath;
   readonly length: number;
+  readonly head: Key | null;
   readonly serialize: () => string;
   readonly toString: () => string;
   readonly append: (...raw: ReadonlyArray<Key>) => Path;
@@ -40,6 +41,7 @@ export const Path = (() => {
       [IS_PATH]: true,
       raw,
       length: raw.length,
+      head: raw[0] ?? null,
       serialize,
       toString: serialize,
       append,
@@ -96,7 +98,7 @@ export const Path = (() => {
   }
 
   function isPath(path: any): path is Path {
-    return path && path[IS_PATH] === true;
+    return Boolean(path && path[IS_PATH] === true);
   }
 
   function validatePathItem(item: string): string {

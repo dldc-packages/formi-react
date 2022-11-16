@@ -51,7 +51,7 @@ export const ImmuWeakMap = (() => {
   }
 
   function isImmuWeakMap(val: any): val is ImmuWeakMap<any, any> {
-    return val && val[IS_IMMU_WEAK_MAP] === true;
+    return Boolean(val && val[IS_IMMU_WEAK_MAP] === true);
   }
 
   function empty<K extends object, V>(): ImmuWeakMap<K, V> {

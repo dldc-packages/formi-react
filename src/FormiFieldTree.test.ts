@@ -1,5 +1,6 @@
 import { FormiField } from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
+import { Path } from './tools/Path';
 
 test('Traverse', () => {
   const tree = {
@@ -58,4 +59,46 @@ test('Find path', () => {
   expect(FormiFieldTree.fieldPath(tree, tree.a1[1])?.raw).toEqual(['a1', 1]);
   expect(FormiFieldTree.fieldPath(tree, tree.a2.children.b1)?.raw).toEqual(['a2', 'b1']);
   expect(FormiFieldTree.fieldPath(tree, tree.a2.children.b2)?.raw).toEqual(['a2', 'b2']);
+});
+
+describe('FormiFieldTree.restoreFromPaths', () => {
+  test('Restore simple tree', () => {
+    const tree: FormiFieldTree = {
+      foo: FormiField.value(),
+      bar: FormiField.value(),
+    };
+
+    const result = FormiFieldTree.restoreFromPaths(tree, []) as any;
+    expect(result).toEqual({ foo: expect.anything(), bar: expect.anything() });
+    expect(FormiField.utils.isFormiField(result.foo)).toBe(true);
+    expect(FormiField.utils.isFormiField(result.bar)).toBe(true);
+  });
+
+  test('Restore repeat', () => {
+    const tree: FormiFieldTree = {
+      repeat: FormiField.repeat(FormiField.value()),
+    };
+
+    const result = FormiFieldTree.restoreFromPaths(tree, [
+      Path.from(['repeat', 0]),
+      Path.from(['repeat', 1]),
+      Path.from(['repeat', 2]),
+    ]) as any;
+    expect(result.repeat.children).toHaveLength(3);
+  });
+
+  test('Restore repeat with object', () => {
+    const tree: FormiFieldTree = {
+      repeat: FormiField.repeat({
+        foo: FormiField.value(),
+      }),
+    };
+
+    const result = FormiFieldTree.restoreFromPaths(tree, [
+      Path.from(['repeat', 0, 'foo']),
+      Path.from(['repeat', 1, 'foo']),
+      Path.from(['repeat', 2, 'foo']),
+    ]) as any;
+    expect(result.repeat.children).toHaveLength(3);
+  });
 });

@@ -8,7 +8,7 @@ const FORM_NAME = 'repeat';
 
 const initialFields = {
   name: FormiField.string().zodValidate(z.string().min(1)),
-  ingredients: [ingredientField()],
+  ingredients: FormiField.repeat(ingredientField),
 };
 
 export function RepeatExample() {
@@ -27,16 +27,21 @@ export function RepeatExample() {
       <p>This example uses a dynamic form with a repeatable field.</p>
       <TextInput field={fields.name} label="Recipe name" type="text" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginLeft: '2rem' }}>
-        {fields.ingredients.map((ingredientField, index) => {
+        {fields.ingredients.children.map((ingredientField, index) => {
           return (
             <IngredientInput
               field={ingredientField}
               key={ingredientField.key.id}
               onRemove={() => {
                 setFields((prev) => {
-                  const ingredients = [...prev.ingredients];
-                  ingredients.splice(index, 1);
-                  return { ...prev, ingredients };
+                  return {
+                    ...prev,
+                    ingredients: prev.ingredients.withChildren((prev) => {
+                      const ingredients = [...prev];
+                      ingredients.splice(index, 1);
+                      return ingredients;
+                    }),
+                  };
                 });
               }}
             />
@@ -45,7 +50,7 @@ export function RepeatExample() {
         <div>
           <button
             onClick={() => {
-              setFields((prev) => ({ ...prev, ingredients: [...prev.ingredients, ingredientField()] }));
+              setFields((prev) => ({ ...prev, ingredients: prev.ingredients.withChildren((prev) => [...prev, ingredientField.clone()]) }));
             }}
             type="button"
           >

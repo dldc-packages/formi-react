@@ -27,6 +27,8 @@ export const FormiFieldTree = (() => {
     wrap,
     unwrap,
     getChildren,
+    clone,
+    restoreFromPaths,
   };
 
   function wrap(fields: FormiFieldTree): FormiFieldAny {
@@ -120,18 +122,68 @@ export const FormiFieldTree = (() => {
     }
     return fieldList;
   }
-})();
 
-// export type FieldsNames<Tree extends FieldTree> = Tree extends Field<any, any, infer Children>
-//   ? Children extends null
-//     ? string
-//     : FieldsNames<Children>
-//   : Tree extends Array<infer Inner>
-//   ? Inner extends FieldTree
-//     ? ReadonlyArray<FieldsNames<Inner>>
-//     : never
-//   : Tree extends { [key: string]: FieldAny }
-//   ? { readonly [K in keyof Tree]: FieldsNames<Tree[K]> }
-//   : Tree extends null
-//   ? null
-//   : never;
+  function clone<Tree extends FormiFieldTree>(tree: Tree): Tree {
+    if (tree === null) {
+      return tree;
+    }
+    if (FormiField.utils.isFormiField(tree)) {
+      return tree.clone() as Tree;
+    }
+    if (Array.isArray(tree)) {
+      return tree.map(clone) as Tree;
+    }
+    return Object.fromEntries(Object.entries(tree).map(([key, value]) => [key, clone(value)])) as Tree;
+  }
+
+  function restoreFromPaths<Tree extends FormiFieldTree >(tree: Tree, paths: Path[]): Tree {
+    if (tree === null) {
+      return tree;
+    }
+    if (FormiField.utils.isFormiField(tree)) {
+      const restore = FormiField.utils.getRestoreFromPaths(tree) ?? (() => ({ children: tree.children, paths }));
+      const result = restore(paths);
+      const children = restoreFromPaths(result.children, result.paths);
+      return tree.withChildren(children) as Tree;
+    }
+    if (Array.isArray(tree)) {
+      const pathsByIndex = new Map<number, Path[]>();
+      for (const path of paths) {
+        const [index, rest] = path.splitHead();
+        if (index === null || typeof index !== 'number') {
+          continue;
+        }
+        let list = pathsByIndex.get(index);
+        if (!list) {
+          list = [];
+          pathsByIndex.set(index, list);
+        }
+        list.push(rest);
+      }
+      return tree.map((item, index): FormiFieldTree => {
+        const paths = pathsByIndex.get(index) ?? [];
+        return restoreFromPaths(item, paths);
+      }) as Tree;
+    }
+    // Object
+    const pathsByKey = new Map<string, Path[]>();
+    for (const path of paths) {
+      const [key, rest] = path.splitHead();
+      if (key === null || typeof key !== 'string') {
+        continue;
+      }
+      let list = pathsByKey.get(key);
+      if (!list) {
+        list = [];
+        pathsByKey.set(key, list);
+      }
+      list.push(rest);
+    }
+    return Object.fromEntries(
+      Object.entries(tree).map(([key, value]): [string, FormiFieldTree] => {
+        const paths = pathsByKey.get(key) ?? [];
+        return [key, restoreFromPaths(value, paths)];
+      })
+    ) as Tree;
+  }
+})();
