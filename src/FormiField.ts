@@ -35,8 +35,7 @@ export type FormiFieldValue<F extends FormiFieldAny> = F[typeof FIELD_TYPES]['__
 export type FormiFieldIssue<F extends FormiFieldAny> = F[typeof FIELD_TYPES]['__issue'];
 export type FormiFieldChildren<F extends FormiFieldAny> = F['children'];
 
-export type RestoreFromPathsResult<Children extends FormiFieldTree> = { children: Children; paths: Array<Path> };
-export type RestoreFromPaths<Children extends FormiFieldTree> = (paths: ReadonlyArray<Path>) => RestoreFromPathsResult<Children>;
+export type RestoreFromPaths<Children extends FormiFieldTree> = (paths: ReadonlyArray<Path>) => Children;
 
 export type Validate<Value, Issue, Children extends FormiFieldTree = null> = <NextValue = Value, NextIssue = never>(
   validateFn: ValidateFn<Value, NextValue, Issue | NextIssue>
@@ -226,19 +225,27 @@ export const FormiField = (() => {
 
   // utils
 
-  function restoreRepeat<Child extends FormiFieldTree>(child: Child, paths: ReadonlyArray<Path>): RestoreFromPathsResult<Array<Child>> {
+  function restoreRepeat<Child extends FormiFieldTree>(child: Child, paths: ReadonlyArray<Path>): Array<Child> {
     let size = 0;
-    const nextPaths: Array<Path> = [];
+    const pathsByIndex = new Map<number, Array<Path>>();
     for (const path of paths) {
       const [head, rest] = path.splitHead();
       if (head === null || typeof head !== 'number') {
         continue; // not an index
       }
+      let list = pathsByIndex.get(head);
+      if (!list) {
+        list = [];
+        pathsByIndex.set(head, list);
+      }
+      list.push(rest);
       size = Math.max(size, head + 1);
-      nextPaths.push(rest);
     }
-    const children = Array.from({ length: size }, () => FormiFieldTree.clone(child));
-    return { children, paths: nextPaths };
+
+    return Array.from({ length: size }, () => FormiFieldTree.clone(child)).map((child, index) => {
+      const paths = pathsByIndex.get(index) ?? [];
+      return FormiFieldTree.restoreFromPaths(child, paths);
+    });
   }
 
   function isFormiField(field: any): field is FormiField<any, any, any> {
