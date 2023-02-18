@@ -8,7 +8,7 @@
 - 🔒 **Type safe**: React Formi is built with TypeScript and provides type safety for your forms, including typing field validation issues !
 - ✨ **FormData based**: React Formi manipulates the native FormData API, this mean that you can validate your form on the backend with the same code as on the frontend.
 - 🪶 **Very few dependencies**: React Formi only has a few dependencies (2 at the time of writing).
-- 🔐 **Server validation**: With React Formi provide a way to validate your form on the server using the same schema as on the frontend as well as a way to display the validation issues.
+- 🔐 **Server validation**: With React Formi you can validate your form on the server using the same schema as on the frontend as well as a way to display the validation issues.
 - 🚀 **Fast**: React Formi is built with performance in mind so your components only render when they need to.
 - 🛡 **Zod validation**: React Formi offers convinient tools to validate your form with [Zod](https://github.com/colinhacks/zod) but you can use any validation library you want (and zod is not a dependency of React Formi).
 - 🛠 **Transformations**: React Formi offers a way to transform your form data, this allow your form to output data in the shape you want.
