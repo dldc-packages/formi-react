@@ -1,5 +1,6 @@
 import { SubscribeMethod } from 'suub';
 import { FormiErrors } from './FormiError';
+import { FormiFieldAny } from './FormiField';
 import { FormiFieldTree, FormiFieldTreeValue } from './FormiFieldTree';
 import { FormiIssues } from './FormiIssue';
 import { FormiIssuesBuilder } from './FormiIssuesBuilder';
@@ -47,6 +48,11 @@ export interface FormiController<Tree extends FormiFieldTree> {
   readonly setIssues: (issues: FormiIssues<any>) => void;
   readonly setOnSubmit: (onSubmit: OnSubmit<Tree>) => void;
   readonly setFields: (update: Tree | ((prev: Tree) => Tree)) => void;
+  /**
+   * Revalidate the given fields.
+   * If no fields are given, all fields will be revalidated.
+   */
+  readonly revalidate: (...fields: FormiFieldAny[]) => void;
 
   readonly unmount: () => void;
   readonly mount: (formEl: HTMLFormElement) => void;
@@ -57,6 +63,7 @@ export type FormiControllerOptions<Tree extends FormiFieldTree> = {
   initialFields: Tree;
   initialIssues?: FormiIssues<any>;
   onSubmit?: OnSubmit<Tree>;
+  onReset?: () => void;
   validateOnMount?: boolean;
 };
 
@@ -88,6 +95,7 @@ export const FormiController = (() => {
     initialFields,
     initialIssues,
     onSubmit: userOnSubmit,
+    onReset: userOnReset,
   }: FormiControllerOptions<Tree>): FormiController<Tree> {
     Path.validatePathItem(formName);
 
@@ -108,6 +116,7 @@ export const FormiController = (() => {
       setIssues,
       setOnSubmit,
       setFields,
+      revalidate,
 
       mount,
       unmount,
@@ -125,6 +134,13 @@ export const FormiController = (() => {
 
     function setFields(fields: Tree | ((prev: Tree) => Tree)) {
       store.dispatch({ type: 'SetFields', fields: fields as any });
+    }
+
+    function revalidate(...fields: FormiFieldAny[]) {
+      const form = getForm();
+      const data = new FormData(form);
+      store.dispatch({ type: 'Change', data, touched: false, fields: fields.length === 0 ? null : fields });
+      return;
     }
 
     function getResult(): FormiResult<Tree> {
@@ -174,37 +190,40 @@ export const FormiController = (() => {
         console.warn('No target ?');
         return;
       }
-      const form = getForm();
       const input = target as HTMLInputElement;
       const name = input.name;
       if (!name) {
         // ignore inputs without name
         return;
       }
-      const data = new FormData(form);
       const fieldPath = Path.from(name);
       const [inputFormName, path] = fieldPath.splitHead();
       if (!inputFormName) {
-        // input name does not match formi name -> ignore it
+        // no form name -> ignore it
         return;
       }
       if (inputFormName !== formName) {
         // input form name does not match form name -> ignore it
         return;
       }
+      const form = getForm();
+      const data = new FormData(form);
       const fields = store.getState().rootField;
-      const fieldList = FormiFieldTree.findAllByPath(fields, path);
-      if (!fieldList) {
+      const field = FormiFieldTree.findByPath(fields, path);
+      if (!field) {
         console.warn(`Field not found: ${name}`);
         return;
       }
-      store.dispatch({ type: 'Change', data, fieldList });
+      store.dispatch({ type: 'Change', data, touched: true, fields: [field] });
     }
 
     function handleReset() {
       const form = getForm();
       const data = new FormData(form);
       store.dispatch({ type: 'Reset', data });
+      if (userOnReset) {
+        userOnReset();
+      }
     }
 
     function mount(newFormEl: HTMLFormElement) {

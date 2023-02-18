@@ -1,6 +1,6 @@
 import React, { useId } from 'react';
 import { FormiField, FormiIssue, useFieldState } from '../../src';
-import { IssueBox } from './IssueBox';
+import { IssueBox } from '../utils/IssueBox';
 
 type Props = {
   label: string;
@@ -15,7 +15,7 @@ export function FileInput({ label, field }: Props) {
     <div className="input">
       <label htmlFor={id}>{label}</label>
       <input id={id} type="file" name={state.name} />
-      {state.touchedIssues && <IssueBox issue={state.touchedIssues[0]} />}
+      {state.touchedIssues && <IssueBox issues={state.touchedIssues} />}
     </div>
   );
 }

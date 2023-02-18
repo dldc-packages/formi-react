@@ -3,6 +3,9 @@ import { FormiController } from './FormiController';
 import { FormiFieldTree } from './FormiFieldTree';
 import { useFormiController } from './useFormiContext';
 
+/**
+ * Subscribe to the entire fields tree.
+ */
 export function useFields<Tree extends FormiFieldTree>(controller?: FormiController<Tree>): Tree {
   const ctrl = useFormiController(controller);
   const fields = useSyncExternalStoreWithSelector(

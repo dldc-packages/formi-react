@@ -1,7 +1,7 @@
 import React from 'react';
 import { FormiField, FormiIssue, useFormi, ValidateResult } from '../../src';
+import { IssueBox } from '../utils/IssueBox';
 import { dateField, DateInput } from './DateInput';
-import { IssueBox } from './IssueBox';
 
 export type DateExampleIssue = FormiIssue | { kind: 'StartDateAfterEndDate' };
 
@@ -41,7 +41,19 @@ export function DateExample() {
       </p>
       <DateInput label="Start Date" field={fields.children.startDate} />
       <DateInput label="End Date" field={fields.children.endDate} />
-      <IssueBox issues={rootFieldState.touchedIssues} />
+      <IssueBox
+        issues={rootFieldState.touchedIssues}
+        renderIssue={(issue, i) => {
+          if (issue.kind === 'StartDateAfterEndDate') {
+            return (
+              <p key={i} className="error">
+                Start date must be before end date.
+              </p>
+            );
+          }
+          return null;
+        }}
+      />
       <div className="buttons">
         <button type="submit">Submit</button>
         <button type="reset">Reset</button>

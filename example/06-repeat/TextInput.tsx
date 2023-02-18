@@ -1,6 +1,6 @@
 import React, { useId } from 'react';
 import { FormiField, FormiIssue, useFieldState } from '../../src';
-import { IssueBox } from './IssueBox';
+import { IssueBox } from '../utils/IssueBox';
 
 type Props = {
   label: string;
@@ -17,7 +17,6 @@ export function TextInput({ label, field, type = 'text', defaultValue }: Props) 
     <div className="input">
       <label htmlFor={id}>{label}</label>
       <input id={id} type={type} name={state.name} defaultValue={defaultValue} />
-      {state.value && <p>Transformed value: {state.value}</p>}
       <IssueBox issues={state.touchedIssues} />
     </div>
   );

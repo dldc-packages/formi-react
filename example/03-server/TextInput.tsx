@@ -1,6 +1,6 @@
 import React, { useId } from 'react';
 import { FormiField, FormiIssue, useFieldState } from '../../src';
-import { IssueBox } from './IssueBox';
+import { IssueBox } from '../utils/IssueBox';
 import { UsernameIssue } from './ServerExample';
 
 type Props = {
@@ -18,7 +18,21 @@ export function TextInput({ label, field, type, defaultValue }: Props) {
     <div className="input">
       <label htmlFor={id}>{label}</label>
       <input id={id} type={type} name={state.name} defaultValue={defaultValue} />
-      {state.touchedIssues && <IssueBox issue={state.touchedIssues[0]} />}
+      {state.touchedIssues && (
+        <IssueBox
+          issues={state.touchedIssues}
+          renderIssue={(issue, i) => {
+            if (issue.kind === 'UsernameAlreadyUsed') {
+              return (
+                <p className="error" key={i}>
+                  Username is already used
+                </p>
+              );
+            }
+            return null;
+          }}
+        />
+      )}
     </div>
   );
 }

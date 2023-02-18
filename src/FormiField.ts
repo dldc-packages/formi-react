@@ -114,7 +114,7 @@ export const FormiField = (() => {
     return self;
 
     function clone() {
-      return create({ key: FormiKey(), children, validateFn: currentValidateFn, restoreFromPaths });
+      return create({ key: FormiKey(), children: FormiFieldTree.clone(children), validateFn: currentValidateFn, restoreFromPaths });
     }
 
     function withIssue<NextIssue>(): FormiField<Value, Issue | NextIssue, Children> {

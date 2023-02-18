@@ -1,7 +1,7 @@
 import React from 'react';
 import { z } from 'zod';
 import { FormiField, FormiIssueBase, useFieldState, ValidateResult } from '../../src';
-import { IssueBox } from './IssueBox';
+import { IssueBox } from '../utils/IssueBox';
 
 export type DateFieldIssue = FormiIssueBase | { kind: 'TheWorldEndsIn2048' };
 
@@ -51,7 +51,19 @@ export function DateInput({ label, field }: Props) {
           <IssueBox issues={dayState.touchedIssues} />
         </div>
       </div>
-      <IssueBox issues={state.touchedIssues} />
+      <IssueBox
+        issues={state.touchedIssues}
+        renderIssue={(issue, i) => {
+          if (issue.kind === 'TheWorldEndsIn2048') {
+            return (
+              <p key={i} className="error">
+                Sorry but the world ends in 2048 because God stored the year on 11 bits...
+              </p>
+            );
+          }
+          return null;
+        }}
+      />
       {state.value && <p>Value: {state.value.toLocaleString()}</p>}
     </div>
   );

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { FormiController, FormiField, useFormi } from '../../src';
+import { useAsync } from '../utils/useAsync';
 import { TextInput } from './TextInput';
 
 export type UsernameIssue = { kind: 'UsernameAlreadyUsed' };
@@ -68,20 +69,4 @@ export function ServerExample() {
       </div>
     </Form>
   );
-}
-
-type AsyncStatus<Res> = { status: 'idle' } | { status: 'pending' } | { status: 'resolved'; data: Res };
-
-function useAsync<Param, Res>(fn: (params: Param) => Promise<Res>): { status: AsyncStatus<Res>; run: (param: Param) => void } {
-  const [status, setStatus] = useState<AsyncStatus<Res>>({ status: 'idle' });
-
-  const run = useCallback(
-    (param: Param) => {
-      setStatus({ status: 'pending' });
-      fn(param).then((data) => setStatus({ status: 'resolved', data }));
-    },
-    [fn]
-  );
-
-  return { status, run };
 }

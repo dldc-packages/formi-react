@@ -20,6 +20,7 @@ export type UseFormiOptions<Tree extends FormiFieldTree> = {
   initialFields: Tree;
   formName?: string;
   onSubmit?: OnSubmit<Tree>;
+  onReset?: () => void;
   validateOnMount?: boolean;
   formRefObject?: MutableRefObject<HTMLFormElement | null>;
   issues?: FormiIssues<any>;
@@ -47,6 +48,7 @@ export function useFormi<Tree extends FormiFieldTree>({
   initialFields,
   issues,
   onSubmit,
+  onReset,
   validateOnMount,
   formRefObject,
 }: UseFormiOptions<Tree>): UseFormiResult<Tree> {
@@ -67,7 +69,7 @@ export function useFormi<Tree extends FormiFieldTree>({
   );
 
   const [controller] = useState(() =>
-    FormiController<Tree>({ formName: formNameResolved, initialFields, initialIssues: issues, onSubmit, validateOnMount })
+    FormiController<Tree>({ formName: formNameResolved, initialFields, initialIssues: issues, onSubmit, onReset, validateOnMount })
   );
 
   const fields = useFields<Tree>(controller);

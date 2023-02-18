@@ -9,11 +9,17 @@ export type ImmuWeakMapError = typeof ImmuWeakMapErrors.infered;
 
 const IS_IMMU_WEAK_MAP = Symbol('IS_IMMU_WEAK_MAP');
 
+/**
+ * An immutable WeakMap.
+ */
 export interface ImmuWeakMap<K extends object, V> {
   readonly [IS_IMMU_WEAK_MAP]: true;
   readonly get: (key: K) => V | undefined;
   readonly getOrThrow: (key: K) => V;
   readonly has: (key: K) => boolean;
+  /**
+   * Create a draft of the map (see ImmuWeakMapDraft).
+   */
   readonly draft: () => ImmuWeakMapDraft<K, V>;
   readonly produce: (update: (draft: ImmuWeakMapDraft<K, V>) => ImmuWeakMap<K, V>) => ImmuWeakMap<K, V>;
 }
@@ -70,6 +76,11 @@ export const ImmuWeakMap = (() => {
 
 const IS_IMMU_WEAK_MAP_DRAFT = Symbol('IS_IMMU_WEAK_MAP_DRAFT');
 
+/**
+ * This object let you update an ImmuWeakMap as if it was a mutable one.
+ * Once you are done, you can commit the changes to get a new ImmuWeakMap.
+ * When you commit, you must provide all the keys that you want to keep.
+ */
 export interface ImmuWeakMapDraft<K extends object, V> {
   readonly [IS_IMMU_WEAK_MAP_DRAFT]: true;
   readonly get: (key: K) => V | undefined;

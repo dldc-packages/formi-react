@@ -23,7 +23,7 @@ export type FormiFieldTreeValue<Tree extends FormiFieldTree> = Tree extends Form
 export const FormiFieldTree = (() => {
   return {
     traverse,
-    findAllByPath,
+    findByPath,
     fieldPath,
     wrap,
     unwrap,
@@ -32,6 +32,9 @@ export const FormiFieldTree = (() => {
     restoreFromPaths,
   };
 
+  /**
+   * Wrap fields in a group if they are not already a group or a single fields.
+   */
   function wrap(fields: FormiFieldTree): FormiFieldAny {
     if (FormiField.utils.isFormiField(fields)) {
       return fields;
@@ -104,24 +107,20 @@ export const FormiFieldTree = (() => {
     return tree[key] ?? null;
   }
 
-  function findAllByPath(tree: FormiFieldTree, path: Path): FormiFieldAny[] | null {
+  function findByPath(tree: FormiFieldTree, path: Path): FormiFieldAny | null {
     const pathResolved = Path.from(path);
     let current = tree;
-    const fieldList: Array<FormiFieldAny> = [];
-    if (FormiField.utils.isFormiField(current)) {
-      fieldList.unshift(current);
-    }
     for (const pathItem of pathResolved) {
       const next = getChildrenByKey(current, pathItem);
       if (!next) {
         return null;
       }
       current = next;
-      if (FormiField.utils.isFormiField(current)) {
-        fieldList.unshift(current);
-      }
     }
-    return fieldList;
+    if (FormiField.utils.isFormiField(current)) {
+      return current;
+    }
+    return null;
   }
 
   function clone<Tree extends FormiFieldTree>(tree: Tree): Tree {

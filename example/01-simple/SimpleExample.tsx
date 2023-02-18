@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 import { z } from 'zod';
 import { FormiField, useFormi } from '../../src';
-import { IssueBox } from './IssueBox';
+import { IssueBox } from '../utils/IssueBox';
 
 /**
  * 1. Define the form schema

@@ -13,6 +13,8 @@ export interface FieldState<Value, Issue, Children extends FormiFieldTree> {
   readonly key: FormiKey;
   readonly path: Path;
   readonly name: string; // path as string
+  // All field keys (self + children recursively)
+  // This is used to know which fields to update when a field changes
   readonly keys: ReadonlySet<FormiKey>;
 
   readonly initialRawValue: InputBase<Children> | undefined;
@@ -40,17 +42,36 @@ export type FieldsStateMapDraft = ImmuWeakMapDraft<FormiKey, FieldStateAny>;
 
 type FormiStoreActions =
   | { type: 'Mount'; data: FormData }
+  | {
+      type: 'Change';
+      data: FormData;
+      // Should the changed fields be marked as touched
+      touched: boolean;
+      // All fields that need to be updated
+      // null means all fields
+      fields: ReadonlyArray<FormiFieldAny> | null;
+    }
   | { type: 'Submit'; data: FormData }
   | { type: 'Reset'; data: FormData }
-  | { type: 'Change'; data: FormData; fieldList: ReadonlyArray<FormiFieldAny> }
-  | { type: 'SetIssues'; issues: FormiIssues<any> }
-  | { type: 'SetFields'; fields: FormiFieldTree | FieldsUpdateFn<FormiFieldTree> };
+  | {
+      // This action is triggered when controller.setIssues is called
+      type: 'SetIssues';
+      issues: FormiIssues<any>;
+    }
+  | {
+      // This action updated the shape of the form
+      type: 'SetFields';
+      fields: FormiFieldTree | FieldsUpdateFn<FormiFieldTree>;
+    };
 
 export type RootFormiField = FormiField<any, any, FormiFieldTree>;
 
 export type FormiState = {
+  // If the root fields is an object of fields we wrap it in a group
   readonly rootFieldWrapped: boolean;
+  // The tree of fields
   readonly rootField: RootFormiField;
+  // State for each field
   readonly states: FieldsStateMap;
 };
 
@@ -130,25 +151,35 @@ export const FormiStore = (() => {
         });
       }
       if (action.type === 'Change') {
+        const tree = FormiFieldTree.unwrap(state.rootField, state.rootFieldWrapped);
+        const keys = action.fields ? new Set(action.fields.map((f) => f.key)) : null;
         return updateStates(state, (draft) => {
-          for (const field of action.fieldList) {
+          FormiFieldTree.traverse<boolean>(tree, (field, _path, next) => {
+            const childrenUpdated = next().some((v) => v);
+            const shouldUpdateSelf = keys === null || keys.has(field.key);
+            const shouldUpdate = shouldUpdateSelf || childrenUpdated;
+            if (!shouldUpdate) {
+              return false;
+            }
             const inputRes = getInput(draft, field, action.data);
             const prev = draft.getOrThrow(field.key);
-            if (prev.isMounted && shallowEqual(prev.rawValue, inputRes.input)) {
+            const expectedTouched = action.touched;
+            if (prev.isMounted && prev.isTouched === expectedTouched && shallowEqual(prev.rawValue, inputRes.input)) {
               // input is the same, stop validation
-              break;
+              return false;
             }
             const result = runValidate(field, inputRes);
-            const isTouched = true;
-            const next: FieldStateAny = {
+            const isTouched = prev.isTouched || expectedTouched;
+            const nextState: FieldStateAny = {
               ...prev,
               isTouched,
               hasExternalIssues: false,
               ...inputToPartialState(prev, inputRes),
               ...validateResultToPartialState(result, isTouched),
             };
-            draft.set(field.key, next);
-          }
+            draft.set(field.key, nextState);
+            return true;
+          });
         });
       }
       if (action.type === 'Submit') {
@@ -240,6 +271,7 @@ export const FormiStore = (() => {
               ...prev,
               keys: nextKeys,
               path: nextPath,
+              name: nextPath.serialize(),
             };
           });
         });
@@ -325,6 +357,10 @@ export const FormiStore = (() => {
       });
     }
 
+    /**
+     * Traverses the tree from top to bottom,
+     * Collecting keys so the visitor function receive the keys of all the fields in the subtree
+     */
     function traverseWithKeys(
       formName: string,
       tree: FormiFieldTree,

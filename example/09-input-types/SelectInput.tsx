@@ -1,6 +1,6 @@
 import React, { useId } from 'react';
 import { FormiField, FormiIssue, useFieldState } from '../../src';
-import { IssueBox } from './IssueBox';
+import { IssueBox } from '../utils/IssueBox';
 
 type Props = {
   label: string;

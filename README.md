@@ -8,10 +8,11 @@
 - 🔒 **Type safe**: React Formi is built with TypeScript and provides type safety for your forms, including typing field validation issues !
 - ✨ **FormData based**: React Formi manipulates the native FormData API, this mean that you can validate your form on the backend with the same code as on the frontend.
 - 🪶 **Very few dependencies**: React Formi only has a few dependencies (2 at the time of writing).
+- 🔐 **Server validation**: With React Formi provide a way to validate your form on the server using the same schema as on the frontend as well as a way to display the validation issues.
 - 🚀 **Fast**: React Formi is built with performance in mind so your components only render when they need to.
 - 🛡 **Zod validation**: React Formi offers convinient tools to validate your form with [Zod](https://github.com/colinhacks/zod) but you can use any validation library you want (and zod is not a dependency of React Formi).
 - 🛠 **Transformations**: React Formi offers a way to transform your form data, this allow your form to output data in the shape you want.
-- 🧩 **Dynamic fields**: With React Formi you can dynamically change the shape of your form.
+- 🧩 **Dynamic fields**: With React Formi you can dynamically change the shape of your form and it's not limited to arrays !
 
 ## Motivations
 
@@ -77,9 +78,22 @@ React Formi let the browser handle the state of each inputs (they are uncontroll
 - The state of the shape of the form (the structure, or schema of the form) and the names of the inputs.
 - The state of the validation and transformation of the form (field issues, submitted, etc).
 
-To do so, React Formi only needs a ref to the `form` element, then it listens the `change`, `reset` and `submit` events to update its state.
+To do so, React Formi only needs a ref to the `form` element, then it listens to the `change`, `reset` and `submit` events to update its state.
 
 **Note**: The `change` event of the `form` element is only triggered when the user `blurs` an input (click outside / press tab) with a different value. This means that with React Formi you don't get _validation as you type_ (you can if you really want). This behavior is the same as the default one in the browser and garantees that writing in an input is always fast.
+
+Internally React Formi uses two data structures to keep track of the state of the form:
+
+- A tree of `fields` for the shape of the form, each field has a `key` that identifies it
+- A `Map` to keep the validation state of each field (identified by its `key`)
+
+# Examples
+
+You can find many examples in the `examples` folder. You can run them with:
+
+```bash
+yarn example:run
+```
 
 # API
 
