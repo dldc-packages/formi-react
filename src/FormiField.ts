@@ -50,7 +50,9 @@ export interface FormiField<Value, Issue, Children extends FormiFieldTree = null
 
   readonly clone: () => FormiField<Value, Issue, Children>;
   readonly validate: Validate<Value, Issue, Children>;
-  readonly zodValidate: <NextValue = Value>(schema: z.Schema<NextValue>) => FormiField<NextValue, Issue | FormiIssueZod, Children>;
+  readonly zodValidate: <NextValue = Value>(
+    schema: z.Schema<NextValue>
+  ) => FormiField<NextValue, Issue | FormiIssueZod, Children>;
   readonly withIssue: <NextIssue>() => FormiField<Value, Issue | NextIssue, Children>;
   readonly withChildren: (children: Children | ChildrenUpdateFn<Children>) => FormiField<Value, Issue, Children>;
 }
@@ -114,7 +116,12 @@ export const FormiField = (() => {
     return self;
 
     function clone() {
-      return create({ key: FormiKey(), children: FormiFieldTree.clone(children), validateFn: currentValidateFn, restoreFromPaths });
+      return create({
+        key: FormiKey(),
+        children: FormiFieldTree.clone(children),
+        validateFn: currentValidateFn,
+        restoreFromPaths,
+      });
     }
 
     function withIssue<NextIssue>(): FormiField<Value, Issue | NextIssue, Children> {
@@ -149,7 +156,9 @@ export const FormiField = (() => {
       });
     }
 
-    function zodValidate<NextValue = Value>(schema: z.Schema<NextValue>): FormiField<NextValue, Issue | FormiIssueZod, Children> {
+    function zodValidate<NextValue = Value>(
+      schema: z.Schema<NextValue>
+    ): FormiField<NextValue, Issue | FormiIssueZod, Children> {
       return validate(zodValidator(schema));
     }
   }
@@ -201,7 +210,9 @@ export const FormiField = (() => {
     return file().validate(isNonEmptyFile);
   }
 
-  function group<Children extends FormiFieldTree>(children: Children): FormiField<FormiFieldTreeValue<Children>, FormiIssueBase, Children> {
+  function group<Children extends FormiFieldTree>(
+    children: Children
+  ): FormiField<FormiFieldTreeValue<Children>, FormiIssueBase, Children> {
     return create<FormiFieldTreeValue<Children>, FormiIssueBase, Children>({
       key: FormiKey(),
       children,

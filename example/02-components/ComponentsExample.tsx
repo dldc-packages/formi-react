@@ -33,8 +33,8 @@ export function ComponentsExample() {
     <Form>
       <h2>Components</h2>
       <p>
-        In this example we use a custom <code>TextInput</code> component. We use <code>useFormiFieldState</code> to get the state of a field
-        and display validation errors.
+        In this example we use a custom <code>TextInput</code> component. We use <code>useFormiFieldState</code> to get
+        the state of a field and display validation errors.
       </p>
       <TextInput label="Username" field={fields.username} type="text" defaultValue="my-username" />
       <TextInput label="Email" field={fields.email} type="email" />

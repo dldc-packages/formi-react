@@ -36,8 +36,8 @@ export function DateExample() {
     <Form>
       <h2>Date</h2>
       <p>
-        This example uses a custom <code>DateInput</code> that is composed of three inputs (year, month, day) and also expose a custom field
-        def.
+        This example uses a custom <code>DateInput</code> that is composed of three inputs (year, month, day) and also
+        expose a custom field def.
       </p>
       <DateInput label="Start Date" field={fields.children.startDate} />
       <DateInput label="End Date" field={fields.children.endDate} />

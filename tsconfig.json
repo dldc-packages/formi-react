@@ -1,5 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "include": ["src", "tests"],
   "compilerOptions": {
     "target": "ESNext",
     "module": "ES2020",
@@ -18,10 +19,8 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "jsx": "react"
-  },
-  "include": ["src", "tests", "example"]
+    "jsx": "react-jsx"
+  }
 }

@@ -1,3 +1,4 @@
+import { describe, expect, test } from 'vitest';
 import { Path, RawPath } from './Path';
 
 describe('serialize / parse', () => {

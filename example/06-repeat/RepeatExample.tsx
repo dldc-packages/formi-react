@@ -50,7 +50,10 @@ export function RepeatExample() {
         <div>
           <button
             onClick={() => {
-              setFields((prev) => ({ ...prev, ingredients: prev.ingredients.withChildren((prev) => [...prev, ingredientField.clone()]) }));
+              setFields((prev) => ({
+                ...prev,
+                ingredients: prev.ingredients.withChildren((prev) => [...prev, ingredientField.clone()]),
+              }));
             }}
             type="button"
           >

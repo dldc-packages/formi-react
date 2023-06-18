@@ -1,3 +1,4 @@
+import { describe, expect, test, vi } from 'vitest';
 import { FormiField } from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
 import { Path } from './tools/Path';
@@ -9,7 +10,7 @@ test('Traverse', () => {
     c: FormiField.group(null),
   };
 
-  const onTraverse = jest.fn();
+  const onTraverse = vi.fn();
 
   FormiFieldTree.traverse(tree, onTraverse);
 
@@ -33,7 +34,7 @@ test('Traverse nested fields', () => {
     }),
   };
 
-  const onTraverse = jest.fn((_field, _path, next) => {
+  const onTraverse = vi.fn((_field, _path, next) => {
     next();
     return null;
   });

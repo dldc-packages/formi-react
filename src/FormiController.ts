@@ -72,7 +72,10 @@ export type FormiControllerAny = FormiController<any>;
 export const FormiController = (() => {
   return Object.assign(create, { validate });
 
-  function validate<Tree extends FormiFieldTree>(options: FormiControllerOptions<Tree>, data: FormData): FormiResult<Tree> {
+  function validate<Tree extends FormiFieldTree>(
+    options: FormiControllerOptions<Tree>,
+    data: FormData
+  ): FormiResult<Tree> {
     const formPaths: Path[] = [];
     Array.from(data.keys())
       .map((p) => Path.from(p))

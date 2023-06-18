@@ -1,7 +1,14 @@
 import { SubscribeMethod, Subscription } from 'suub';
 import { FieldsUpdateFn } from './FormiController';
 import { FormiErrors, FormiInternalErrors } from './FormiError';
-import { FormiField, FormiFieldAny, FormiFieldChildren, FormiFieldIssue, FormiFieldValue, InputBase } from './FormiField';
+import {
+  FormiField,
+  FormiFieldAny,
+  FormiFieldChildren,
+  FormiFieldIssue,
+  FormiFieldValue,
+  InputBase,
+} from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
 import { FormiIssue, FormiIssueBase, FormiIssues } from './FormiIssue';
 import { FormiKey } from './FormiKey';
@@ -287,7 +294,10 @@ export const FormiStore = (() => {
       });
     }
 
-    function updateStates(state: FormiState, updater: (draft: FieldsStateMapDraft, fields: RootFormiField) => void): FormiState {
+    function updateStates(
+      state: FormiState,
+      updater: (draft: FieldsStateMapDraft, fields: RootFormiField) => void
+    ): FormiState {
       const draft = state.states.draft();
       updater(draft, state.rootField);
       const nextStates = commiStatesDraft(draft, state.rootField);
@@ -298,7 +308,11 @@ export const FormiStore = (() => {
       return result;
     }
 
-    function createInitialState(formName: string, fields: FormiFieldTree, issues: FormiIssues<any> | undefined): FormiState {
+    function createInitialState(
+      formName: string,
+      fields: FormiFieldTree,
+      issues: FormiIssues<any> | undefined
+    ): FormiState {
       const map = ImmuWeakMap.empty<FormiKey, FieldStateAny>();
       const draft = map.draft();
       const rootField = FormiFieldTree.wrap(fields);
@@ -324,7 +338,12 @@ export const FormiStore = (() => {
       return issuesResolved;
     }
 
-    function createFieldState(field: FormiFieldAny, path: Path, keys: Set<FormiKey>, issues: FormiIssues<any> | undefined): FieldStateAny {
+    function createFieldState(
+      field: FormiFieldAny,
+      path: Path,
+      keys: Set<FormiKey>,
+      issues: FormiIssues<any> | undefined
+    ): FieldStateAny {
       const issuesResolved = getFieldIssues(path, issues);
       return {
         key: field.key,
@@ -386,7 +405,10 @@ export const FormiStore = (() => {
       });
     }
 
-    type ValidateResult = { status: 'success'; value: unknown } | { status: 'error'; issues: any[] } | { status: 'unkown' };
+    type ValidateResult =
+      | { status: 'success'; value: unknown }
+      | { status: 'error'; issues: any[] }
+      | { status: 'unkown' };
 
     function runValidate(field: FormiFieldAny, input: GetInputResult): ValidateResult {
       if (input.resolved === false) {
@@ -511,7 +533,12 @@ export const FormiStore = (() => {
         // same input, ignore
         return { isMounted, initialRawValue, rawValue, isDirty };
       }
-      return { isMounted, initialRawValue, rawValue: inputRes.input, isDirty: shallowEqual(inputRes.input, initialRawValue) === false };
+      return {
+        isMounted,
+        initialRawValue,
+        rawValue: inputRes.input,
+        isDirty: shallowEqual(inputRes.input, initialRawValue) === false,
+      };
     }
 
     function hasErrors(): boolean {

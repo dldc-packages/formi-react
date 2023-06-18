@@ -10,8 +10,12 @@ const SPLITTER = /(\[\d+\]|\.)/g;
 
 export const PathErrors = new ErreursMap({
   CannotSplitEmpty: () => ({ message: `Cannot split head of empty path` }),
-  InvalidStringPathItem: (item: string) => ({ message: `String Path item cannot contain . or [ or ] (received "${item}")` }),
-  InvalidNumberPathItem: (item: number) => ({ message: `Number Path item must be a positive (or 0) integer (received "${item}")` }),
+  InvalidStringPathItem: (item: string) => ({
+    message: `String Path item cannot contain . or [ or ] (received "${item}")`,
+  }),
+  InvalidNumberPathItem: (item: number) => ({
+    message: `Number Path item must be a positive (or 0) integer (received "${item}")`,
+  }),
 });
 
 export type PathError = typeof PathErrors.infered;

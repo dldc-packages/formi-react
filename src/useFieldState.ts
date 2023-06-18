@@ -5,7 +5,10 @@ import { FormiFieldAny } from './FormiField';
 import { FieldStateOf } from './FormiStore';
 import { useFormiController } from './useFormiContext';
 
-export function useFieldState<FormField extends FormiFieldAny>(field: FormField, controller?: FormiControllerAny): FieldStateOf<FormField> {
+export function useFieldState<FormField extends FormiFieldAny>(
+  field: FormField,
+  controller?: FormiControllerAny
+): FieldStateOf<FormField> {
   const ctrl = useFormiController(controller);
 
   const state = useSyncExternalStoreWithSelector(

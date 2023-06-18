@@ -1,3 +1,4 @@
+import { expect, test } from 'vitest';
 import { ImmuWeakMap } from './ImmuWeakMap';
 
 test('Create ImmuWeakMap', () => {

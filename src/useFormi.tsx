@@ -1,4 +1,13 @@
-import React, { MutableRefObject, useCallback, useEffect, useId, useLayoutEffect as reactULE, useMemo, useRef, useState } from 'react';
+import React, {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect as reactULE,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { FormiController, OnSubmit } from './FormiController';
 import { FormiFieldAny } from './FormiField';
 import { FormiFieldTree } from './FormiFieldTree';
@@ -69,7 +78,14 @@ export function useFormi<Tree extends FormiFieldTree>({
   );
 
   const [controller] = useState(() =>
-    FormiController<Tree>({ formName: formNameResolved, initialFields, initialIssues: issues, onSubmit, onReset, validateOnMount })
+    FormiController<Tree>({
+      formName: formNameResolved,
+      initialFields,
+      initialIssues: issues,
+      onSubmit,
+      onReset,
+      validateOnMount,
+    })
   );
 
   const fields = useFields<Tree>(controller);

@@ -55,7 +55,10 @@ export function ServerExample() {
   return (
     <Form>
       <h2>Server</h2>
-      <p>This example shows how you can do additional validation on the server and how to display server errors in your UI.</p>
+      <p>
+        This example shows how you can do additional validation on the server and how to display server errors in your
+        UI.
+      </p>
       <TextInput label="Username (try 'user')" field={fields.username} type="text" />
       <TextInput label="Email" field={fields.email} type="email" defaultValue="demo@example.com" />
       <TextInput label="Password" field={fields.password} type="password" />

@@ -18,7 +18,10 @@ export type FieldsStates<Tree extends FormiFieldTree> = Tree extends null
 
 const IS_OBJECT = Symbol('IS_OBJECT');
 
-export function useFieldsState<Tree extends FormiFieldTree>(fields: Tree, controller?: FormiControllerAny): FieldsStates<Tree> {
+export function useFieldsState<Tree extends FormiFieldTree>(
+  fields: Tree,
+  controller?: FormiControllerAny
+): FieldsStates<Tree> {
   const ctrl = useFormiController(controller);
 
   const state = useSyncExternalStoreWithSelector(

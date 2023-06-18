@@ -38,8 +38,14 @@ export const FormiErrors = new ErreursMap({
     field,
     input,
   }),
-  GetValueUnmountedForm: (formName: string) => ({ message: `Cannot get value of unmounted form "${formName}"`, formName }),
-  GetValueUnresolved: (formName: string) => ({ message: `Cannot get value of unresolved form "${formName}"`, formName }),
+  GetValueUnmountedForm: (formName: string) => ({
+    message: `Cannot get value of unmounted form "${formName}"`,
+    formName,
+  }),
+  GetValueUnresolved: (formName: string) => ({
+    message: `Cannot get value of unresolved form "${formName}"`,
+    formName,
+  }),
   MissingFieldState: (field: FormiFieldAny) => ({ message: `Missing field state for field "${field.key}"`, field }),
   MissingFormiContext: () => ({ message: `No FormiContext found` }),
   MissingFormiController: () => ({ message: `No FormiController found` }),
