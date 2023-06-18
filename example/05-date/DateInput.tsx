@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { FormiField, FormiIssueBase, useFieldState, ValidateResult } from '../../src';
+import { FormiField, FormiIssueBase, useFieldState, ValidateResult } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
 export type DateFieldIssue = FormiIssueBase | { kind: 'TheWorldEndsIn2048' };

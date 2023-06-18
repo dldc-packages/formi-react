@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { FormiField, FormiIssue, useFieldState } from '../../src';
+import { FormiField, FormiIssue, useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
 type Props = {

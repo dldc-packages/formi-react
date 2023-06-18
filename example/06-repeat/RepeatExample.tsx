@@ -1,7 +1,7 @@
 import React from 'react';
 import { z } from 'zod';
-import { FormiField, useFormi } from '../../src';
-import { ingredientField, IngredientInput } from './IngredientInput';
+import { FormiField, useFormi } from '../../src/mod';
+import { IngredientInput, ingredientField } from './IngredientInput';
 import { TextInput } from './TextInput';
 
 const FORM_NAME = 'repeat';

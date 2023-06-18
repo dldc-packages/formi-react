@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { FormiField, useFormi } from '../../src';
+import { FormiField, useFormi } from '../../src/mod';
 import { Input } from './Input';
 import { RadioInput } from './RadioInput';
 import { SelectInput } from './SelectInput';

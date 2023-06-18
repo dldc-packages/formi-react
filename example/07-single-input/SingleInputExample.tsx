@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { FormiField, useFormi } from '../../src';
+import { FormiField, useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
 const FORM_NAME = 'single-input';

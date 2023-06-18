@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormiField, FormiIssue, useFormi, ValidateResult } from '../../src';
+import { FormiField, FormiIssue, useFormi, ValidateResult } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import { dateField, DateInput } from './DateInput';
 

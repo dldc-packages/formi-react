@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { FormiController, FormiField, useFormi } from '../../src';
+import { FormiController, FormiField, useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import { slugify } from '../utils/slugify';
 import { useAsync } from '../utils/useAsync';

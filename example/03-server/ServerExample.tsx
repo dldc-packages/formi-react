@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { z } from 'zod';
-import { FormiController, FormiField, useFormi } from '../../src';
+import { FormiController, FormiField, useFormi } from '../../src/mod';
 import { useAsync } from '../utils/useAsync';
 import { TextInput } from './TextInput';
 
