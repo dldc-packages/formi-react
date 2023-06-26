@@ -43,8 +43,7 @@
     "typecheck:watch": "tsc --watch"
   },
   "dependencies": {
-    "erreur": "^1.1.1",
-    "suub": "^3.2.1",
+    "@dldc/formi": "^0.3.2",
     "use-sync-external-store": "^1.2.0"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { FormiController, FormiField, useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';

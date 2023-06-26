@@ -1,9 +1,5 @@
+import { FieldStateOf, FormiControllerAny, FormiErrors, FormiField, FormiFieldAny, FormiFieldTree } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { FormiControllerAny } from './FormiController';
-import { FormiErrors } from './FormiError';
-import { FormiField, FormiFieldAny } from './FormiField';
-import { FormiFieldTree } from './FormiFieldTree';
-import { FieldStateOf } from './FormiStore';
 import { useFormiController } from './useFormiContext';
 
 export type FieldsStates<Tree extends FormiFieldTree> = Tree extends null
@@ -40,7 +36,7 @@ export function useFieldsState<Tree extends FormiFieldTree>(
         if (FormiField.utils.isFormiField(f)) {
           const fieldState = states.get(f.key);
           if (!fieldState) {
-            throw FormiErrors.create.MissingFieldState(f);
+            throw FormiErrors.MissingFieldState.create(f);
           }
           return fieldState;
         }

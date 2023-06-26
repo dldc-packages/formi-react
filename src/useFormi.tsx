@@ -1,21 +1,25 @@
+import {
+  FieldStateOf,
+  FormiController,
+  FormiFieldAny,
+  FormiFieldTree,
+  FormiIssues,
+  IFormiController,
+  OnSubmit,
+} from '@dldc/formi';
 import React, {
   MutableRefObject,
+  useLayoutEffect as reactULE,
   useCallback,
   useEffect,
   useId,
-  useLayoutEffect as reactULE,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import { FormiController, OnSubmit } from './FormiController';
-import { FormiFieldAny } from './FormiField';
-import { FormiFieldTree } from './FormiFieldTree';
-import { FormiIssues } from './FormiIssue';
-import { FieldStateOf } from './FormiStore';
+import { useFieldState as useFieldStateBase } from './useFieldState';
 import { useFields } from './useFields';
 import { FieldsStates, useFieldsState as useFieldsStateBase } from './useFieldsState';
-import { useFieldState as useFieldStateBase } from './useFieldState';
 import { FormiContextProvider } from './useFormiContext';
 
 export type FormRefObject = MutableRefObject<HTMLFormElement | null>;
@@ -38,7 +42,7 @@ export type UseFormiOptions<Tree extends FormiFieldTree> = {
 type HtmlFormProps = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>;
 
 export type UseFormiResult<Tree extends FormiFieldTree> = {
-  readonly controller: FormiController<Tree>;
+  readonly controller: IFormiController<Tree>;
   readonly refObject: FormRefObject;
   readonly ref: FormRefCallback;
   readonly fields: Tree;

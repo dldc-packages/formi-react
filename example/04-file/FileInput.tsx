@@ -1,10 +1,10 @@
-import React, { useId } from 'react';
-import { FormiField, FormiIssue, useFieldState } from '../../src/mod';
+import { useId } from 'react';
+import { FormiIssue, IFormiField, useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
 type Props = {
   label: string;
-  field: FormiField<any, FormiIssue>;
+  field: IFormiField<any, FormiIssue>;
 };
 
 export function FileInput({ label, field }: Props) {

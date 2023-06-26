@@ -1,12 +1,11 @@
+import { FormiFieldTree, IFormiController } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/with-selector';
-import { FormiController } from './FormiController';
-import { FormiFieldTree } from './FormiFieldTree';
 import { useFormiController } from './useFormiContext';
 
 /**
  * Subscribe to the entire fields tree.
  */
-export function useFields<Tree extends FormiFieldTree>(controller?: FormiController<Tree>): Tree {
+export function useFields<Tree extends FormiFieldTree>(controller?: IFormiController<Tree>): Tree {
   const ctrl = useFormiController(controller);
   const fields = useSyncExternalStoreWithSelector(
     ctrl.subscribe,

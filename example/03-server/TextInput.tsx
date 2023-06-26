@@ -1,11 +1,11 @@
-import React, { useId } from 'react';
-import { FormiField, FormiIssue, useFieldState } from '../../src/mod';
+import { useId } from 'react';
+import { FormiIssue, IFormiField, useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import { UsernameIssue } from './ServerExample';
 
 type Props = {
   label: string;
-  field: FormiField<string, FormiIssue | UsernameIssue>;
+  field: IFormiField<string, FormiIssue | UsernameIssue>;
   type: 'password' | 'text' | 'email';
   defaultValue?: string;
 };

@@ -1,4 +1,3 @@
-import React from 'react';
 import { z } from 'zod';
 import { FormiField, useFormi } from '../../src/mod';
 import { IngredientInput, ingredientField } from './IngredientInput';

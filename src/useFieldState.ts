@@ -1,8 +1,5 @@
+import { FieldStateOf, FormiControllerAny, FormiErrors, FormiFieldAny } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { FormiControllerAny } from './FormiController';
-import { FormiErrors } from './FormiError';
-import { FormiFieldAny } from './FormiField';
-import { FieldStateOf } from './FormiStore';
 import { useFormiController } from './useFormiContext';
 
 export function useFieldState<FormField extends FormiFieldAny>(
@@ -18,7 +15,7 @@ export function useFieldState<FormField extends FormiFieldAny>(
     (s): FieldStateOf<FormField> => {
       const fieldState = s.get(field.key);
       if (!fieldState) {
-        throw FormiErrors.create.MissingFieldState(field);
+        throw FormiErrors.MissingFieldState.create(field);
       }
       return fieldState as FieldStateOf<FormField>;
     }

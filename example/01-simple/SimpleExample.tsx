@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import { useId } from 'react';
 import { z } from 'zod';
 import { FormiField, useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
