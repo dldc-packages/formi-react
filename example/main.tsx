@@ -13,7 +13,7 @@ import { AutoSlugExample } from './11-auto-slug/AutoSlugExample';
 import './index.css';
 import './new.css';
 
-const STRICT_MODE = false;
+const STRICT_MODE = true;
 
 const StrictMode = STRICT_MODE ? React.StrictMode : React.Fragment;
 
