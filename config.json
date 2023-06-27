@@ -1,7 +1,6 @@
 {
   "react": true,
   "viteExample": true,
-  "browser": true,
   "additionalDevDependencies": {
     "@types/use-sync-external-store": "^0.0.3",
     "zod": "^3.21.4"
