@@ -1,18 +1,18 @@
 {
-  "name": "react-formi",
+  "name": "@dldc/formi-react",
   "version": "1.0.0-14",
   "description": "React form hook",
   "keywords": [
     "react",
     "form"
   ],
-  "homepage": "https://github.com/etienne-dldc/react-formi#readme",
+  "homepage": "https://github.com/dldc-packages/formi-react#readme",
   "bugs": {
-    "url": "https://github.com/etienne-dldc/react-formi/issues"
+    "url": "https://github.com/dldc-packages/formi-react/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/etienne-dldc/react-formi.git"
+    "url": "git+https://github.com/dldc-packages/formi-react.git"
   },
   "license": "MIT",
   "author": "Etienne Dldc <e.deladonchamps@gmail.com>",
