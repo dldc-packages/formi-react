@@ -78,7 +78,7 @@ export function useFormi<Tree extends FormiFieldTree>({
       }
       formRefObjectResolved.current = form;
     },
-    [formRefObjectResolved]
+    [formRefObjectResolved],
   );
 
   const [controller] = useState(() =>
@@ -89,7 +89,7 @@ export function useFormi<Tree extends FormiFieldTree>({
       onSubmit,
       onReset,
       validateOnMount,
-    })
+    }),
   );
 
   const fields = useFields<Tree>(controller);
@@ -116,14 +116,14 @@ export function useFormi<Tree extends FormiFieldTree>({
     function useFieldState<FormField extends FormiFieldAny>(field: FormField): FieldStateOf<FormField> {
       return useFieldStateBase<FormField>(field, controller);
     },
-    [controller]
+    [controller],
   );
 
   const useFieldsState = useCallback(
     function useFieldsState<Tree extends FormiFieldTree>(fields: Tree): FieldsStates<Tree> {
       return useFieldsStateBase<Tree>(fields, controller);
     },
-    [controller]
+    [controller],
   );
 
   const Form = useCallback(
@@ -134,7 +134,7 @@ export function useFormi<Tree extends FormiFieldTree>({
         </FormiContextProvider>
       );
     },
-    [controller, refCallback]
+    [controller, refCallback],
   );
 
   return useMemo((): UseFormiResult<Tree> => {

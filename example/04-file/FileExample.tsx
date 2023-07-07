@@ -9,7 +9,7 @@ const fieldsDef = {
       .string()
       .min(1)
       .max(20)
-      .transform((v) => v.toLowerCase().replaceAll(' ', '-'))
+      .transform((v) => v.toLowerCase().replaceAll(' ', '-')),
   ),
   file: FormiField.nonEmptyfile().validate((file) => {
     return { success: true, value: { file, size: file.size } };

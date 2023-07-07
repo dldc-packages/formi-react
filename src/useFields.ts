@@ -11,7 +11,7 @@ export function useFields<Tree extends FormiFieldTree>(controller?: IFormiContro
     ctrl.subscribe,
     () => ctrl.getState(),
     () => ctrl.getState(),
-    (state) => FormiFieldTree.unwrap(state.rootField, state.rootFieldWrapped)
+    (state) => FormiFieldTree.unwrap(state.rootField, state.rootFieldWrapped),
   );
 
   return fields as any;

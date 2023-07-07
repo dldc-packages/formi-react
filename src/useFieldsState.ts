@@ -16,7 +16,7 @@ const IS_OBJECT = Symbol('IS_OBJECT');
 
 export function useFieldsState<Tree extends FormiFieldTree>(
   fields: Tree,
-  controller?: FormiControllerAny
+  controller?: FormiControllerAny,
 ): FieldsStates<Tree> {
   const ctrl = useFormiController(controller);
 
@@ -47,7 +47,7 @@ export function useFieldsState<Tree extends FormiFieldTree>(
         return res;
       }
     },
-    isEqual
+    isEqual,
   );
 
   return state;

@@ -4,7 +4,7 @@ import { useFormiController } from './useFormiContext';
 
 export function useFieldState<FormField extends FormiFieldAny>(
   field: FormField,
-  controller?: FormiControllerAny
+  controller?: FormiControllerAny,
 ): FieldStateOf<FormField> {
   const ctrl = useFormiController(controller);
 
@@ -18,7 +18,7 @@ export function useFieldState<FormField extends FormiFieldAny>(
         throw FormiErrors.MissingFieldState.create(field);
       }
       return fieldState as FieldStateOf<FormField>;
-    }
+    },
   );
 
   return state;
