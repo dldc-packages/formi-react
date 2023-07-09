@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useFormi } from '../src/useFormi';
 import { IssueBox } from './utils/IssueBox';
 
-test('test are working', () => {
+test('Simple form', () => {
   /**
    * 1. Define the form schema
    */

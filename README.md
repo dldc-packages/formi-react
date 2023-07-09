@@ -1,4 +1,4 @@
-# 📄 React Formi
+# 📄 Formi React
 
 > A type-safe form librairy for React
 
@@ -23,7 +23,7 @@ This library is heavily inspired by [`react-zorm`](https://github.com/esamattis/
 ```tsx
 import React from 'react';
 import { z } from 'zod';
-import { FormiField, useFormi } from '../../src';
+import { FormiField, useFormi } from '@dldc/formi-react';
 import { TextInput } from './TextInput';
 
 /**

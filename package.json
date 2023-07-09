@@ -43,7 +43,7 @@
     "typecheck:watch": "tsc --watch"
   },
   "dependencies": {
-    "@dldc/formi": "^0.3.3",
+    "@dldc/formi": "^0.3.4",
     "use-sync-external-store": "^1.2.0"
   },
   "devDependencies": {
