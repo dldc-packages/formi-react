@@ -1,4 +1,5 @@
-import { FormiField, FormiIssue, useFormi, ValidateResult } from '../../src/mod';
+import type { FormiIssue, ValidateResult } from '../../src/mod';
+import { FormiField, useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import { dateField, DateInput } from './DateInput';
 

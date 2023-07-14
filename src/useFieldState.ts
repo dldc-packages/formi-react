@@ -1,4 +1,5 @@
-import { FieldStateOf, FormiControllerAny, FormiErrors, FormiFieldAny } from '@dldc/formi';
+import type { FieldStateOf, FormiControllerAny, FormiFieldAny } from '@dldc/formi';
+import { FormiErrors } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { useFormiController } from './useFormiContext';
 

@@ -1,4 +1,5 @@
-import { FormiControllerAny, FormiErrors } from '@dldc/formi';
+import type { FormiControllerAny } from '@dldc/formi';
+import { FormiErrors } from '@dldc/formi';
 import { createContext, createElement, useContext } from 'react';
 
 const FormiContext = createContext<FormiControllerAny | null>(null);

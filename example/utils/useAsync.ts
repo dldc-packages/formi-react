@@ -10,7 +10,7 @@ export function useAsync<Param, Res>(
   const run = useCallback(
     (param: Param) => {
       setStatus({ status: 'pending' });
-      fn(param).then((data) => setStatus({ status: 'resolved', data }));
+      void fn(param).then((data) => setStatus({ status: 'resolved', data }));
     },
     [fn],
   );

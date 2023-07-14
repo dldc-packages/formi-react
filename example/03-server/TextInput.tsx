@@ -1,7 +1,8 @@
 import { useId } from 'react';
-import { FormiIssue, IFormiField, useFieldState } from '../../src/mod';
+import type { FormiIssue, IFormiField } from '../../src/mod';
+import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
-import { UsernameIssue } from './ServerExample';
+import type { UsernameIssue } from './ServerExample';
 
 type Props = {
   label: string;

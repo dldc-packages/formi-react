@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormiIssue } from '../../src/mod';
+import type { FormiIssue } from '../../src/mod';
 
 interface Props<OtherIssue extends { kind: string }> {
   issues: Array<FormiIssue | OtherIssue> | null;
