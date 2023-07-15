@@ -1,16 +1,16 @@
 import { z } from 'zod';
-import type { FormiIssueBase, ValidateResult } from '../../src/mod';
+import type { TFormiIssueBase, TValidateResult } from '../../src/mod';
 import { FormiField, useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
-export type DateFieldIssue = FormiIssueBase | { kind: 'TheWorldEndsIn2048' };
+export type DateFieldIssue = TFormiIssueBase | { kind: 'TheWorldEndsIn2048' };
 
 export const dateField = () =>
   FormiField.group({
     year: FormiField.number().zodValidate(z.number().int().min(1900, 'Min year is 1900').max(2100, 'Max year is 2100')),
     month: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid month').max(12, 'Invalid month')),
     day: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid day').max(31, 'Invalid day')),
-  }).validate((data): ValidateResult<Date, DateFieldIssue> => {
+  }).validate((data): TValidateResult<Date, DateFieldIssue> => {
     if (data === null) {
       return { success: false };
     }

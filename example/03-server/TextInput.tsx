@@ -1,12 +1,12 @@
 import { useId } from 'react';
-import type { FormiIssue, IFormiField } from '../../src/mod';
+import type { IFormiField, TFormiIssue } from '../../src/mod';
 import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import type { UsernameIssue } from './ServerExample';
 
 type Props = {
   label: string;
-  field: IFormiField<string, FormiIssue | UsernameIssue>;
+  field: IFormiField<string, TFormiIssue | UsernameIssue>;
   type: 'password' | 'text' | 'email';
   defaultValue?: string;
 };

@@ -1,14 +1,14 @@
-import type { FormiIssue, ValidateResult } from '../../src/mod';
+import type { TFormiIssue, TValidateResult } from '../../src/mod';
 import { FormiField, useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
-import { dateField, DateInput } from './DateInput';
+import { DateInput, dateField } from './DateInput';
 
-export type DateExampleIssue = FormiIssue | { kind: 'StartDateAfterEndDate' };
+export type DateExampleIssue = TFormiIssue | { kind: 'StartDateAfterEndDate' };
 
 const initialFields = FormiField.group({
   startDate: dateField(),
   endDate: dateField(),
-}).validate((data): ValidateResult<NonNullable<typeof data>, DateExampleIssue> => {
+}).validate((data): TValidateResult<NonNullable<typeof data>, DateExampleIssue> => {
   if (data === null) {
     return { success: false };
   }

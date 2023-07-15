@@ -1,48 +1,55 @@
-import type { FieldStateOf, FormiFieldAny, FormiFieldTree, FormiIssues, IFormiController, OnSubmit } from '@dldc/formi';
+import type {
+  IFormiController,
+  TFieldStateOf,
+  TFormiFieldAny,
+  TFormiFieldTree,
+  TFormiIssues,
+  TOnSubmit,
+} from '@dldc/formi';
 import { FormiController } from '@dldc/formi';
 import type { MutableRefObject } from 'react';
 import React, { useLayoutEffect as reactULE, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useFieldState as useFieldStateBase } from './useFieldState';
 import { useFields } from './useFields';
-import type { FieldsStates } from './useFieldsState';
+import type { TFieldsStates } from './useFieldsState';
 import { useFieldsState as useFieldsStateBase } from './useFieldsState';
 import { FormiContextProvider } from './useFormiContext';
 
-export type FormRefObject = MutableRefObject<HTMLFormElement | null>;
-export type FormRefCallback = (form: HTMLFormElement | null) => void;
+export type TFormRefObject = MutableRefObject<HTMLFormElement | null>;
+export type TFormRefCallback = (form: HTMLFormElement | null) => void;
 
 declare const window: any;
 
 const useLayoutEffect = typeof window !== 'undefined' ? reactULE : useEffect;
 
-export type UseFormiOptions<Tree extends FormiFieldTree> = {
+export interface IUseFormiOptions<Tree extends TFormiFieldTree> {
   initialFields: Tree;
   formName?: string;
-  onSubmit?: OnSubmit<Tree>;
+  onSubmit?: TOnSubmit<Tree>;
   onReset?: () => void;
   validateOnMount?: boolean;
   formRefObject?: MutableRefObject<HTMLFormElement | null>;
-  issues?: FormiIssues<any>;
-};
+  issues?: TFormiIssues<any>;
+}
 
-type HtmlFormProps = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>;
+type THtmlFormProps = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>;
 
-export type UseFormiResult<Tree extends FormiFieldTree> = {
+export interface IUseFormiResult<Tree extends TFormiFieldTree> {
   readonly controller: IFormiController<Tree>;
-  readonly refObject: FormRefObject;
-  readonly ref: FormRefCallback;
+  readonly refObject: TFormRefObject;
+  readonly ref: TFormRefCallback;
   readonly fields: Tree;
   readonly setFields: (update: Tree | ((prev: Tree) => Tree)) => void;
-  readonly useFieldState: <FormField extends FormiFieldAny>(field: FormField) => FieldStateOf<FormField>;
-  readonly useFieldsState: <Tree extends FormiFieldTree>(fields: Tree) => FieldsStates<Tree>;
+  readonly useFieldState: <FormField extends TFormiFieldAny>(field: FormField) => TFieldStateOf<FormField>;
+  readonly useFieldsState: <Tree extends TFormiFieldTree>(fields: Tree) => TFieldsStates<Tree>;
   // render a <form> with ref
-  readonly Form: (props: Omit<HtmlFormProps, 'ref'>) => JSX.Element;
-};
+  readonly Form: (props: Omit<THtmlFormProps, 'ref'>) => JSX.Element;
+}
 
 /**
  * Create a FormController then subscribe to form state
  */
-export function useFormi<Tree extends FormiFieldTree>({
+export function useFormi<Tree extends TFormiFieldTree>({
   formName,
   initialFields,
   issues,
@@ -50,7 +57,7 @@ export function useFormi<Tree extends FormiFieldTree>({
   onReset,
   validateOnMount,
   formRefObject,
-}: UseFormiOptions<Tree>): UseFormiResult<Tree> {
+}: IUseFormiOptions<Tree>): IUseFormiResult<Tree> {
   const formId = useId();
   const formNameResolved = formName ?? formId;
   const defaultFormRefObject = useRef<HTMLFormElement | null>(null);
@@ -99,21 +106,21 @@ export function useFormi<Tree extends FormiFieldTree>({
   }, [controller, issues]);
 
   const useFieldState = useCallback(
-    function useFieldState<FormField extends FormiFieldAny>(field: FormField): FieldStateOf<FormField> {
+    function useFieldState<FormField extends TFormiFieldAny>(field: FormField): TFieldStateOf<FormField> {
       return useFieldStateBase<FormField>(field, controller);
     },
     [controller],
   );
 
   const useFieldsState = useCallback(
-    function useFieldsState<Tree extends FormiFieldTree>(fields: Tree): FieldsStates<Tree> {
+    function useFieldsState<Tree extends TFormiFieldTree>(fields: Tree): TFieldsStates<Tree> {
       return useFieldsStateBase<Tree>(fields, controller);
     },
     [controller],
   );
 
   const Form = useCallback(
-    (props: Omit<HtmlFormProps, 'ref'>): JSX.Element => {
+    (props: Omit<THtmlFormProps, 'ref'>): JSX.Element => {
       return (
         <FormiContextProvider controller={controller}>
           <form {...props} ref={refCallback} {...props} />
@@ -123,7 +130,7 @@ export function useFormi<Tree extends FormiFieldTree>({
     [controller, refCallback],
   );
 
-  return useMemo((): UseFormiResult<Tree> => {
+  return useMemo((): IUseFormiResult<Tree> => {
     return {
       controller,
       ref: refCallback,

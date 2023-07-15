@@ -1,24 +1,24 @@
-import type { FieldStateOf, FormiControllerAny, FormiFieldAny, FormiFieldTree } from '@dldc/formi';
+import type { TFieldStateOf, TFormiControllerAny, TFormiFieldAny, TFormiFieldTree } from '@dldc/formi';
 import { FormiErrors, FormiField } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { useFormiController } from './useFormiContext';
 
-export type FieldsStates<Tree extends FormiFieldTree> = Tree extends null
+export type TFieldsStates<Tree extends TFormiFieldTree> = Tree extends null
   ? null
-  : Tree extends FormiFieldAny
-  ? FieldStateOf<Tree>
-  : Tree extends Array<infer Inner extends FormiFieldTree>
-  ? ReadonlyArray<FieldsStates<Inner>>
-  : Tree extends Record<string, FormiFieldAny>
-  ? { [K in keyof Tree]: FieldsStates<Tree[K]> }
+  : Tree extends TFormiFieldAny
+  ? TFieldStateOf<Tree>
+  : Tree extends Array<infer Inner extends TFormiFieldTree>
+  ? ReadonlyArray<TFieldsStates<Inner>>
+  : Tree extends Record<string, TFormiFieldAny>
+  ? { [K in keyof Tree]: TFieldsStates<Tree[K]> }
   : never;
 
 const IS_OBJECT = Symbol('IS_OBJECT');
 
-export function useFieldsState<Tree extends FormiFieldTree>(
+export function useFieldsState<Tree extends TFormiFieldTree>(
   fields: Tree,
-  controller?: FormiControllerAny,
-): FieldsStates<Tree> {
+  controller?: TFormiControllerAny,
+): TFieldsStates<Tree> {
   const ctrl = useFormiController(controller);
 
   const state = useSyncExternalStoreWithSelector(
@@ -27,7 +27,7 @@ export function useFieldsState<Tree extends FormiFieldTree>(
     () => ctrl.getState().states,
     (states): any => {
       return select(fields);
-      function select(f: FormiFieldTree): any {
+      function select(f: TFormiFieldTree): any {
         if (f === null) {
           return null;
         }
