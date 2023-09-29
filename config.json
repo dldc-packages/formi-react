@@ -1,9 +1,0 @@
-{
-  "react": true,
-  "viteExample": true,
-  "skipLibCheck": true, // Issue with vite types
-  "additionalDevDependencies": {
-    "@types/use-sync-external-store": "^0.0.4",
-    "zod": "^3.22.2"
-  }
-}
