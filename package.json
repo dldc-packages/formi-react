@@ -34,6 +34,7 @@
     "build": "rimraf dist && tsup --format cjs,esm src/mod.ts --dts src/mod.ts",
     "build:watch": "tsup --watch --format cjs,esm src/mod.ts --dts src/mod.ts",
     "changelog": "auto-changelog --stdout --hide-credit true --commit-limit false -u --template https://raw.githubusercontent.com/release-it/release-it/main/templates/changelog-compact.hbs",
+    "example:run": "vite example",
     "lint": "prettier . --check && eslint . && tsc --noEmit",
     "lint:fix": "prettier . --write . && eslint . --fix",
     "release": "release-it --only-version",
@@ -60,7 +61,8 @@
     ],
     "extends": [
       "plugin:@typescript-eslint/recommended-type-checked",
-      "prettier"
+      "prettier",
+      "plugin:react-hooks/recommended"
     ],
     "rules": {
       "no-constant-condition": "off",
@@ -97,7 +99,7 @@
     "@types/use-sync-external-store": "^0.0.4",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
-    "@vitejs/plugin-react": "^4.0.4",
+    "@vitejs/plugin-react": "^4.1.0",
     "@vitest/coverage-v8": "^0.34.5",
     "auto-changelog": "^2.4.0",
     "eslint": "^8.50.0",

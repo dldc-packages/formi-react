@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "include": ["src", "tests", "vitest.config.ts"],
+  "include": ["src", "tests", "vitest.config.ts", "example", "vite.config.ts"],
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",
@@ -10,6 +10,7 @@
     "importHelpers": false,
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "jsx": "react-jsx",
     "isolatedModules": true,
     "declaration": true,
     "sourceMap": true,
@@ -19,6 +20,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
   }
 }
