@@ -22,7 +22,6 @@ This library is heavily inspired by [`react-zorm`](https://github.com/esamattis/
 
 ```tsx
 import React from 'react';
-import { z } from 'zod';
 import { FormiField, useFormi } from '@dldc/formi-react';
 import { TextInput } from './TextInput';
 
@@ -59,6 +58,26 @@ export function ComponentsExample() {
         <button type="reset">Reset</button>
       </div>
     </Form>
+  );
+}
+
+type TextInputProps = {
+  label: string;
+  field: IFormiField<string, TFormiIssue>;
+  type: 'password' | 'text' | 'email';
+  defaultValue?: string;
+};
+
+function TextInput({ label, field, type, defaultValue }: TextInputProps) {
+  const state = useFieldState(field);
+  const id = useId();
+
+  return (
+    <div className="input">
+      <label htmlFor={id}>{label}</label>
+      <input id={id} type={type} name={state.name} defaultValue={defaultValue} />
+      {state.touchedIssues && <IssueBox issues={state.touchedIssues} />}
+    </div>
   );
 }
 ```
