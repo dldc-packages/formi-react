@@ -1,5 +1,6 @@
-import type { TFormiIssue, TValidateResult } from '../../src/mod';
-import { FormiField, useFormi } from '../../src/mod';
+import type { TFormiIssue, TValidateResult } from '@dldc/formi';
+import { FormiField } from '@dldc/formi';
+import { useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import { DateInput, dateField } from './DateInput';
 

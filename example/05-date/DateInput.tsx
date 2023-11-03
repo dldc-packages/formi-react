@@ -1,6 +1,7 @@
+import type { TFormiIssueBase, TValidateResult } from '@dldc/formi';
+import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
-import type { TFormiIssueBase, TValidateResult } from '../../src/mod';
-import { FormiField, useFieldState } from '../../src/mod';
+import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
 export type DateFieldIssue = TFormiIssueBase | { kind: 'TheWorldEndsIn2048' };

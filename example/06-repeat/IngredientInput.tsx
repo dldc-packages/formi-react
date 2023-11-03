@@ -1,5 +1,5 @@
+import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
-import { FormiField } from '../../src/mod';
 import { TextInput } from './TextInput';
 
 export const ingredientField = FormiField.group({

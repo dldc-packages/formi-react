@@ -1,5 +1,4 @@
 import type { TFormiControllerAny } from '@dldc/formi';
-import { FormiErrors } from '@dldc/formi';
 import { createContext, createElement, useContext } from 'react';
 
 const FormiContext = createContext<TFormiControllerAny | null>(null);
@@ -16,7 +15,7 @@ export function FormiContextProvider({ controller, children }: IFormiContextProv
 export function useFormiContext(): TFormiControllerAny {
   const controller = useContext(FormiContext);
   if (!controller) {
-    throw FormiErrors.MissingFormiContext.create();
+    throw new Error(`useFormiContext must be used within a FormiContextProvider`);
   }
   return controller;
 }
@@ -29,7 +28,7 @@ export function useFormiController(controller?: TFormiControllerAny): TFormiCont
   const controllerContext = useMaybeFormiContext();
   const ctrl = controller ?? controllerContext;
   if (!ctrl) {
-    throw FormiErrors.MissingFormiController.create();
+    throw new Error(`useFormiController must be used within a FormiContextProvider`);
   }
   return ctrl;
 }

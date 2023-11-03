@@ -1,5 +1,5 @@
+import type { IFormiField, TFormiIssue } from '@dldc/formi';
 import { useId } from 'react';
-import type { IFormiField, TFormiIssue } from '../../src/mod';
 import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import type { UsernameIssue } from './ServerExample';

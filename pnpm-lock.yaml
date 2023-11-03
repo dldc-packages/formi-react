@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@dldc/formi':
-    specifier: ^1.0.3
-    version: 1.0.3(react-dom@18.2.0)(react@18.2.0)(zod@3.22.4)
+    specifier: ^2.0.0
+    version: 2.0.0(zod@3.22.4)
   use-sync-external-store:
     specifier: ^1.2.0
     version: 1.2.0(react@18.2.0)
@@ -345,30 +345,26 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@dldc/erreur@5.0.0:
-    resolution: {integrity: sha512-lL8aXNNAjeaXFhu3FRZQPJNr9O8NfWhtd38ysFNsDmVoVrsQUjIW0TeWl1Jg+0b9ZzkIbUvla/ELmHDzHY5Xzg==}
+  /@dldc/erreur@6.0.0:
+    resolution: {integrity: sha512-B0vlpRgfdxWCUQ9QCo0Ir23BGfw4Cw1rizVOMliwMqejUUVMyPou22mduNpxfycozT4N5Fb6kaOCb64/Mbf0MA==}
     dependencies:
       '@dldc/stack': 4.1.1
     dev: false
 
-  /@dldc/formi@1.0.3(react-dom@18.2.0)(react@18.2.0)(zod@3.22.4):
-    resolution: {integrity: sha512-Urro5NH19ncDwW8MxvIIFu262Knt1y5dxWlgbx1xNbD26cphK7KT6HoqY1s60AgJkSviqKczSqXq/rmrIDjvKg==}
+  /@dldc/formi@2.0.0(zod@3.22.4):
+    resolution: {integrity: sha512-cGkKtTklqBkD+/jgtSqFvUXmkIBPbu7wop0RN4OcZrhTLK9KF+jFRxbsJsQVCfQeq+mlfwRC5JosAi2SEjE1ag==}
     peerDependencies:
-      react: '>=17'
-      react-dom: '>=17'
       zod: ^3.21.0
     dependencies:
-      '@dldc/erreur': 5.0.0
-      '@dldc/pubsub': 5.2.5
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
+      '@dldc/erreur': 6.0.0
+      '@dldc/pubsub': 6.0.0
       zod: 3.22.4
     dev: false
 
-  /@dldc/pubsub@5.2.5:
-    resolution: {integrity: sha512-ktdLkRDiT6z/wOACwKTstlNGDKeGOc3cT8F8SV1JyD9kQrRL7k2+28AfntepheiaDaArko0bxIRk3WqeGKwZfA==}
+  /@dldc/pubsub@6.0.0:
+    resolution: {integrity: sha512-42S43L3wwBCt6RBlDi5WefSjqF53qJckaWRUIYOMysZ7vT4eWzj7paaCo0HuysNql7U8HRPfC8mK+5B/RaY5IA==}
     dependencies:
-      '@dldc/erreur': 5.0.0
+      '@dldc/erreur': 6.0.0
     dev: false
 
   /@dldc/stack@4.1.1:
@@ -4206,6 +4202,7 @@ packages:
       loose-envify: 1.4.0
       react: 18.2.0
       scheduler: 0.23.0
+    dev: true
 
   /react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
@@ -4470,6 +4467,7 @@ packages:
     resolution: {integrity: sha512-CtuThmgHNg7zIZWAXi3AsyIzA3n4xx7aNyjwC2VJldO2LMVDhFK+63xGqq6CsJH4rTAt6/M+N4GhZiDYPx9eUw==}
     dependencies:
       loose-envify: 1.4.0
+    dev: true
 
   /semver-diff@4.0.0:
     resolution: {integrity: sha512-0Ju4+6A8iOnpL/Thra7dZsSlOHYAHIeMxfhWQRI1/VLcT3WDBZKKtQt/QkBOsiIN9ZpuvHE6cGZ0x4glCMmfiA==}

@@ -1,5 +1,5 @@
+import type { TFormiIssue } from '@dldc/formi';
 import React from 'react';
-import type { TFormiIssue } from '../../src/mod';
 
 interface Props<OtherIssue extends { kind: string }> {
   issues: Array<TFormiIssue | OtherIssue> | null;

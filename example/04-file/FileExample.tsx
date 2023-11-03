@@ -1,5 +1,6 @@
+import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
-import { FormiField, useFormi } from '../../src/mod';
+import { useFormi } from '../../src/mod';
 import { FileInput } from './FileInput';
 import { TextInput } from './TextInput';
 

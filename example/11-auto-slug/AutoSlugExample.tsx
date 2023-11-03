@@ -1,6 +1,7 @@
+import { FormiController, FormiField } from '@dldc/formi';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { FormiController, FormiField, useFormi } from '../../src/mod';
+import { useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import { slugify } from '../utils/slugify';
 import { useAsync } from '../utils/useAsync';

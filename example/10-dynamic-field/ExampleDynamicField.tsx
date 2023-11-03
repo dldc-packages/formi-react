@@ -1,6 +1,7 @@
+import { FormiField } from '@dldc/formi';
 import { Fragment, useState } from 'react';
 import { z } from 'zod';
-import { FormiField, useFormi } from '../../src/mod';
+import { useFormi } from '../../src/mod';
 import { TextInput } from './TextInput';
 
 const simpleFields = {

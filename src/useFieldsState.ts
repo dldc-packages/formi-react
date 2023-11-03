@@ -1,5 +1,5 @@
 import type { TFieldStateOf, TFormiControllerAny, TFormiFieldAny, TFormiFieldTree } from '@dldc/formi';
-import { FormiErrors, FormiField } from '@dldc/formi';
+import { FormiErreur, FormiField } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { useFormiController } from './useFormiContext';
 
@@ -37,7 +37,7 @@ export function useFieldsState<Tree extends TFormiFieldTree>(
         if (FormiField.utils.isFormiField(f)) {
           const fieldState = states.get(f.key);
           if (!fieldState) {
-            throw FormiErrors.MissingFieldState.create(f);
+            throw FormiErreur.MissingFieldState(f);
           }
           return fieldState;
         }
