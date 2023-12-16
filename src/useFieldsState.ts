@@ -6,12 +6,12 @@ import { useFormiController } from './useFormiContext';
 export type TFieldsStates<Tree extends TFormiFieldTree> = Tree extends null
   ? null
   : Tree extends TFormiFieldAny
-  ? TFieldStateOf<Tree>
-  : Tree extends Array<infer Inner extends TFormiFieldTree>
-  ? ReadonlyArray<TFieldsStates<Inner>>
-  : Tree extends Record<string, TFormiFieldAny>
-  ? { [K in keyof Tree]: TFieldsStates<Tree[K]> }
-  : never;
+    ? TFieldStateOf<Tree>
+    : Tree extends Array<infer Inner extends TFormiFieldTree>
+      ? ReadonlyArray<TFieldsStates<Inner>>
+      : Tree extends Record<string, TFormiFieldAny>
+        ? { [K in keyof Tree]: TFieldsStates<Tree[K]> }
+        : never;
 
 const IS_OBJECT = Symbol('IS_OBJECT');
 
