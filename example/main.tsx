@@ -10,6 +10,7 @@ import { SingleInputExample } from './07-single-input/SingleInputExample';
 import { InputTypesExample } from './09-input-types/InputTypesExample';
 import { ExampleDynamicField } from './10-dynamic-field/ExampleDynamicField';
 import { AutoSlugExample } from './11-auto-slug/AutoSlugExample';
+import { ControlledComponentExample } from './12-controlled-component/ControlledComponentExample';
 import './index.css';
 import './new.css';
 
@@ -31,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <InputTypesExample />
       <ExampleDynamicField />
       <AutoSlugExample />
+      <ControlledComponentExample />
     </div>
   </StrictMode>,
 );
