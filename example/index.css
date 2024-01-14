@@ -17,7 +17,8 @@
   color-scheme: dark;
 }
 
-form {
+form,
+.card {
   background: var(--nc-bg-2);
   padding: 1rem;
   border-radius: 0.4rem;

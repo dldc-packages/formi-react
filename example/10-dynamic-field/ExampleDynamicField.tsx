@@ -22,21 +22,23 @@ export function ExampleDynamicField() {
   const [showForm, setShowForm] = useState(false);
 
   return (
-    <Form>
+    <div className="card">
       <h2>Dynamic Fields</h2>
       <p>In this example we use dynamically show / hide a fields</p>
       <button onClick={() => setShowForm(!showForm)} type="button">
         Toggle Form
       </button>
       {showForm && (
-        <Fragment>
-          <TextInput label="Username" field={fields.username} type="text" />
-          <div className="buttons">
-            <button type="submit">Submit</button>
-            <button type="reset">Reset</button>
-          </div>
-        </Fragment>
+        <Form>
+          <Fragment>
+            <TextInput label="Username" field={fields.username} type="text" />
+            <div className="buttons">
+              <button type="submit">Submit</button>
+              <button type="reset">Reset</button>
+            </div>
+          </Fragment>
+        </Form>
       )}
-    </Form>
+    </div>
   );
 }

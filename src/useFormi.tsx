@@ -64,16 +64,6 @@ export function useFormi<Tree extends TFormiFieldTree>({
 
   const formRefObjectResolved = formRefObject ?? defaultFormRefObject;
 
-  const refCallback = useCallback(
-    (form: HTMLFormElement | null) => {
-      if (form === formRefObjectResolved.current) {
-        return;
-      }
-      formRefObjectResolved.current = form;
-    },
-    [formRefObjectResolved],
-  );
-
   const [controller] = useState(() =>
     FormiController<Tree>({
       formName: formNameResolved,
@@ -85,13 +75,22 @@ export function useFormi<Tree extends TFormiFieldTree>({
     }),
   );
 
-  const fields = useFields<Tree>(controller);
+  const refCallback = useCallback(
+    (form: HTMLFormElement | null) => {
+      if (form === formRefObjectResolved.current) {
+        return;
+      }
+      formRefObjectResolved.current = form;
+      if (form === null) {
+        controller.unmount();
+      } else {
+        controller.mount(form);
+      }
+    },
+    [controller, formRefObjectResolved],
+  );
 
-  useLayoutEffect(() => {
-    if (formRefObjectResolved.current) {
-      controller.mount(formRefObjectResolved.current);
-    }
-  }, [controller, formRefObjectResolved, fields]);
+  const fields = useFields<Tree>(controller);
 
   useLayoutEffect(() => {
     if (onSubmit) {
