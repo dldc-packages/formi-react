@@ -1,6 +1,6 @@
 import type { IFormiController, TFormiFieldTree } from '@dldc/formi';
 import { FormiFieldTree } from '@dldc/formi';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/with-selector';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
 import { useFormiController } from './useFormiContext';
 
 /**
