@@ -1,6 +1,6 @@
 import type { TFieldStateOf, TFormiControllerAny, TFormiFieldAny, TFormiFieldTree } from '@dldc/formi';
 import { FormiErreur, FormiField } from '@dldc/formi';
-import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector.js';
 import { useFormiController } from './useFormiContext';
 
 export type TFieldsStates<Tree extends TFormiFieldTree> = Tree extends null
