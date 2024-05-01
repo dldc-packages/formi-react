@@ -1,5 +1,5 @@
 import type { TFieldStateOf, TFormiControllerAny, TFormiFieldAny } from '@dldc/formi';
-import { FormiErreur } from '@dldc/formi';
+import { createMissingFieldState } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector.js';
 import { useFormiController } from './useFormiContext';
 
@@ -16,7 +16,7 @@ export function useFieldState<FormField extends TFormiFieldAny>(
     (s): TFieldStateOf<FormField> => {
       const fieldState = s.get(field.key);
       if (!fieldState) {
-        throw FormiErreur.MissingFieldState(field);
+        throw createMissingFieldState(field);
       }
       return fieldState as TFieldStateOf<FormField>;
     },
