@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@dldc/formi':
-    specifier: ^3.0.0
-    version: 3.0.0(zod@3.23.5)
+    specifier: ^3.0.1
+    version: 3.0.1(zod@3.23.5)
   use-sync-external-store:
     specifier: ^1.2.2
     version: 1.2.2(react@18.3.1)
@@ -347,8 +347,8 @@ packages:
     resolution: {integrity: sha512-vr4QJwA2OrVPAq/S786mCYy9BAhF5c9F/j91PqfRG+g3C9BlPHapZjyai4twqd3CjszoA5MyDs0vebd6eQkSAg==}
     dev: false
 
-  /@dldc/formi@3.0.0(zod@3.23.5):
-    resolution: {integrity: sha512-8aPadgt5qFG+nqrL536a5y9/60bFY9s19MUIwGNmsAY2k40ltsg/1+K2D5jU2MYg4R/axEMiyEFYnMcaCYUAww==}
+  /@dldc/formi@3.0.1(zod@3.23.5):
+    resolution: {integrity: sha512-vY/kdQrPQSueVC3v5Caig1SgPxxjbT+XmxbxJ7m1e9shvAW52eqEYEKDLNfaVSEDMRQ6599DBVLivd7kZoNKJQ==}
     peerDependencies:
       zod: ^3.21.0
     dependencies:

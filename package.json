@@ -87,7 +87,7 @@
     "root": true
   },
   "dependencies": {
-    "@dldc/formi": "^3.0.0",
+    "@dldc/formi": "^3.0.1",
     "use-sync-external-store": "^1.2.2"
   },
   "devDependencies": {
