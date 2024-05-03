@@ -1,0 +1,6 @@
+{
+  "react": true,
+  "viteExample": true,
+  "skipLibCheck": true,
+  "additionalDevDependencies": ["@types/use-sync-external-store", "zod"]
+}
