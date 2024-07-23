@@ -2,10 +2,11 @@ import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
+import { zodValidator } from '../utils/zodValidator';
 
 const FORM_NAME = 'single-input';
 
-const initialFields = FormiField.string().zodValidate(z.string().min(1));
+const initialFields = FormiField.string().validate(zodValidator(z.string().min(1)));
 
 export function SingleInputExample() {
   const { fields, Form, useFieldState } = useFormi({

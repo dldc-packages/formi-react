@@ -6,7 +6,7 @@ import type {
   TFormiIssues,
   TOnSubmit,
 } from '@dldc/formi';
-import { FormiController } from '@dldc/formi';
+import { createFormiController } from '@dldc/formi';
 import type { MutableRefObject } from 'react';
 import React, { useLayoutEffect as reactULE, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useFieldState as useFieldStateBase } from './useFieldState';
@@ -65,7 +65,7 @@ export function useFormi<Tree extends TFormiFieldTree>({
   const formRefObjectResolved = formRefObject ?? defaultFormRefObject;
 
   const [controller] = useState(() =>
-    FormiController<Tree>({
+    createFormiController<Tree>({
       formName: formNameResolved,
       initialFields,
       initialIssues: issues,

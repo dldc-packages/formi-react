@@ -1,10 +1,11 @@
 import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
+import { zodValidator } from '../utils/zodValidator';
 import { TextInput } from './TextInput';
 
 export const ingredientField = FormiField.group({
-  name: FormiField.string().zodValidate(z.string().min(1)),
-  quantity: FormiField.string().zodValidate(z.string().min(1)),
+  name: FormiField.string().validate(zodValidator(z.string().min(1))),
+  quantity: FormiField.string().validate(zodValidator(z.string().min(1))),
 });
 
 interface Props {

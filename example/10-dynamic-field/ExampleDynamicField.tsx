@@ -2,10 +2,11 @@ import { FormiField } from '@dldc/formi';
 import { Fragment, useState } from 'react';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
+import { zodValidator } from '../utils/zodValidator';
 import { TextInput } from './TextInput';
 
 const simpleFields = {
-  username: FormiField.string().zodValidate(z.string().min(1).max(20)),
+  username: FormiField.string().validate(zodValidator(z.string().min(1).max(20))),
 };
 
 export function ExampleDynamicField() {

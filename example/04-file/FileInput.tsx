@@ -1,11 +1,11 @@
-import type { IFormiField, TFormiIssue } from '@dldc/formi';
+import type { TFormiField, TFormiIssue } from '@dldc/formi';
 import { useId } from 'react';
 import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
 type Props = {
   label: string;
-  field: IFormiField<any, TFormiIssue>;
+  field: TFormiField<any, TFormiIssue>;
 };
 
 export function FileInput({ label, field }: Props) {

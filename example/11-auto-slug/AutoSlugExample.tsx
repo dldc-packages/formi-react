@@ -1,10 +1,11 @@
-import { FormiController, FormiField } from '@dldc/formi';
+import { FormiField, validateForm } from '@dldc/formi';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 import { slugify } from '../utils/slugify';
 import { useAsync } from '../utils/useAsync';
+import { zodValidator } from '../utils/zodValidator';
 
 const FORM_NAME = 'auto-slug';
 
@@ -13,15 +14,17 @@ const SLUG_REGEX = /^[a-z0-9-]+$/;
 export type SlugIssue = { kind: 'SlugAlreadyUsed' };
 
 const initialFields = {
-  name: FormiField.string().zodValidate(z.string().min(1)),
-  slug: FormiField.string().zodValidate(z.string().min(3).regex(SLUG_REGEX)).withIssue<SlugIssue>(),
+  name: FormiField.string().validate(zodValidator(z.string().min(1))),
+  slug: FormiField.string()
+    .validate(zodValidator(z.string().min(3).regex(SLUG_REGEX)))
+    .withIssue<SlugIssue>(),
 };
 
 export function AutoSlugExample() {
   // This code is a proxy for a server call
   const { status, run } = useAsync(async (data: FormData) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const res = FormiController.validate({ formName: FORM_NAME, initialFields }, data);
+    const res = validateForm({ formName: FORM_NAME, initialFields }, data);
     if (res.success === false) {
       return { success: false, issues: res.issues };
     }

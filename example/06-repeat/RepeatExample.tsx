@@ -1,13 +1,14 @@
 import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
+import { zodValidator } from '../utils/zodValidator';
 import { IngredientInput, ingredientField } from './IngredientInput';
 import { TextInput } from './TextInput';
 
 const FORM_NAME = 'repeat';
 
 const initialFields = {
-  name: FormiField.string().zodValidate(z.string().min(1)),
+  name: FormiField.string().validate(zodValidator(z.string().min(1))),
   ingredients: FormiField.repeat(ingredientField),
 };
 

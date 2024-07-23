@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@dldc/formi':
-        specifier: ^3.0.1
-        version: 3.0.1(zod@3.23.8)
+        specifier: npm:@jsr/dldc__formi@^5.0.1
+        version: '@jsr/dldc__formi@5.0.1'
       use-sync-external-store:
         specifier: ^1.2.2
         version: 1.2.2(react@18.3.1)
@@ -213,20 +213,6 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
-
-  '@dldc/erreur@7.0.1':
-    resolution: {integrity: sha512-whJBmayFsOnwHZl9xVQuSJXb6DgtDmMNKgiawDr+BvhjCGEiKxAkJXWrqN95Yz3DOeqdD6fpzD1l9l68iKu1MQ==}
-
-  '@dldc/erreur@7.1.0':
-    resolution: {integrity: sha512-vr4QJwA2OrVPAq/S786mCYy9BAhF5c9F/j91PqfRG+g3C9BlPHapZjyai4twqd3CjszoA5MyDs0vebd6eQkSAg==}
-
-  '@dldc/formi@3.0.1':
-    resolution: {integrity: sha512-vY/kdQrPQSueVC3v5Caig1SgPxxjbT+XmxbxJ7m1e9shvAW52eqEYEKDLNfaVSEDMRQ6599DBVLivd7kZoNKJQ==}
-    peerDependencies:
-      zod: ^3.21.0
-
-  '@dldc/pubsub@7.0.1':
-    resolution: {integrity: sha512-MBgfmW4gdiiSzoCIV9hNAvnar9J6k+1jiY/aVyaytKIOU/jPOUAaoVFKZJSwvagq3RK6EtA3I2B34fTHf0jqqQ==}
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -579,6 +565,15 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
+
+  '@jsr/dldc__erreur@7.1.1':
+    resolution: {integrity: sha512-NqS59hO/2ITktUa5RzBYigZ01ZuZQARYDPP/JF6/I6orFmL72zzZcRQPDeL1kWgn3nlwTuW3iPIGl2nOuY581g==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__erreur/7.1.1.tgz}
+
+  '@jsr/dldc__formi@5.0.1':
+    resolution: {integrity: sha512-NR7nBSZUneliyBiflOnntLrtpLcwpEKVM+PlyMmnUgCVRkSV9/C0popRYs1/u9wBlA08HBLUXiJzVHCS0tPbmw==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__formi/5.0.1.tgz}
+
+  '@jsr/dldc__pubsub@7.0.1':
+    resolution: {integrity: sha512-hQXnj8bJxs5ObG11otoUr9qCdQwf5kGbDkNtib7GJuUcyC47rItKR7dWAvNjaSB7Q4PuILv4qlc7gRnecXcOXA==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__pubsub/7.0.1.tgz}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -3124,20 +3119,6 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@dldc/erreur@7.0.1': {}
-
-  '@dldc/erreur@7.1.0': {}
-
-  '@dldc/formi@3.0.1(zod@3.23.8)':
-    dependencies:
-      '@dldc/erreur': 7.1.0
-      '@dldc/pubsub': 7.0.1
-      zod: 3.23.8
-
-  '@dldc/pubsub@7.0.1':
-    dependencies:
-      '@dldc/erreur': 7.0.1
-
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
 
@@ -3349,6 +3330,17 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  '@jsr/dldc__erreur@7.1.1': {}
+
+  '@jsr/dldc__formi@5.0.1':
+    dependencies:
+      '@jsr/dldc__erreur': 7.1.1
+      '@jsr/dldc__pubsub': 7.0.1
+
+  '@jsr/dldc__pubsub@7.0.1':
+    dependencies:
+      '@jsr/dldc__erreur': 7.1.1
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:

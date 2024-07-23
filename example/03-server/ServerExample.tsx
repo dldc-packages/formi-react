@@ -1,16 +1,19 @@
-import { FormiController, FormiField } from '@dldc/formi';
+import { FormiField, validateForm } from '@dldc/formi';
 import { useEffect } from 'react';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
 import { useAsync } from '../utils/useAsync';
+import { zodValidator } from '../utils/zodValidator';
 import { TextInput } from './TextInput';
 
 export type UsernameIssue = { kind: 'UsernameAlreadyUsed' };
 
 const fieldsDef = {
-  username: FormiField.string().withIssue<UsernameIssue>().zodValidate(z.string().min(1).max(20)),
-  email: FormiField.string().zodValidate(z.string().email()),
-  password: FormiField.string().zodValidate(z.string().min(3)),
+  username: FormiField.string()
+    .withIssue<UsernameIssue>()
+    .validate(zodValidator(z.string().min(1).max(20))),
+  email: FormiField.string().validate(zodValidator(z.string().email())),
+  password: FormiField.string().validate(zodValidator(z.string().min(3))),
 };
 
 const FORM_NAME = 'server';
@@ -18,7 +21,7 @@ const FORM_NAME = 'server';
 export function ServerExample() {
   const { status, run } = useAsync(async (data: FormData) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    const res = FormiController.validate({ formName: FORM_NAME, initialFields: fieldsDef }, data);
+    const res = validateForm({ formName: FORM_NAME, initialFields: fieldsDef }, data);
     if (res.success === false) {
       return { success: false, issues: res.issues };
     }

@@ -3,14 +3,19 @@ import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
 import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
+import { zodValidator } from '../utils/zodValidator';
 
 export type DateFieldIssue = TFormiIssueBase | { kind: 'TheWorldEndsIn2048' };
 
 export const dateField = () =>
   FormiField.group({
-    year: FormiField.number().zodValidate(z.number().int().min(1900, 'Min year is 1900').max(2100, 'Max year is 2100')),
-    month: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid month').max(12, 'Invalid month')),
-    day: FormiField.number().zodValidate(z.number().int().min(1, 'Invalid day').max(31, 'Invalid day')),
+    year: FormiField.number().validate(
+      zodValidator(z.number().int().min(1900, 'Min year is 1900').max(2100, 'Max year is 2100')),
+    ),
+    month: FormiField.number().validate(
+      zodValidator(z.number().int().min(1, 'Invalid month').max(12, 'Invalid month')),
+    ),
+    day: FormiField.number().validate(zodValidator(z.number().int().min(1, 'Invalid day').max(31, 'Invalid day'))),
   }).validate((data): TValidateResult<Date, DateFieldIssue> => {
     if (data === null) {
       return { success: false };

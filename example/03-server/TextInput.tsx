@@ -1,12 +1,13 @@
-import type { IFormiField, TFormiIssue } from '@dldc/formi';
+import type { TFormiField, TFormiIssue } from '@dldc/formi';
 import { useId } from 'react';
 import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
+import type { TFormiIssueZod } from '../utils/zodValidator';
 import type { UsernameIssue } from './ServerExample';
 
 type Props = {
   label: string;
-  field: IFormiField<string, TFormiIssue | UsernameIssue>;
+  field: TFormiField<string, TFormiIssue | UsernameIssue | TFormiIssueZod>;
   type: 'password' | 'text' | 'email';
   defaultValue?: string;
 };

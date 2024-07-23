@@ -1,4 +1,4 @@
-import { FormiField, type IFormiField, type TFormiIssue } from '@dldc/formi';
+import { FormiField, type TFormiField, type TFormiIssue } from '@dldc/formi';
 import { useCallback, useRef } from 'react';
 import { useFieldState } from '../../src/useFieldState';
 import { useFormiContext } from '../../src/useFormiContext';
@@ -16,7 +16,7 @@ export function dateField() {
 }
 
 interface ControlledComponentFieldProps {
-  field: IFormiField<Date, TFormiIssue | { kind: 'InvalidDate' }>;
+  field: TFormiField<Date, TFormiIssue | { kind: 'InvalidDate' }>;
   label: string;
   initialDate?: Date;
 }

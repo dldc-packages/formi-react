@@ -1,6 +1,7 @@
 import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
+import { zodValidator } from '../utils/zodValidator';
 import { Input } from './Input';
 import { RadioInput } from './RadioInput';
 import { SelectInput } from './SelectInput';
@@ -11,9 +12,9 @@ const initialFields = {
   text: FormiField.string(),
   number: FormiField.number(),
   checkbox: FormiField.checkbox(),
-  radio: FormiField.string().zodValidate(z.enum(['a', 'b', 'c'])),
+  radio: FormiField.string().validate(zodValidator(z.enum(['a', 'b', 'c']))),
   select: FormiField.string()
-    .zodValidate(z.enum(['a', 'b', 'c', '']))
+    .validate(zodValidator(z.enum(['a', 'b', 'c', ''])))
     .validate((value) => {
       if (value === '') {
         return { success: false, issue: { kind: 'MissingField' } };

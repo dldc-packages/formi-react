@@ -1,9 +1,10 @@
 import type { TFormiIssue } from '@dldc/formi';
 import React from 'react';
+import type { TFormiIssueZod } from './zodValidator';
 
 interface Props<OtherIssue extends { kind: string }> {
-  issues: Array<TFormiIssue | OtherIssue> | null;
-  renderIssue?: (issue: TFormiIssue | OtherIssue, index: number) => React.ReactNode | null;
+  issues: Array<TFormiIssue | TFormiIssueZod | OtherIssue> | null;
+  renderIssue?: (issue: TFormiIssue | TFormiIssueZod | OtherIssue, index: number) => React.ReactNode | null;
 }
 
 export function IssueBox<OtherIssue extends { kind: string }>({ issues, renderIssue }: Props<OtherIssue>) {
@@ -18,7 +19,7 @@ export function IssueBox<OtherIssue extends { kind: string }>({ issues, renderIs
           return rendered;
         }
         if (issue.kind === 'ZodIssue') {
-          const zodIssue = issue as Extract<TFormiIssue, { kind: 'ZodIssue' }>;
+          const zodIssue = issue as TFormiIssueZod;
           return (
             <p key={i} className="error">
               {zodIssue.issue.message}

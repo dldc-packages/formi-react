@@ -1,5 +1,5 @@
 import type { IFormiController, TFormiFieldTree } from '@dldc/formi';
-import { FormiFieldTree } from '@dldc/formi';
+import { unwrapFormiFieldTree } from '@dldc/formi';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector.js';
 import { useFormiController } from './useFormiContext';
 
@@ -12,7 +12,7 @@ export function useFields<Tree extends TFormiFieldTree>(controller?: IFormiContr
     ctrl.subscribe,
     () => ctrl.getState(),
     () => ctrl.getState(),
-    (state) => FormiFieldTree.unwrap(state.rootField, state.rootFieldWrapped),
+    (state) => unwrapFormiFieldTree(state.rootField, state.rootFieldWrapped),
   );
 
   return fields as any;

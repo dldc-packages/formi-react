@@ -63,7 +63,7 @@ export function ComponentsExample() {
 
 type TextInputProps = {
   label: string;
-  field: IFormiField<string, TFormiIssue>;
+  field: TFormiField<string, TFormiIssue>;
   type: 'password' | 'text' | 'email';
   defaultValue?: string;
 };

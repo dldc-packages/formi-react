@@ -1,16 +1,19 @@
 import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
+import { zodValidator } from '../utils/zodValidator';
 import { FileInput } from './FileInput';
 import { TextInput } from './TextInput';
 
 const fieldsDef = {
-  filename: FormiField.string().zodValidate(
-    z
-      .string()
-      .min(1)
-      .max(20)
-      .transform((v) => v.toLowerCase().replaceAll(' ', '-')),
+  filename: FormiField.string().validate(
+    zodValidator(
+      z
+        .string()
+        .min(1)
+        .max(20)
+        .transform((v) => v.toLowerCase().replaceAll(' ', '-')),
+    ),
   ),
   file: FormiField.nonEmptyfile().validate((file) => {
     return { success: true, value: { file, size: file.size } };

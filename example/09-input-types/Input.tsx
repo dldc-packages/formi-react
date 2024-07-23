@@ -1,11 +1,11 @@
-import type { IFormiField, TFormiIssue } from '@dldc/formi';
+import type { TFormiField, TFormiIssue } from '@dldc/formi';
 import { useId } from 'react';
 import { useFieldState } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
 
 type Props = {
   label: string;
-  field: IFormiField<string | number | boolean, TFormiIssue>;
+  field: TFormiField<string | number | boolean, TFormiIssue>;
   type?: 'password' | 'text' | 'email' | 'number' | 'checkbox';
   defaultValue?: string;
 };

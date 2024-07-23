@@ -3,14 +3,15 @@ import { useId } from 'react';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
 import { IssueBox } from '../utils/IssueBox';
+import { zodValidator } from '../utils/zodValidator';
 
 /**
  * 1. Define the form schema
  */
 const simpleFields = {
-  username: FormiField.string().zodValidate(z.string().min(1).max(20)),
-  email: FormiField.string().zodValidate(z.string().email()),
-  password: FormiField.string().zodValidate(z.string().min(1)),
+  username: FormiField.string().validate(zodValidator(z.string().min(1).max(20))),
+  email: FormiField.string().validate(zodValidator(z.string().email())),
+  password: FormiField.string().validate(zodValidator(z.string().min(1))),
 };
 
 export function SimpleExample() {

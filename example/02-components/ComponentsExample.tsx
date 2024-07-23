@@ -1,15 +1,16 @@
 import { FormiField } from '@dldc/formi';
 import { z } from 'zod';
 import { useFormi } from '../../src/mod';
+import { zodValidator } from '../utils/zodValidator';
 import { TextInput } from './TextInput';
 
 /**
  * 1. Define the form schema
  */
 const simpleFields = {
-  username: FormiField.string().zodValidate(z.string().min(1).max(20)),
-  email: FormiField.string().zodValidate(z.string().email()),
-  password: FormiField.string().zodValidate(z.string().min(8)),
+  username: FormiField.string().validate(zodValidator(z.string().min(1).max(20))),
+  email: FormiField.string().validate(zodValidator(z.string().email())),
+  password: FormiField.string().validate(zodValidator(z.string().min(8))),
 };
 
 export function ComponentsExample() {
