@@ -46,7 +46,7 @@
     "typecheck:watch": "tsc --watch"
   },
   "dependencies": {
-    "@dldc/formi": "npm:@jsr/dldc__formi@^5.0.1",
+    "@dldc/formi": "npm:@jsr/dldc__formi@^5.1.0",
     "use-sync-external-store": "^1.2.2"
   },
   "devDependencies": {

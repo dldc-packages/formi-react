@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@dldc/formi':
-        specifier: npm:@jsr/dldc__formi@^5.0.1
-        version: '@jsr/dldc__formi@5.0.1'
+        specifier: npm:@jsr/dldc__formi@^5.1.0
+        version: '@jsr/dldc__formi@5.1.0'
       use-sync-external-store:
         specifier: ^1.2.2
         version: 1.2.2(react@18.3.1)
@@ -569,8 +569,8 @@ packages:
   '@jsr/dldc__erreur@7.1.1':
     resolution: {integrity: sha512-NqS59hO/2ITktUa5RzBYigZ01ZuZQARYDPP/JF6/I6orFmL72zzZcRQPDeL1kWgn3nlwTuW3iPIGl2nOuY581g==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__erreur/7.1.1.tgz}
 
-  '@jsr/dldc__formi@5.0.1':
-    resolution: {integrity: sha512-NR7nBSZUneliyBiflOnntLrtpLcwpEKVM+PlyMmnUgCVRkSV9/C0popRYs1/u9wBlA08HBLUXiJzVHCS0tPbmw==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__formi/5.0.1.tgz}
+  '@jsr/dldc__formi@5.1.0':
+    resolution: {integrity: sha512-oiFXgnuYiKOM362qvuzBTUokamaJ0yMxt/6FrwekixmS+7qdEhQQzp/WycSqUJC1dw0AznkeMlEW2pN0EPaC9Q==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__formi/5.1.0.tgz}
 
   '@jsr/dldc__pubsub@7.0.1':
     resolution: {integrity: sha512-hQXnj8bJxs5ObG11otoUr9qCdQwf5kGbDkNtib7GJuUcyC47rItKR7dWAvNjaSB7Q4PuILv4qlc7gRnecXcOXA==, tarball: https://npm.jsr.io/~/11/@jsr/dldc__pubsub/7.0.1.tgz}
@@ -3333,7 +3333,7 @@ snapshots:
 
   '@jsr/dldc__erreur@7.1.1': {}
 
-  '@jsr/dldc__formi@5.0.1':
+  '@jsr/dldc__formi@5.1.0':
     dependencies:
       '@jsr/dldc__erreur': 7.1.1
       '@jsr/dldc__pubsub': 7.0.1
