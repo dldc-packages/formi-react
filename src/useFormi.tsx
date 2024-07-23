@@ -30,6 +30,7 @@ export interface IUseFormiOptions<Tree extends TFormiFieldTree> {
   validateOnMount?: boolean;
   formRefObject?: MutableRefObject<HTMLFormElement | null>;
   issues?: TFormiIssues<any>;
+  onMount?: (controller: IFormiController<Tree>) => void;
 }
 
 type THtmlFormProps = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement>;
@@ -57,23 +58,29 @@ export function useFormi<Tree extends TFormiFieldTree>({
   onReset,
   validateOnMount,
   formRefObject,
+  onMount,
 }: IUseFormiOptions<Tree>): IUseFormiResult<Tree> {
   const formId = useId();
   const formNameResolved = formName ?? formId;
   const defaultFormRefObject = useRef<HTMLFormElement | null>(null);
+  const onMountRef = useRef(onMount);
 
   const formRefObjectResolved = formRefObject ?? defaultFormRefObject;
 
-  const [controller] = useState(() =>
-    createFormiController<Tree>({
+  const [controller] = useState(() => {
+    const ctrl = createFormiController<Tree>({
       formName: formNameResolved,
       initialFields,
       initialIssues: issues,
       onSubmit,
       onReset,
       validateOnMount,
-    }),
-  );
+    });
+    if (onMountRef.current) {
+      onMountRef.current(ctrl);
+    }
+    return ctrl;
+  });
 
   const refCallback = useCallback(
     (form: HTMLFormElement | null) => {
