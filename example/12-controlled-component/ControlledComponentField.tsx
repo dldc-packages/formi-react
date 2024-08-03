@@ -1,7 +1,6 @@
 import { FormiField, type TFormiField, type TFormiIssue } from '@dldc/formi';
 import { useCallback, useRef } from 'react';
 import { useFieldState } from '../../src/useFieldState';
-import { useFormiContext } from '../../src/useFormiContext';
 import { IssueBox } from '../utils/IssueBox';
 import { ControlledComponent } from './ControlledComponent';
 
@@ -24,17 +23,14 @@ interface ControlledComponentFieldProps {
 export function ControlledComponentField({ field, label, initialDate }: ControlledComponentFieldProps) {
   const state = useFieldState(field);
   const inputRef = useRef<HTMLInputElement>(null);
-  const controller = useFormiContext();
 
-  const onValueChange = useCallback(
-    (date: Date) => {
-      if (inputRef.current) {
-        inputRef.current.value = date.toISOString();
-        controller.revalidate(field);
-      }
-    },
-    [controller, field],
-  );
+  const onValueChange = useCallback((date: Date) => {
+    if (inputRef.current) {
+      inputRef.current.value = date.toISOString();
+      inputRef.current.dispatchEvent(new CustomEvent('input', { bubbles: true, cancelable: true }));
+      inputRef.current.dispatchEvent(new CustomEvent('change', { bubbles: true, cancelable: true }));
+    }
+  }, []);
 
   return (
     <div className="input">
